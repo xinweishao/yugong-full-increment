@@ -68,7 +68,7 @@ public class YuGongContext {
         this.batchApply = batchApply;
     }
 
-	public String getSourceEncoding() {
+    public String getSourceEncoding() {
         return sourceEncoding;
     }
 

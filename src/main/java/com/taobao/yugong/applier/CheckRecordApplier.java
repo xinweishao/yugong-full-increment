@@ -341,8 +341,8 @@ public class CheckRecordApplier extends AbstractRecordApplier {
 
             RecordDiffer.diff(record, recordMap2.remove(objs));
         }
-        
-        //比对record2多余的数据
+
+        // 比对record2多余的数据
         for (Record record2 : recordMap2.values()) {
             RecordDiffer.diff(null, record2);
         }

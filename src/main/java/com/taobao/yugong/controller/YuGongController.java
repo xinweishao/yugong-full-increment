@@ -572,7 +572,6 @@ public class YuGongController extends AbstractYuGongLifeCycle {
         }
     }
 
-
     private String getTable(String tableName) {
         String[] paramArray = tableName.split("#");
         if (paramArray.length >= 1 && !"".equals(paramArray[0])) {

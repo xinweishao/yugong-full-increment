@@ -66,11 +66,10 @@ public class OracleFullRecordExtractor extends AbstractOracleRecordExtractor {
             // logger.info("table : {} \n\t extract sql : {}",
             // context.getTableMeta().getFullName(), extractSql);
         }
-        
-		if (getMinPkSql == null && StringUtils.isNotBlank(primaryKey)) {
-			this.getMinPkSql = new MessageFormat(MIN_PK_FORMAT)
-					.format(new Object[] { primaryKey, schemaName, tableName });
-		}
+
+        if (getMinPkSql == null && StringUtils.isNotBlank(primaryKey)) {
+            this.getMinPkSql = new MessageFormat(MIN_PK_FORMAT).format(new Object[] { primaryKey, schemaName, tableName });
+        }
 
         extractorThread = new NamedThreadFactory(this.getClass().getSimpleName() + "-"
                                                  + context.getTableMeta().getFullName()).newThread(new ContinueExtractor(context));
@@ -139,65 +138,61 @@ public class OracleFullRecordExtractor extends AbstractOracleRecordExtractor {
         private Object           id      = 0L;
         private volatile boolean running = true;
 
-		public ContinueExtractor(YuGongContext context) {
-			jdbcTemplate = new JdbcTemplate(context.getSourceDs());
+        public ContinueExtractor(YuGongContext context){
+            jdbcTemplate = new JdbcTemplate(context.getSourceDs());
 
-			Position position = context.getLastPosition();
-			if (position != null) {
-				IdPosition idPosition = ((IdPosition) position);
-				if (idPosition.getCurrentProgress() == ProgressStatus.FULLING) {
-					id = idPosition.getId();
-				}
+            Position position = context.getLastPosition();
+            if (position != null) {
+                IdPosition idPosition = ((IdPosition) position);
+                if (idPosition.getCurrentProgress() == ProgressStatus.FULLING) {
+                    id = idPosition.getId();
+                }
 
-				if (id == null) {
-					id = getMinId();
-				}
-			} else {
-				id = getMinId();
-			}
+                if (id == null) {
+                    id = getMinId();
+                }
+            } else {
+                id = getMinId();
+            }
 
-			logger.info(context.getTableMeta().getFullName()
-					+ " start postion:" + id);
-		}
+            logger.info(context.getTableMeta().getFullName() + " start postion:" + id);
+        }
 
-		private Object getMinId() {
-			if (jdbcTemplate != null && StringUtils.isNotBlank(getMinPkSql)) {
-				Object min = jdbcTemplate.execute(getMinPkSql,
-						new PreparedStatementCallback() {
-							@Override
-							public Object doInPreparedStatement(
-									PreparedStatement ps) throws SQLException,
-									DataAccessException {
-								ResultSet rs = ps.executeQuery();
-								Object re = null;
-								while (rs.next()) {
-									re = rs.getObject(1);
-									break;
-								}
-								return re;
-							}
-						});
+        private Object getMinId() {
+            if (jdbcTemplate != null && StringUtils.isNotBlank(getMinPkSql)) {
+                Object min = jdbcTemplate.execute(getMinPkSql, new PreparedStatementCallback() {
 
-				if (min != null) {
-					if (min instanceof Number) {
-						min = Long.valueOf(String.valueOf(min)) - 1;
-					} else {
-						min = "";
-					}
-				} else {
-					if (min instanceof Number) {
-						min = 0;
-					} else {
-						min = "";
-					}
-				}
+                    @Override
+                    public Object doInPreparedStatement(PreparedStatement ps) throws SQLException, DataAccessException {
+                        ResultSet rs = ps.executeQuery();
+                        Object re = null;
+                        while (rs.next()) {
+                            re = rs.getObject(1);
+                            break;
+                        }
+                        return re;
+                    }
+                });
 
-				return min;
-			} else {
-				throw new YuGongException(
-						"jdbcTemplate or getMinPkSql is null while getMinId");
-			}
-		}
+                if (min != null) {
+                    if (min instanceof Number) {
+                        min = Long.valueOf(String.valueOf(min)) - 1;
+                    } else {
+                        min = "";
+                    }
+                } else {
+                    if (min instanceof Number) {
+                        min = 0;
+                    } else {
+                        min = "";
+                    }
+                }
+
+                return min;
+            } else {
+                throw new YuGongException("jdbcTemplate or getMinPkSql is null while getMinId");
+            }
+        }
 
         public void run() {
             while (running) {

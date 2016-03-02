@@ -189,18 +189,18 @@ public class MultiThreadIncrementRecordApplier extends IncrementRecordApplier {
                         }
 
                         // 添加主键
-                        List<ColumnValue> pks  = Lists.newArrayList();
-                        //add by 文疏，物化视图创建由with primary改为with (shardKey)
-                        if(incRecord.getOpType() == IncrementOpType.U || incRecord.getOpType() == IncrementOpType.I) {
-                        	for(ColumnMeta cm : context.getTableMeta().getPrimaryKeys()) {
-                        		for(ColumnValue cv : incRecord.getPrimaryKeys()) {
-                            		if(cm.getName().equals(cv.getColumn().getName())) {
-                            			pks.add(cv);
-                            		}
-                            	}
-                    		}
+                        List<ColumnValue> pks = Lists.newArrayList();
+                        // add by 文疏，物化视图创建由with primary改为with (shardKey)
+                        if (incRecord.getOpType() == IncrementOpType.U || incRecord.getOpType() == IncrementOpType.I) {
+                            for (ColumnMeta cm : context.getTableMeta().getPrimaryKeys()) {
+                                for (ColumnValue cv : incRecord.getPrimaryKeys()) {
+                                    if (cm.getName().equals(cv.getColumn().getName())) {
+                                        pks.add(cv);
+                                    }
+                                }
+                            }
                         } else {
-                        	pks = incRecord.getPrimaryKeys();
+                            pks = incRecord.getPrimaryKeys();
                         }
                         for (ColumnValue pk : pks) {
                             Integer index = getIndex(indexs, pk, true);// 考虑delete的目标库主键，可能在源库的column中

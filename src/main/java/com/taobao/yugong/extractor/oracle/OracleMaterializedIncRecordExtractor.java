@@ -235,23 +235,21 @@ public class OracleMaterializedIncRecordExtractor extends AbstractOracleRecordEx
             public Object doInPreparedStatement(PreparedStatement ps) throws SQLException, DataAccessException {
                 for (OracleIncrementRecord record : records) {
                     int i = 1;
-                    //add by 文疏，物化视图创建语句由with primary key 改为with (shardkey)，
-                    //对于update的日志，可能会加载出shardkey列，但是此时shardkey已经改变就无法去数据库反查到了
-                	for(ColumnMeta col : context.getTableMeta().getPrimaryKeys()) {
-                		for(ColumnValue pk: record.getPrimaryKeys()) {
-                			if(col.getName().equals(pk.getColumn().getName())) {
-                				ps.setObject(i, pk.getValue(), pk.getColumn().getType());
+                    // add by 文疏，物化视图创建语句由with primary key 改为with (shardkey)，
+                    // 对于update的日志，可能会加载出shardkey列，但是此时shardkey已经改变就无法去数据库反查到了
+                    for (ColumnMeta col : context.getTableMeta().getPrimaryKeys()) {
+                        for (ColumnValue pk : record.getPrimaryKeys()) {
+                            if (col.getName().equals(pk.getColumn().getName())) {
+                                ps.setObject(i, pk.getValue(), pk.getColumn().getType());
                                 i++;
-                			}
-                		}
-                	}
-                    /* else {
-                    	for (ColumnValue pk : record.getPrimaryKeys()) {
-                            ps.setObject(i, pk.getValue(), pk.getColumn().getType());
-                            i++;
+                            }
                         }
-                    }*/
-                    
+                    }
+                    /*
+                     * else { for (ColumnValue pk : record.getPrimaryKeys()) {
+                     * ps.setObject(i, pk.getValue(), pk.getColumn().getType());
+                     * i++; } }
+                     */
 
                     try {
                         ResultSet rs = ps.executeQuery();
@@ -312,17 +310,16 @@ public class OracleMaterializedIncRecordExtractor extends AbstractOracleRecordEx
                     // 构造master sql
                     String colstr = SqlTemplates.COMMON.makeColumn(context.getTableMeta().getColumnsWithPrimary());
                     List<ColumnMeta> primaryMetas = Lists.newArrayList();
-                    //add by 文疏，物化视图创建语句由with primary key 改为with (shardkey)，
-                    //对于update的日志，可能会加载出shardkey列，但是此时shardkey已经改变就无法去数据库反查到了
-                    
-	            	for(ColumnMeta columnMeta : context.getTableMeta().getPrimaryKeys()) {
-	            		primaryMetas.add(columnMeta);
-	            	}
-                    /* else {
-	                    for (ColumnValue col : record.getPrimaryKeys()) {
-	                        primaryMetas.add(col.getColumn());
-	                    }
-                    }*/
+                    // add by 文疏，物化视图创建语句由with primary key 改为with (shardkey)，
+                    // 对于update的日志，可能会加载出shardkey列，但是此时shardkey已经改变就无法去数据库反查到了
+
+                    for (ColumnMeta columnMeta : context.getTableMeta().getPrimaryKeys()) {
+                        primaryMetas.add(columnMeta);
+                    }
+                    /*
+                     * else { for (ColumnValue col : record.getPrimaryKeys()) {
+                     * primaryMetas.add(col.getColumn()); } }
+                     */
                     String priStr = SqlTemplates.COMMON.makeWhere(primaryMetas);
                     applierSql = new MessageFormat(MASTER_MULTI_PK_FORMAT).format(new Object[] { colstr,
                             record.getSchemaName(), record.getTableName(), priStr });
