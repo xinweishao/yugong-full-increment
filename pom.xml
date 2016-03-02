@@ -6,29 +6,101 @@
 	<packaging>jar</packaging>
 	<name>yugong module for ${project.version}</name>
 	<version>1.0.0-SNAPSHOT</version>
+	<url>https://github.com/alibaba/yugong</url>
+    <parent>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>7</version>
+    </parent>
+
+    <developers>
+        <developer>
+            <name>agapple</name>
+            <url>http://agapple.iteye.com</url>
+            <email>jianghang115@gmail.com</email>
+            <timezone>8</timezone>
+        </developer>
+        <developer>
+			<name>bucketli</name>
+			<url>http://bucketli.iteye.com</url>
+			<email>zylicfc@gmail.com</email>
+			<timezone>8</timezone>
+		</developer>
+        <developer>
+            <name>in355hz</name>
+            <url>http://in355hz.iteye.com</url>
+            <email>in355hz@gmail.com</email>
+            <timezone>8</timezone>
+        </developer>
+    </developers>
 
 	<repositories>
 		<repository>
-			<id>java.net</id>
-			<url>http://download.java.net/maven/2/</url>
-			<releases>
-				<enabled>true</enabled>
-			</releases>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</repository>
-		<repository>
-			<id>alibaba</id>
-			<url>http://code.alibabatech.com/mvn/releases/</url>
-			<releases>
-				<enabled>true</enabled>
-			</releases>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</repository>
+            <id>central</id>
+            <url>http://repo1.maven.org/maven2</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>java.net</id>
+            <url>http://download.java.net/maven/2/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>alibaba</id>
+            <url>http://code.alibabatech.com/mvn/releases/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>sonatype</id>
+            <name>sonatype</name>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>sonatype-release</id>
+            <name>sonatype-release</name>
+            <url>https://oss.sonatype.org/service/local/repositories/releases/content</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
 	</repositories>
+
+	<licenses>
+        <license>
+            <name>GNU General Public License v2.0</name>
+            <url>http://www.gnu.org/licenses/gpl-2.0.html</url>
+        </license>
+    </licenses>
+
+    <scm>
+        <url>git@github.com:alibaba/yugong.git</url>
+        <connection>scm:git:git@github.com:alibaba/yugong.git</connection>
+        <developerConnection>scm:git:git@github.com:alibaba/yugong.git</developerConnection>
+    </scm>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -216,6 +288,21 @@
 				<configuration>
 					<appendAssemblyId>false</appendAssemblyId>
 					<attach>false</attach>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-eclipse-plugin</artifactId>
+				<version>2.5.1</version>
+				<configuration>
+					<additionalConfig>
+						<file>
+							<name>.settings/org.eclipse.core.resources.prefs</name>
+							<content>
+						   <![CDATA[eclipse.preferences.version=1${line.separator}encoding/<project>=${file_encoding}${line.separator}]]>
+							</content>
+						</file>
+					</additionalConfig>
 				</configuration>
 			</plugin>
 		</plugins>
