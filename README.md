@@ -20,7 +20,7 @@
 <li>原库停写，切到新库</li>
 </ol>
 <h1>架构</h1>
-<p><img src="http://dl2.iteye.com/upload/attachment/0115/5467/aae71c94-5873-31b1-a6c8-fb605a9f2319.png" alt="" width="584" height="206" /></p>
+<p><img src="http://dl2.iteye.com/upload/attachment/0115/5473/8532d838-d4b2-371b-af9f-829d4127b1b8.png" alt="" width="584" height="206" /></p>
 <p>说明:&nbsp;</p>
 <ol>
 <li><!--StartFragment-->
