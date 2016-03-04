@@ -1,5 +1,3 @@
-<h1>阿里巴巴去Oralce数据迁移同步工具(目标支持MySQL/DRDS)</h1>
-----
 <h1>背景</h1>
 <p>&nbsp; &nbsp;08年左右，阿里巴巴开始尝试MySQL的相关研究，并开发了基于MySQL分库分表技术的相关产品，Cobar/TDDL(目前为阿里云DRDS产品)，解决了单机Oracle无法满足的扩展性问题，当时也掀起一股去IOE项目的浪潮，愚公这项目因此而诞生，其要解决的目标就是帮助用户完成从Oracle数据迁移到MySQL上，完成去IOE的第一步.&nbsp;</p>
 <h1>项目介绍</h1>
@@ -31,13 +29,13 @@
 <li><!--StartFragment-->&nbsp;instance分为三部分<br />a.&nbsp; <!--StartFragment-->extractor &nbsp;(从源数据库上提取数据，可分为全量/增量实现)<!--EndFragment--><br />b.&nbsp; <!--StartFragment-->translator &nbsp;(将源库上的数据按照目标库的需求进行自定义转化)<!--EndFragment--><br />c. &nbsp;applier<!--EndFragment-->&nbsp; (将数据更新到目标库，可分为全量/增量/对比的实现<!--EndFragment-->)</li>
 </ol>
 <h1>DevDesign</h1>
-<p>See the page for dev design: [[DevDesign]]</p>
+<p>See the page for dev design: <a href="https://github.com/alibaba/yugong/wiki/DevDesign">DevDesign</a></p>
 <h1>QuickStart</h1>
-<p>See the page for quick start: &nbsp;[[QuickStart]]</p>
+<p>See the page for quick start: <a href="https://github.com/alibaba/yugong/wiki/QuickStart">QuickStart</a></p>
 <h1>AdminGuide</h1>
-<p>See the page for admin deploy guide: [[AdminGuide]]</p>
+<p>See the page for admin deploy guide: <a href="https://github.com/alibaba/yugong/wiki/AdminGuide">AdminGuide</a></p>
 <h1>Performance</h1>
-<p>See the page for yugong performance : [[Performance]]</p>
+<p>See the page for yugong performance : <a href="https://github.com/alibaba/yugong/wiki/Performance">Performance</a></p>
 <h1>相关资料</h1>
 <ol>
 <li>yugong简单介绍ppt : &nbsp;<a href="https://github.com/alibaba/yugong/blob/master/docs/yugong_Intro.ppt?raw=true">ppt</a></li>
