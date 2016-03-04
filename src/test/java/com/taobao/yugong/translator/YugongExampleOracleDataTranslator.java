@@ -60,7 +60,7 @@ public class YugongExampleOracleDataTranslator extends AbstractDataTranslator im
     public boolean translator(Record record) {
         // 1. schema/table名不同
         // record.setSchemaName("test");
-        // record.setTableName("yugong_example_mysql");
+        record.setTableName("yugong_example_mysql");
 
         // 2. 字段名字不同
         ColumnValue nameColumn = record.getColumnByName("name");

@@ -44,7 +44,7 @@
 <h1>问题反馈</h1>
 <ol>
 <li><span style="line-height: 21px;">qq交流群： 537157866</span></li>
-<li><span style="line-height: 21px;">邮件交流： jianghang115@gmail.com</span></li>
+<li><span style="line-height: 21px;">邮件交流： jianghang115@gmail.com , zylicfc@gmail.com</span></li>
 <li><span style="line-height: 21px;">新浪微博： agapple0002</span></li>
 <li><span style="line-height: 21px;">报告issue：<a href="https://github.com/alibaba/yugong/issues">issues</a></span></li>
 </ol>
