@@ -52,13 +52,20 @@ public class TableMetaGenerator {
                 String sName = schemaName;
                 String tName = tableName;
                 DatabaseMetaData metaData = conn.getMetaData();
-                if (metaData.storesUpperCaseIdentifiers()) {
+                /*
+                    metaData中的storesUpperCaseIdentifiers，storesUpperCaseQuotedIdentifiers，
+                    storesLowerCaseIdentifiers,storesLowerCaseQuotedIdentifiers,
+                    storesMixedCaseIdentifiers,storesMixedCaseQuotedIdentifiers
+                    不足以判断sName,tName是否需要全部转大写或者小写，
+                    这个也取决于建表时的schemaName,tableName是否带引号
+                */
+                /*if (metaData.storesUpperCaseIdentifiers()) {
                     sName = StringUtils.upperCase(sName);
                     tName = StringUtils.upperCase(tName);
                 } else if (metaData.storesLowerCaseIdentifiers()) {
                     sName = StringUtils.lowerCase(sName);
                     tName = StringUtils.lowerCase(tName);
-                }
+                }*/
 
                 ResultSet rs = null;
                 rs = metaData.getTables(sName, sName, tName, new String[] { "TABLE" });
