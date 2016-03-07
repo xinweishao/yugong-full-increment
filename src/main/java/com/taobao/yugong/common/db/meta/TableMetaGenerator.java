@@ -49,23 +49,9 @@ public class TableMetaGenerator {
         return (Table) jdbcTemplate.execute(new ConnectionCallback() {
 
             public Object doInConnection(Connection conn) throws SQLException, DataAccessException {
-                String sName = schemaName;
-                String tName = tableName;
                 DatabaseMetaData metaData = conn.getMetaData();
-                /*
-                    metaData中的storesUpperCaseIdentifiers，storesUpperCaseQuotedIdentifiers，
-                    storesLowerCaseIdentifiers,storesLowerCaseQuotedIdentifiers,
-                    storesMixedCaseIdentifiers,storesMixedCaseQuotedIdentifiers
-                    不足以判断sName,tName是否需要全部转大写或者小写，
-                    这个也取决于建表时的schemaName,tableName是否带引号
-                */
-                /*if (metaData.storesUpperCaseIdentifiers()) {
-                    sName = StringUtils.upperCase(sName);
-                    tName = StringUtils.upperCase(tName);
-                } else if (metaData.storesLowerCaseIdentifiers()) {
-                    sName = StringUtils.lowerCase(sName);
-                    tName = StringUtils.lowerCase(tName);
-                }*/
+                String sName = getIdentifierName(schemaName, metaData);
+                String tName = getIdentifierName(tableName, metaData);
 
                 ResultSet rs = null;
                 rs = metaData.getTables(sName, sName, tName, new String[] { "TABLE" });
@@ -249,16 +235,9 @@ public class TableMetaGenerator {
         return (Map<String, String>) jdbcTemplate.execute(new ConnectionCallback() {
 
             public Object doInConnection(Connection conn) throws SQLException, DataAccessException {
-                String sName = schemaName;
-                String tName = tableName;
                 DatabaseMetaData metaData = conn.getMetaData();
-                if (metaData.storesUpperCaseIdentifiers()) {
-                    sName = StringUtils.upperCase(sName);
-                    tName = StringUtils.upperCase(tName);
-                } else if (metaData.storesLowerCaseIdentifiers()) {
-                    sName = StringUtils.lowerCase(sName);
-                    tName = StringUtils.lowerCase(tName);
-                }
+                String sName = getIdentifierName(schemaName, metaData);
+                String tName = getIdentifierName(tableName, metaData);
 
                 ResultSet rs = metaData.getIndexInfo(sName, sName, tName, false, true);
                 Map<String, String> indexes = new HashMap<String, String>();
@@ -293,15 +272,8 @@ public class TableMetaGenerator {
 
             public Object doInPreparedStatement(PreparedStatement ps) throws SQLException, DataAccessException {
                 DatabaseMetaData metaData = ps.getConnection().getMetaData();
-                String sName = schemaName;
-                String tName = tableName;
-                if (metaData.storesUpperCaseIdentifiers()) {
-                    sName = StringUtils.upperCase(sName);
-                    tName = StringUtils.upperCase(tName);
-                } else if (metaData.storesLowerCaseIdentifiers()) {
-                    sName = StringUtils.lowerCase(sName);
-                    tName = StringUtils.lowerCase(tName);
-                }
+                // String sName = getIdentifierName(schemaName, metaData);
+                String tName = getIdentifierName(tableName, metaData);
 
                 ps.setString(1, tName);
                 ResultSet rs = ps.executeQuery();
@@ -405,15 +377,8 @@ public class TableMetaGenerator {
 
             public Object doInPreparedStatement(PreparedStatement ps) throws SQLException, DataAccessException {
                 DatabaseMetaData metaData = ps.getConnection().getMetaData();
-                String sName = schemaName;
-                String tName = tableName;
-                if (metaData.storesUpperCaseIdentifiers()) {
-                    sName = StringUtils.upperCase(sName);
-                    tName = StringUtils.upperCase(tName);
-                } else if (metaData.storesLowerCaseIdentifiers()) {
-                    sName = StringUtils.lowerCase(sName);
-                    tName = StringUtils.lowerCase(tName);
-                }
+                // String sName = getIdentifierName(schemaName, metaData);
+                String tName = getIdentifierName(tableName, metaData);
 
                 ps.setString(1, tName);
                 ResultSet rs = ps.executeQuery();
@@ -424,5 +389,30 @@ public class TableMetaGenerator {
                 return log;
             }
         });
+    }
+
+    /**
+     * 根据{@linkplain DatabaseMetaData}获取正确的表名
+     * 
+     * <pre>
+     * metaData中的storesUpperCaseIdentifiers，storesUpperCaseQuotedIdentifiers，storesLowerCaseIdentifiers,
+     * storesLowerCaseQuotedIdentifiers,storesMixedCaseIdentifiers,storesMixedCaseQuotedIdentifiers
+     * </pre>
+     * 
+     * @param name
+     * @param metaData
+     * @return
+     * @throws SQLException
+     */
+    private static String getIdentifierName(String name, DatabaseMetaData metaData) throws SQLException {
+        if (metaData.storesMixedCaseIdentifiers()) {
+            return name; // 保留原始名
+        } else if (metaData.storesUpperCaseIdentifiers()) {
+            return StringUtils.upperCase(name);
+        } else if (metaData.storesLowerCaseIdentifiers()) {
+            return StringUtils.lowerCase(name);
+        } else {
+            return name;
+        }
     }
 }
