@@ -107,7 +107,7 @@ public class YuGongController extends AbstractYuGongLifeCycle {
 
         int statBufferSize = config.getInt("yugong.stat.buffer.size", 16384);
         int statPrintInterval = config.getInt("yugong.stat.print.interval", 5);
-        // 是否滨行执行concurrent
+        // 是否并行执行concurrent
         boolean concurrent = config.getBoolean("yugong.table.concurrent.enable", false);
 
         Collection<TableHolder> tableMetas = initTables();
