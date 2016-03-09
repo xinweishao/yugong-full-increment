@@ -119,8 +119,7 @@ public class YuGongController extends AbstractYuGongLifeCycle {
 
         tableController = new TableController(tableMetas.size(), threadSize);
         progressTracer = new ProgressTracer(runMode, tableMetas.size());
-        String alarmReceiver = config.getString("yugong.alarm.receiver", "agapple.loujh@taobao.com");
-
+        String alarmReceiver = config.getString("yugong.alarm.receiver", "");
         int retryTimes = config.getInt("yugong.table.retry.times", 3);
         int retryInterval = config.getInt("yugong.table.retry.interval", 1000);
 
