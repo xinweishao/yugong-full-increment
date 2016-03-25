@@ -2,6 +2,7 @@ package com.taobao.yugong.controller;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
@@ -31,6 +32,7 @@ import com.taobao.yugong.common.alarm.AlarmService;
 import com.taobao.yugong.common.alarm.LogAlarmService;
 import com.taobao.yugong.common.alarm.MailAlarmService;
 import com.taobao.yugong.common.db.DataSourceFactory;
+import com.taobao.yugong.common.db.meta.ColumnMeta;
 import com.taobao.yugong.common.db.meta.Table;
 import com.taobao.yugong.common.db.meta.TableMetaGenerator;
 import com.taobao.yugong.common.lifecycle.AbstractYuGongLifeCycle;
@@ -348,16 +350,20 @@ public class YuGongController extends AbstractYuGongLifeCycle {
     }
 
     private DataTranslator buildTranslator(String name) throws Exception {
-        String className = YuGongUtils.toPascalCase(name) + "DataTranslator";
-        String fullName = DataTranslator.class.getPackage().getName() + "." + className;
-
+        String tableName = YuGongUtils.toPascalCase(name);
+        String translatorName = tableName + "DataTranslator";
+        String packageName = DataTranslator.class.getPackage().getName();
         Class clazz = null;
         try {
-            clazz = Class.forName(fullName);
+            clazz = Class.forName(packageName + "." + translatorName);
         } catch (ClassNotFoundException e) {
-            File file = new File(translatorDir, className + ".java");
+            File file = new File(translatorDir, translatorName + ".java");
             if (!file.exists()) {
-                return null;
+                // 兼容下表名
+                file = new File(translatorDir, tableName + ".java");
+                if (!file.exists()) {
+                    return null;
+                }
             }
 
             String javaSource = StringUtils.join(IOUtils.readLines(new FileInputStream(file)), "\n");
@@ -486,7 +492,25 @@ public class YuGongController extends AbstractYuGongLifeCycle {
                         }
                     }
 
-                    if (extKey != null) {
+                    // 以逗号切割
+                    String[] keys = StringUtils.split(StringUtils.replace(extKey, "|", ","), ",");
+                    List<String> newExtKeys = new ArrayList<String>();
+                    for (String key : keys) {
+                        boolean found = false;
+                        for (ColumnMeta meta : table.getPrimaryKeys()) {
+                            if (meta.getName().equalsIgnoreCase(key)) {
+                                found = true;
+                                break;
+                            }
+                        }
+
+                        if (!found) {
+                            // 只增加非主键的字段
+                            newExtKeys.add(key);
+                        }
+                    }
+                    if (newExtKeys.size() > 0) {
+                        extKey = StringUtils.join(newExtKeys, ",");
                         table.setExtKey(extKey);
                     }
 
@@ -556,7 +580,7 @@ public class YuGongController extends AbstractYuGongLifeCycle {
     /**
      * 从表白名单中得到shardKey
      * 
-     * @param tableName 带有shardkey的表, 例子 yugong_example_oracle#pk#name
+     * @param tableName 带有shardkey的表, 例子 yugong_example_oracle#pk|name
      * @return
      */
     private String getExtKey(String tableName) {
