@@ -14,16 +14,13 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
-import com.taobao.yugong.common.db.meta.ColumnMeta;
 import com.taobao.yugong.common.db.meta.ColumnValue;
 import com.taobao.yugong.common.db.meta.Table;
 import com.taobao.yugong.common.db.meta.TableMetaGenerator;
 import com.taobao.yugong.common.db.sql.SqlTemplates;
 import com.taobao.yugong.common.model.DbType;
 import com.taobao.yugong.common.model.YuGongContext;
-import com.taobao.yugong.common.model.record.IncrementOpType;
 import com.taobao.yugong.common.model.record.IncrementRecord;
 import com.taobao.yugong.common.model.record.Record;
 import com.taobao.yugong.common.utils.YuGongUtils;
@@ -105,19 +102,7 @@ public class IncrementRecordApplier extends AbstractRecordApplier {
                     }
 
                     // 添加主键
-                    List<ColumnValue> pks = Lists.newArrayList();
-                    // add by 文疏，物化视图创建由with primary改为with (shardKey)
-                    if (incRecord.getOpType() == IncrementOpType.U || incRecord.getOpType() == IncrementOpType.I) {
-                        for (ColumnMeta cm : context.getTableMeta().getPrimaryKeys()) {
-                            for (ColumnValue cv : incRecord.getPrimaryKeys()) {
-                                if (cm.getName().equals(cv.getColumn().getName())) {
-                                    pks.add(cv);
-                                }
-                            }
-                        }
-                    } else {
-                        pks = incRecord.getPrimaryKeys();
-                    }
+                    List<ColumnValue> pks = incRecord.getPrimaryKeys();
                     for (ColumnValue pk : pks) {
                         Integer index = getIndex(indexs, pk, true);// 考虑delete的目标库主键，可能在源库的column中
                         if (index != null) {
@@ -175,8 +160,7 @@ public class IncrementRecordApplier extends AbstractRecordApplier {
                         context.isIgnoreSchema() ? null : names.get(0),
                         names.get(1));
 
-                    // String[] primaryKeys = getPrimaryNames(record);
-                    String[] primaryKeys = getPrimaryNames(context.getTableMeta());
+                    String[] primaryKeys = getPrimaryNames(record);
                     String[] columns = getColumnNames(record);
                     if (useMerge && YuGongUtils.isNotEmpty(meta.getColumns())) {
                         // merge sql必须不是全主键
@@ -184,7 +168,14 @@ public class IncrementRecordApplier extends AbstractRecordApplier {
                             applierSql = SqlTemplates.MYSQL.getMergeSql(meta.getSchema(),
                                 meta.getName(),
                                 primaryKeys,
-                                columns);
+                                columns,
+                                true);
+                        } else if (dbType == DbType.DRDS) {
+                            applierSql = SqlTemplates.MYSQL.getMergeSql(meta.getSchema(),
+                                meta.getName(),
+                                primaryKeys,
+                                columns,
+                                false);
                         } else if (dbType == DbType.ORACLE) {
                             applierSql = SqlTemplates.ORACLE.getMergeSql(meta.getSchema(),
                                 meta.getName(),
@@ -243,10 +234,7 @@ public class IncrementRecordApplier extends AbstractRecordApplier {
                         context.isIgnoreSchema() ? null : names.get(0),
                         names.get(1));
 
-                    // String[] primaryKeys = getPrimaryNames(record);
-                    // add by 文疏，物化视图由with primary 该为with
-                    // (shardkey)，获取主键由table中获取
-                    String[] primaryKeys = getPrimaryNames(context.getTableMeta());
+                    String[] primaryKeys = getPrimaryNames(record);
                     String[] columns = getColumnNames(record);
                     if (useMerge && YuGongUtils.isNotEmpty(meta.getColumns())) {
                         // merge sql必须不是全主键
@@ -254,7 +242,14 @@ public class IncrementRecordApplier extends AbstractRecordApplier {
                             applierSql = SqlTemplates.MYSQL.getMergeSql(meta.getSchema(),
                                 meta.getName(),
                                 primaryKeys,
-                                columns);
+                                columns,
+                                true);
+                        } else if (dbType == DbType.DRDS) {
+                            applierSql = SqlTemplates.MYSQL.getMergeSql(meta.getSchema(),
+                                meta.getName(),
+                                primaryKeys,
+                                columns,
+                                false);
                         } else if (dbType == DbType.ORACLE) {
                             applierSql = SqlTemplates.ORACLE.getMergeSql(meta.getSchema(),
                                 meta.getName(),

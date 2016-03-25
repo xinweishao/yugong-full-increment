@@ -10,7 +10,8 @@ import com.taobao.yugong.common.db.meta.ColumnMeta;
  */
 public class MysqlSqlTemplate extends SqlTemplate {
 
-    public String getMergeSql(String schemaName, String tableName, String[] pkNames, String[] colNames) {
+    public String getMergeSql(String schemaName, String tableName, String[] pkNames, String[] colNames,
+                              boolean mergeUpdatePk) {
         StringBuilder sql = new StringBuilder();
         sql.append("insert into ").append(makeFullName(schemaName, tableName)).append("(");
         String[] allColumns = buildAllColumns(pkNames, colNames);
@@ -27,12 +28,23 @@ public class MysqlSqlTemplate extends SqlTemplate {
         sql.append(") on duplicate key update ");
 
         // mysql merge sql匹配了uniqe / primary key时都会执行update，所以需要更新pk信息
-        for (int i = 0; i < size; i++) {
-            sql.append(getColumnName(allColumns[i]))
-                .append("=values(")
-                .append(getColumnName(allColumns[i]))
-                .append(")");
-            sql.append(splitCommea(size, i));
+        if (mergeUpdatePk) {
+            for (int i = 0; i < size; i++) {
+                sql.append(getColumnName(allColumns[i]))
+                    .append("=values(")
+                    .append(getColumnName(allColumns[i]))
+                    .append(")");
+                sql.append(splitCommea(size, i));
+            }
+        } else {
+            // merge sql不更新主键信息, 规避drds情况下的分区键变更
+            for (int i = 0; i < colNames.length; i++) {
+                sql.append(getColumnName(colNames[i]))
+                    .append("=values(")
+                    .append(getColumnName(colNames[i]))
+                    .append(")");
+                sql.append(splitCommea(colNames.length, i));
+            }
         }
 
         // intern优化，避免出现大量相同的字符串

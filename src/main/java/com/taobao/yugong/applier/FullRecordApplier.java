@@ -205,7 +205,14 @@ public class FullRecordApplier extends AbstractRecordApplier {
                             applierSql = SqlTemplates.MYSQL.getMergeSql(meta.getSchema(),
                                 meta.getName(),
                                 primaryKeys,
-                                columns);
+                                columns,
+                                true);
+                        } else if (dbType == DbType.DRDS) {
+                            applierSql = SqlTemplates.MYSQL.getMergeSql(meta.getSchema(),
+                                meta.getName(),
+                                primaryKeys,
+                                columns,
+                                false);
                         } else if (dbType == DbType.ORACLE) {
                             applierSql = SqlTemplates.ORACLE.getMergeSql(meta.getSchema(),
                                 meta.getName(),

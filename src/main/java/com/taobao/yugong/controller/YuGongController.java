@@ -457,9 +457,7 @@ public class YuGongController extends AbstractYuGongLifeCycle {
         List<TableHolder> tables = Lists.newArrayList();
         if (!isEmpty) {
             for (Object obj : tableWhiteList) {
-                String whiteTable = (String) obj;
-                // add by 文疏，用户可以配置shardkey
-                whiteTable = getTable(whiteTable);
+                String whiteTable = getTable((String) obj);
                 if (!tableBlackList.contains(whiteTable)) {
                     String[] strs = StringUtils.split(whiteTable, ".");
                     Table table = null;
@@ -481,9 +479,9 @@ public class YuGongController extends AbstractYuGongLifeCycle {
                     if (table == null) {
                         throw new YuGongException("table[" + whiteTable + "] is not found");
                     }
-                    // add by 文疏
-                    String extKey = getExtKey(whiteTable);
-                    if (extKey == null && DbType.valueOf(config.getString("yugong.database.target.type")).isDRDS()) {
+                    String extKey = getExtKey((String) obj);
+                    DbType dbType = YuGongUtils.judgeDbType(globalContext.getTargetDs());
+                    if (extKey == null && dbType.isDRDS()) {
                         // 使用源表的表名查询一次拆分表名
                         if (strs.length == 1) {
                             extKey = TableMetaGenerator.getShardKeyByDRDS(globalContext.getTargetDs(), null, strs[0]);
@@ -492,28 +490,29 @@ public class YuGongController extends AbstractYuGongLifeCycle {
                         }
                     }
 
-                    // 以逗号切割
-                    String[] keys = StringUtils.split(StringUtils.replace(extKey, "|", ","), ",");
-                    List<String> newExtKeys = new ArrayList<String>();
-                    for (String key : keys) {
-                        boolean found = false;
-                        for (ColumnMeta meta : table.getPrimaryKeys()) {
-                            if (meta.getName().equalsIgnoreCase(key)) {
-                                found = true;
-                                break;
+                    if (extKey != null) {
+                        // 以逗号切割
+                        String[] keys = StringUtils.split(StringUtils.replace(extKey, "|", ","), ",");
+                        List<String> newExtKeys = new ArrayList<String>();
+                        for (String key : keys) {
+                            boolean found = false;
+                            for (ColumnMeta meta : table.getPrimaryKeys()) {
+                                if (meta.getName().equalsIgnoreCase(key)) {
+                                    found = true;
+                                    break;
+                                }
+                            }
+
+                            if (!found) {
+                                // 只增加非主键的字段
+                                newExtKeys.add(key);
                             }
                         }
-
-                        if (!found) {
-                            // 只增加非主键的字段
-                            newExtKeys.add(key);
+                        if (newExtKeys.size() > 0) {
+                            extKey = StringUtils.join(newExtKeys, ",");
+                            table.setExtKey(extKey);
                         }
                     }
-                    if (newExtKeys.size() > 0) {
-                        extKey = StringUtils.join(newExtKeys, ",");
-                        table.setExtKey(extKey);
-                    }
-
                     tables.add(holder);
                 }
             }
@@ -588,7 +587,7 @@ public class YuGongController extends AbstractYuGongLifeCycle {
         if (paramArray.length == 1) {
             return null;
         } else if (paramArray.length == 2) {
-            return StringUtils.trim(paramArray[2]);
+            return StringUtils.trim(paramArray[1]);
         } else {
             // 其他情况
             return null;

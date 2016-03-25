@@ -62,7 +62,6 @@ public class OracleRecRecordExtractor extends AbstractOracleRecordExtractor {
 
         String schemaName = context.getTableMeta().getSchema();
         String tableName = context.getTableMeta().getName();
-        // add by 文疏
         String extKey = context.getTableMeta().getExtKey();
         String createMlogSql = null;
         // 支持不分表

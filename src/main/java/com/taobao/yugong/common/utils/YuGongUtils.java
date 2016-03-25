@@ -62,11 +62,16 @@ public class YuGongUtils {
             public Object doInConnection(Connection c) throws SQLException, DataAccessException {
                 DatabaseMetaData meta = c.getMetaData();
                 String databaseName = meta.getDatabaseProductName();
+                String version = meta.getDatabaseProductVersion();
 
                 if (StringUtils.startsWithIgnoreCase(databaseName, "oracle")) {
                     return DbType.ORACLE;
                 } else if (StringUtils.startsWithIgnoreCase(databaseName, "mysql")) {
-                    return DbType.MYSQL;
+                    if (StringUtils.contains(version, "-TDDL-")) {
+                        return DbType.DRDS;
+                    } else {
+                        return DbType.MYSQL;
+                    }
                 } else {
                     throw new YuGongException("unknow database type " + databaseName);
                 }

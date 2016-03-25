@@ -13,6 +13,8 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang.ObjectUtils;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.MDC;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -78,6 +80,9 @@ public class OracleMaterializedIncRecordExtractor extends AbstractOracleRecordEx
 
         // 后去mlog表名
         String mlogTableName = TableMetaGenerator.getMLogTableName(context.getSourceDs(), schemaName, tableName);
+        if (StringUtils.isEmpty(mlogTableName)) {
+            throw new YuGongException("not found mlog table for [" + schemaName + "." + tableName + "]");
+        }
         // 获取mlog表结构
         mlogMeta = TableMetaGenerator.getTableMeta(context.getSourceDs(),
             context.getTableMeta().getSchema(),
@@ -158,6 +163,7 @@ public class OracleMaterializedIncRecordExtractor extends AbstractOracleRecordEx
                     IncrementOpType opType = getDmlType(rs);
                     List<ColumnValue> primaryKeys = new ArrayList<ColumnValue>();
                     List<ColumnValue> columns = new ArrayList<ColumnValue>();
+                    List<ColumnValue> extColumns = new ArrayList<ColumnValue>();
 
                     for (ColumnMeta column : context.getTableMeta().getPrimaryKeys()) {
                         if (pkListHave(mlogMeta.getColumns(), column.getName())) {
@@ -169,7 +175,9 @@ public class OracleMaterializedIncRecordExtractor extends AbstractOracleRecordEx
                     for (ColumnMeta column : context.getTableMeta().getColumns()) {
                         if (pkListHave(mlogMeta.getColumns(), column.getName())) {
                             ColumnValue col = getColumnValue(rs, context.getSourceEncoding(), column);
-                            primaryKeys.add(col);
+                            // 针对非主键的列,添加为特殊的extColumn
+                            // 扩展列可能会发生变化,反查时不能带这个字段
+                            extColumns.add(col);
                         }
                     }
 
@@ -180,7 +188,7 @@ public class OracleMaterializedIncRecordExtractor extends AbstractOracleRecordEx
                         columns);
                     record.setRowId(rowId);
                     record.setOpType(opType);
-
+                    record.setBeforeExtColumns(extColumns);
                     result.add(record);
                 }
 
@@ -235,46 +243,53 @@ public class OracleMaterializedIncRecordExtractor extends AbstractOracleRecordEx
             public Object doInPreparedStatement(PreparedStatement ps) throws SQLException, DataAccessException {
                 for (OracleIncrementRecord record : records) {
                     int i = 1;
-                    // add by 文疏，物化视图创建语句由with primary key 改为with (shardkey)，
-                    // 对于update的日志，可能会加载出shardkey列，但是此时shardkey已经改变就无法去数据库反查到了
-                    for (ColumnMeta col : context.getTableMeta().getPrimaryKeys()) {
-                        for (ColumnValue pk : record.getPrimaryKeys()) {
-                            if (col.getName().equals(pk.getColumn().getName())) {
-                                ps.setObject(i, pk.getValue(), pk.getColumn().getType());
-                                i++;
-                            }
-                        }
+                    for (ColumnValue pk : record.getPrimaryKeys()) {
+                        ps.setObject(i, pk.getValue(), pk.getColumn().getType());
+                        i++;
                     }
-                    /*
-                     * else { for (ColumnValue pk : record.getPrimaryKeys()) {
-                     * ps.setObject(i, pk.getValue(), pk.getColumn().getType());
-                     * i++; } }
-                     */
 
                     try {
                         ResultSet rs = ps.executeQuery();
                         // 一条日志对应一条主表记录
                         List<ColumnValue> columns = new ArrayList<ColumnValue>();
-                        // List<ColumnValue> primaryKeys = new
-                        // ArrayList<ColumnValue>();
+                        List<ColumnValue> afterExtColumns = new ArrayList<ColumnValue>();
                         boolean exist = false;
                         if (rs.next()) {
                             exist = true;
+                            // 反查获取到完整行记录
                             for (ColumnMeta col : context.getTableMeta().getColumns()) {
                                 ColumnValue cv = getColumnValue(rs, context.getSourceEncoding(), col);
-                                columns.add(cv);
-                            }
+                                // 识别下extColumns是否存在变化,如果发生了变化拆分为DELETE+INSERT
+                                boolean isext = false;
+                                for (ColumnValue extValue : record.getBeforeExtColumns()) {
+                                    if (extValue.getColumn().getName().equalsIgnoreCase(col.getName())) {
+                                        isext = true;
+                                        if (!ObjectUtils.equals(extValue.getValue(), cv.getValue())) {
+                                            // 将当前反查的列记录为after值
+                                            afterExtColumns.add(cv);
+                                        }
+                                    }
+                                }
 
-                            // for (ColumnMeta col :
-                            // context.getTableMeta().getPrimaryKeys()) {
-                            // ColumnValue cv = getOracleColumnValue(rs,
-                            // context.getSourceEncoding(), col);
-                            // primaryKeys.add(cv);
-                            // }
+                                // 排除ext列信息
+                                if (!isext) {
+                                    columns.add(cv);
+                                }
+                            }
                         }
 
                         if (!columns.isEmpty()) {
                             record.setColumns(columns);
+                        }
+
+                        // 调整一下before/after值
+                        // 如果未发生过变更,则after有值,before为null
+                        // 如果发生过变更,则before和after均有值
+                        if (!afterExtColumns.isEmpty()) {
+                            record.setAfterExtColumns(afterExtColumns);
+                        } else {
+                            record.setAfterExtColumns(record.getBeforeExtColumns());
+                            record.setBeforeExtColumns(new ArrayList<ColumnValue>());
                         }
 
                         if ((record.getOpType() == IncrementOpType.I || record.getOpType() == IncrementOpType.U)
@@ -310,16 +325,9 @@ public class OracleMaterializedIncRecordExtractor extends AbstractOracleRecordEx
                     // 构造master sql
                     String colstr = SqlTemplates.COMMON.makeColumn(context.getTableMeta().getColumnsWithPrimary());
                     List<ColumnMeta> primaryMetas = Lists.newArrayList();
-                    // add by 文疏，物化视图创建语句由with primary key 改为with (shardkey)，
-                    // 对于update的日志，可能会加载出shardkey列，但是此时shardkey已经改变就无法去数据库反查到了
-
-                    for (ColumnMeta columnMeta : context.getTableMeta().getPrimaryKeys()) {
-                        primaryMetas.add(columnMeta);
+                    for (ColumnValue col : record.getPrimaryKeys()) {
+                        primaryMetas.add(col.getColumn());
                     }
-                    /*
-                     * else { for (ColumnValue col : record.getPrimaryKeys()) {
-                     * primaryMetas.add(col.getColumn()); } }
-                     */
                     String priStr = SqlTemplates.COMMON.makeWhere(primaryMetas);
                     applierSql = new MessageFormat(MASTER_MULTI_PK_FORMAT).format(new Object[] { colstr,
                             record.getSchemaName(), record.getTableName(), priStr });
@@ -335,7 +343,7 @@ public class OracleMaterializedIncRecordExtractor extends AbstractOracleRecordEx
 
     private boolean pkListHave(List<ColumnMeta> pks, String mayBePk) {
         for (ColumnMeta pk : pks) {
-            if (pk.getName().equals(mayBePk)) {
+            if (pk.getName().equalsIgnoreCase(mayBePk)) {
                 return true;
             }
         }
