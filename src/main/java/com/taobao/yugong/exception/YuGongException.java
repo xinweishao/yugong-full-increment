@@ -30,8 +30,8 @@ public class YuGongException extends NestableRuntimeException {
         super(cause);
     }
 
-    public Throwable fillInStackTrace() {
-        return this;
-    }
+    // public Throwable fillInStackTrace() {
+    // return this;
+    // }
 
 }
