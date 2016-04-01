@@ -14,6 +14,7 @@ import javax.sql.DataSource;
 
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.MDC;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -42,6 +43,7 @@ import com.taobao.yugong.common.model.RunMode;
 import com.taobao.yugong.common.model.YuGongContext;
 import com.taobao.yugong.common.stats.ProgressTracer;
 import com.taobao.yugong.common.stats.StatAggregation;
+import com.taobao.yugong.common.utils.LikeUtil;
 import com.taobao.yugong.common.utils.YuGongUtils;
 import com.taobao.yugong.common.utils.compile.JdkCompiler;
 import com.taobao.yugong.exception.YuGongException;
@@ -98,8 +100,8 @@ public class YuGongController extends AbstractYuGongLifeCycle {
             throw new YuGongException("yugong.table.mode should not be empty");
         }
         this.runMode = RunMode.valueOf(mode);
-        this.sourceDbType = DbType.valueOf(config.getString("yugong.database.source.type"));
-        this.targetDbType = DbType.valueOf(config.getString("yugong.database.target.type"));
+        this.sourceDbType = DbType.valueOf(StringUtils.upperCase(config.getString("yugong.database.source.type")));
+        this.targetDbType = DbType.valueOf(StringUtils.upperCase(config.getString("yugong.database.target.type")));
         this.translatorDir = new File(config.getString("yugong.translator.dir", "../conf/translator"));
         this.globalContext = initGlobalContext();
         this.alarmService = initAlarmService();
@@ -235,23 +237,24 @@ public class YuGongController extends AbstractYuGongLifeCycle {
         boolean once = config.getBoolean("yugong.extractor.once", false);
         if (sourceDbType == DbType.ORACLE) {
             if (runMode == RunMode.FULL || runMode == RunMode.CHECK) {
-                StringBuilder sqlTableName = new StringBuilder();
-                if (StringUtils.isNotEmpty(tableHolder.schemaName)) {
-                    sqlTableName.append(tableHolder.schemaName).append('.');
-                }
-                if (StringUtils.isNotEmpty(tableHolder.tableName)) {
-                    sqlTableName.append(tableHolder.tableName);
-                }
-
-                String name = sqlTableName.toString();
-                if (StringUtils.isEmpty(name)) {
-                    name = tableHolder.table.getFullName();
+                String tablename = tableHolder.table.getName();
+                String fullName = tableHolder.table.getFullName();
+                // 优先找tableName
+                String extractSql = config.getString("yugong.extractor.sql." + tablename);
+                if (StringUtils.isEmpty(extractSql)) {
+                    extractSql = config.getString("yugong.extractor.sql." + fullName,
+                        config.getString("yugong.extractor.sql"));
                 }
 
-                String extractSql = config.getString("yugong.extractor.sql." + name,
-                    config.getString("yugong.extractor.sql"));
-
-                boolean tableOnce = config.getBoolean("yugong.extractor.once." + name, false);
+                // 优先找tableName
+                String tableOnceStr = config.getString("yugong.extractor.once." + tablename);
+                if (StringUtils.isEmpty(tableOnceStr)) {
+                    tableOnceStr = config.getString("yugong.extractor.once." + fullName);
+                }
+                boolean tableOnce = false;
+                if (StringUtils.isNotEmpty(tableOnceStr)) {
+                    tableOnce = BooleanUtils.toBooleanObject(tableOnceStr).booleanValue();
+                }
                 boolean forceFull = !tableOnce && StringUtils.isNotEmpty(extractSql);
                 if (forceFull
                     || (isOnlyPkIsNumber(tableHolder.table) && !once && !tableOnce && StringUtils.isEmpty(extractSql))) {
@@ -455,72 +458,54 @@ public class YuGongController extends AbstractYuGongLifeCycle {
         }
 
         List<TableHolder> tables = Lists.newArrayList();
+        DbType targetDbType = YuGongUtils.judgeDbType(globalContext.getTargetDs());
         if (!isEmpty) {
             for (Object obj : tableWhiteList) {
                 String whiteTable = getTable((String) obj);
-                if (!tableBlackList.contains(whiteTable)) {
+                // 先粗略判断一次
+                if (!isBlackTable(whiteTable, tableBlackList)) {
                     String[] strs = StringUtils.split(whiteTable, ".");
-                    Table table = null;
-                    TableHolder holder = new TableHolder();
+                    List<Table> whiteTables = null;
+                    boolean ignoreSchema = false;
                     if (strs.length == 1) {
-                        table = TableMetaGenerator.getTableMeta(globalContext.getSourceDs(), null, strs[0]);
-                        holder.ignoreSchema = true;
-                        holder.schemaName = null;
-                        holder.tableName = strs[0];
+                        whiteTables = TableMetaGenerator.getTableMetasWithoutColumn(globalContext.getSourceDs(),
+                            null,
+                            strs[0]);
+                        ignoreSchema = true;
                     } else if (strs.length == 2) {
-                        table = TableMetaGenerator.getTableMeta(globalContext.getSourceDs(), strs[0], strs[1]);
-                        holder.schemaName = strs[0];
-                        holder.tableName = strs[1];
+                        whiteTables = TableMetaGenerator.getTableMetasWithoutColumn(globalContext.getSourceDs(),
+                            strs[0],
+                            strs[1]);
                     } else {
                         throw new YuGongException("table[" + whiteTable + "] is not valid");
                     }
 
-                    holder.table = table;
-                    if (table == null) {
+                    if (whiteTables.isEmpty()) {
                         throw new YuGongException("table[" + whiteTable + "] is not found");
                     }
-                    String extKey = getExtKey((String) obj);
-                    DbType dbType = YuGongUtils.judgeDbType(globalContext.getTargetDs());
-                    if (extKey == null && dbType.isDRDS()) {
-                        // 使用源表的表名查询一次拆分表名
-                        if (strs.length == 1) {
-                            extKey = TableMetaGenerator.getShardKeyByDRDS(globalContext.getTargetDs(), null, strs[0]);
-                        } else if (strs.length == 2) {
-                            extKey = TableMetaGenerator.getShardKeyByDRDS(globalContext.getTargetDs(), strs[0], strs[1]);
+
+                    for (Table table : whiteTables) {
+                        // 根据实际表名处理一下
+                        if (!isBlackTable(table.getName(), tableBlackList)
+                            && !isBlackTable(table.getFullName(), tableBlackList)) {
+                            TableMetaGenerator.buildColumns(globalContext.getSourceDs(), table);
+                            // 构建一下拆分条件
+                            buildExtKeys(table, (String) obj, targetDbType);
+                            TableHolder holder = new TableHolder(table);
+                            holder.ignoreSchema = ignoreSchema;
+                            tables.add(holder);
                         }
                     }
-
-                    if (extKey != null) {
-                        // 以逗号切割
-                        String[] keys = StringUtils.split(StringUtils.replace(extKey, "|", ","), ",");
-                        List<String> newExtKeys = new ArrayList<String>();
-                        for (String key : keys) {
-                            boolean found = false;
-                            for (ColumnMeta meta : table.getPrimaryKeys()) {
-                                if (meta.getName().equalsIgnoreCase(key)) {
-                                    found = true;
-                                    break;
-                                }
-                            }
-
-                            if (!found) {
-                                // 只增加非主键的字段
-                                newExtKeys.add(key);
-                            }
-                        }
-                        if (newExtKeys.size() > 0) {
-                            extKey = StringUtils.join(newExtKeys, ",");
-                            table.setExtKey(extKey);
-                        }
-                    }
-                    tables.add(holder);
                 }
             }
         } else {
-            List<Table> metas = TableMetaGenerator.getTableMetasWithoutColumn(globalContext.getSourceDs());
+            List<Table> metas = TableMetaGenerator.getTableMetasWithoutColumn(globalContext.getSourceDs(), null, null);
             for (Table table : metas) {
-                if (!tableBlackList.contains(table.getFullName())) {
+                if (!isBlackTable(table.getName(), tableBlackList)
+                    && !isBlackTable(table.getFullName(), tableBlackList)) {
                     TableMetaGenerator.buildColumns(globalContext.getSourceDs(), table);
+                    // 构建一下拆分条件
+                    buildExtKeys(table, null, targetDbType);
                     tables.add(new TableHolder(table));
                 }
             }
@@ -538,9 +523,55 @@ public class YuGongController extends AbstractYuGongLifeCycle {
         // StringUtils.join(noPkTables.toArray()) +
         // "] has no pks , pls check!");
         // }
-
         logger.info("check source tables is ok.");
         return tables;
+    }
+
+    private boolean isBlackTable(String table, List tableBlackList) {
+        for (Object tableBlack : tableBlackList) {
+            if (LikeUtil.isMatch((String) tableBlack, table)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * 尝试构建拆分字段,如果tableStr指定了拆分字段则读取之,否则在目标库找对应的拆分字段
+     */
+    private void buildExtKeys(Table table, String tableStr, DbType targetDbType) {
+        String extKey = getExtKey(tableStr);
+        if (extKey == null && targetDbType.isDRDS()) {
+            // 使用源表的表名查询一次拆分表名
+            extKey = TableMetaGenerator.getShardKeyByDRDS(globalContext.getTargetDs(),
+                table.getSchema(),
+                table.getName());
+        }
+
+        if (extKey != null) {
+            // 以逗号切割
+            String[] keys = StringUtils.split(StringUtils.replace(extKey, "|", ","), ",");
+            List<String> newExtKeys = new ArrayList<String>();
+            for (String key : keys) {
+                boolean found = false;
+                for (ColumnMeta meta : table.getPrimaryKeys()) {
+                    if (meta.getName().equalsIgnoreCase(key)) {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    // 只增加非主键的字段
+                    newExtKeys.add(key);
+                }
+            }
+            if (newExtKeys.size() > 0) {
+                extKey = StringUtils.join(newExtKeys, ",");
+                table.setExtKey(extKey);
+            }
+        }
     }
 
     private AlarmService initAlarmService() {
@@ -605,18 +636,12 @@ public class YuGongController extends AbstractYuGongLifeCycle {
 
     private static class TableHolder {
 
-        public TableHolder(){
-
-        }
-
         public TableHolder(Table table){
             this.table = table;
         }
 
         Table   table;
         boolean ignoreSchema = false;
-        String  schemaName;
-        String  tableName;
     }
 
     @SuppressWarnings("unused")

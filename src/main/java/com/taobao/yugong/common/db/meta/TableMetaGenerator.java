@@ -23,6 +23,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 
 import com.google.common.collect.Lists;
+import com.taobao.yugong.common.utils.LikeUtil;
 import com.taobao.yugong.exception.YuGongException;
 
 /**
@@ -62,9 +63,8 @@ public class TableMetaGenerator {
                     String name = rs.getString(3);
                     String type = rs.getString(4);
 
-                    if ((sName == null || StringUtils.equalsIgnoreCase(catlog, sName) || StringUtils.equalsIgnoreCase(schema,
-                        sName))
-                        && StringUtils.equalsIgnoreCase(name, tName)) {
+                    if ((sName == null || LikeUtil.isMatch(sName, catlog) || LikeUtil.isMatch(sName, schema))
+                        && LikeUtil.isMatch(tName, name)) {
                         table = new Table(type, StringUtils.isEmpty(catlog) ? schema : catlog, name);
                         break;
                     }
@@ -81,35 +81,12 @@ public class TableMetaGenerator {
                     String catlog = rs.getString(1);
                     String schema = rs.getString(2);
                     String name = rs.getString(3);
-                    if ((sName == null || StringUtils.equalsIgnoreCase(catlog, sName) || StringUtils.equalsIgnoreCase(schema,
-                        sName))
-                        && StringUtils.equalsIgnoreCase(name, tName)) {
+                    if ((sName == null || LikeUtil.isMatch(sName, catlog) || LikeUtil.isMatch(sName, schema))
+                        && LikeUtil.isMatch(tName, name)) {
                         String columnName = rs.getString(4); // COLUMN_NAME
                         int columnType = rs.getInt(5);
                         String typeName = rs.getString(6);
-
-                        String[] typeSplit = typeName.split(" ");
-                        if (typeSplit.length > 1) {
-                            if (columnType == Types.INTEGER && StringUtils.equalsIgnoreCase(typeSplit[1], "UNSIGNED")) {
-                                columnType = Types.BIGINT;
-                            }
-                        }
-
-                        if (columnType == Types.OTHER) {
-                            if (StringUtils.equalsIgnoreCase(typeName, "NVARCHAR")
-                                || StringUtils.equalsIgnoreCase(typeName, "NVARCHAR2")) {
-                                columnType = Types.VARCHAR;
-                            }
-
-                            if (StringUtils.equalsIgnoreCase(typeName, "NCLOB")) {
-                                columnType = Types.CLOB;
-                            }
-
-                            if (StringUtils.startsWithIgnoreCase(typeName, "TIMESTAMP")) {
-                                columnType = Types.TIMESTAMP;
-                            }
-                        }
-
+                        columnType = convertSqlType(columnType, typeName);
                         ColumnMeta col = new ColumnMeta(columnName, columnType);
                         columnList.add(col);
                     }
@@ -122,9 +99,8 @@ public class TableMetaGenerator {
                     String catlog = rs.getString(1);
                     String schema = rs.getString(2);
                     String name = rs.getString(3);
-                    if ((sName == null || StringUtils.equalsIgnoreCase(catlog, sName) || StringUtils.equalsIgnoreCase(schema,
-                        sName))
-                        && StringUtils.equalsIgnoreCase(name, tName)) {
+                    if ((sName == null || LikeUtil.isMatch(sName, catlog) || LikeUtil.isMatch(sName, schema))
+                        && LikeUtil.isMatch(tName, name)) {
                         primaryKeys.add(StringUtils.upperCase(rs.getString(4)));
                     }
                 }
@@ -137,9 +113,8 @@ public class TableMetaGenerator {
                         String catlog = rs.getString(1);
                         String schema = rs.getString(2);
                         String name = rs.getString(3);
-                        if ((sName == null || StringUtils.equalsIgnoreCase(catlog, sName) || StringUtils.equalsIgnoreCase(schema,
-                            sName))
-                            && StringUtils.equalsIgnoreCase(name, tName)) {
+                        if ((sName == null || LikeUtil.isMatch(sName, catlog) || LikeUtil.isMatch(sName, schema))
+                            && LikeUtil.isMatch(tName, name)) {
                             String indexName = StringUtils.upperCase(rs.getString(6));
                             if ("PRIMARY".equals(indexName)) {
                                 continue;
@@ -183,7 +158,8 @@ public class TableMetaGenerator {
      * @param dataSource
      * @return
      */
-    public static List<Table> getTableMetasWithoutColumn(final DataSource dataSource) {
+    public static List<Table> getTableMetasWithoutColumn(final DataSource dataSource, final String schemaName,
+                                                         final String tableName) {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         return (List<Table>) jdbcTemplate.execute(new ConnectionCallback() {
 
@@ -191,14 +167,15 @@ public class TableMetaGenerator {
                 DatabaseMetaData metaData = conn.getMetaData();
                 List<Table> result = Lists.newArrayList();
                 String databaseName = metaData.getDatabaseProductName();
+                String sName = getIdentifierName(schemaName, metaData);
+                String tName = getIdentifierName(tableName, metaData);
                 ResultSet rs = null;
                 Table table = null;
-                if (StringUtils.startsWithIgnoreCase(databaseName, "oracle")) {
+                if (StringUtils.startsWithIgnoreCase(databaseName, "oracle") && StringUtils.isEmpty(schemaName)
+                    && StringUtils.isEmpty(tableName)) {
                     // 针对oracle，只查询用户表，忽略系统表
                     Statement stmt = conn.createStatement();
-                    // rs =
-                    // stmt.executeQuery("SELECT SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA') AS SCHEMA_NAME , TABLE_NAME FROM USER_TABLES T , USER_USERS U WHERE U.DEFAULT_TABLESPACE = T.TABLESPACE_NAME");
-                    rs = stmt.executeQuery("SELECT SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA') AS SCHEMA_NAME , TABLE_NAME FROM USER_TABLES T ");
+                    rs = stmt.executeQuery("SELECT SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA') AS SCHEMA_NAME , TABLE_NAME FROM USER_TABLES T , USER_USERS U WHERE U.USERNAME = SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA')");
 
                     while (rs.next()) {
                         String schema = rs.getString(1);
@@ -212,17 +189,21 @@ public class TableMetaGenerator {
                     stmt.close();
                     return result;
                 } else {
-                    rs = metaData.getTables(null, null, null, new String[] { "TABLE" });
+                    rs = metaData.getTables(sName, sName, tName, new String[] { "TABLE" });
                     while (rs.next()) {
                         String catlog = rs.getString(1);
                         String schema = rs.getString(2);
                         String name = rs.getString(3);
                         String type = rs.getString(4);
 
-                        table = new Table(type, StringUtils.isEmpty(catlog) ? schema : catlog, name);
-                        result.add(table);
-                    }
+                        if (!StringUtils.startsWithIgnoreCase(name, "MLOG$_")) {
+                            table = new Table("TABLE", schema, name);
+                            result.add(table);
 
+                            table = new Table(type, StringUtils.isEmpty(catlog) ? schema : catlog, name);
+                            result.add(table);
+                        }
+                    }
                     return result;
                 }
             }
@@ -306,31 +287,13 @@ public class TableMetaGenerator {
                     String catlog = rs.getString(1);
                     String schema = rs.getString(2);
                     String name = rs.getString(3);
-                    if ((table.getSchema() == null || StringUtils.equalsIgnoreCase(catlog, table.getSchema()) || StringUtils.equalsIgnoreCase(schema,
-                        table.getSchema()))
-                        && StringUtils.equalsIgnoreCase(name, table.getName())) {
+                    if ((table.getSchema() == null || LikeUtil.isMatch(table.getSchema(), catlog) || LikeUtil.isMatch(table.getSchema(),
+                        schema))
+                        && LikeUtil.isMatch(table.getName(), name)) {
                         String columnName = rs.getString(4); // COLUMN_NAME
                         int columnType = rs.getInt(5);
-
                         String typeName = rs.getString(6);
-
-                        String[] typeSplit = typeName.split(" ");
-                        if (typeSplit.length > 1) {
-                            if (columnType == Types.INTEGER && typeSplit[1].toUpperCase().equals("UNSIGNED")) {
-                                columnType = Types.BIGINT;
-                            }
-                        }
-
-                        if (columnType == Types.OTHER) {
-                            if (typeName.equals("NVARCHAR") || typeName.equals("NVARCHAR2")) {
-                                columnType = Types.VARCHAR;
-                            }
-
-                            if (typeName.equals("NCLOB")) {
-                                columnType = Types.CLOB;
-                            }
-                        }
-
+                        columnType = convertSqlType(columnType, typeName);
                         ColumnMeta col = new ColumnMeta(columnName, columnType);
                         columnList.add(col);
                     }
@@ -364,6 +327,7 @@ public class TableMetaGenerator {
                 table.getPrimaryKeys().addAll(pks);
                 return null;
             }
+
         });
 
     }
@@ -419,6 +383,31 @@ public class TableMetaGenerator {
         } else {
             return name;
         }
+    }
+
+    private static int convertSqlType(int columnType, String typeName) {
+        String[] typeSplit = typeName.split(" ");
+        if (typeSplit.length > 1) {
+            if (columnType == Types.INTEGER && StringUtils.equalsIgnoreCase(typeSplit[1], "UNSIGNED")) {
+                columnType = Types.BIGINT;
+            }
+        }
+
+        if (columnType == Types.OTHER) {
+            if (StringUtils.equalsIgnoreCase(typeName, "NVARCHAR")
+                || StringUtils.equalsIgnoreCase(typeName, "NVARCHAR2")) {
+                columnType = Types.VARCHAR;
+            }
+
+            if (StringUtils.equalsIgnoreCase(typeName, "NCLOB")) {
+                columnType = Types.CLOB;
+            }
+
+            if (StringUtils.startsWithIgnoreCase(typeName, "TIMESTAMP")) {
+                columnType = Types.TIMESTAMP;
+            }
+        }
+        return columnType;
     }
 
 }
