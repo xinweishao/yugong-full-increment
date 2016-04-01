@@ -90,18 +90,23 @@ public class TableMetaGenerator {
 
                         String[] typeSplit = typeName.split(" ");
                         if (typeSplit.length > 1) {
-                            if (columnType == Types.INTEGER && typeSplit[1].toUpperCase().equals("UNSIGNED")) {
+                            if (columnType == Types.INTEGER && StringUtils.equalsIgnoreCase(typeSplit[1], "UNSIGNED")) {
                                 columnType = Types.BIGINT;
                             }
                         }
 
                         if (columnType == Types.OTHER) {
-                            if (typeName.equals("NVARCHAR") || typeName.equals("NVARCHAR2")) {
+                            if (StringUtils.equalsIgnoreCase(typeName, "NVARCHAR")
+                                || StringUtils.equalsIgnoreCase(typeName, "NVARCHAR2")) {
                                 columnType = Types.VARCHAR;
                             }
 
-                            if (typeName.equals("NCLOB")) {
+                            if (StringUtils.equalsIgnoreCase(typeName, "NCLOB")) {
                                 columnType = Types.CLOB;
+                            }
+
+                            if (StringUtils.startsWithIgnoreCase(typeName, "TIMESTAMP")) {
+                                columnType = Types.TIMESTAMP;
                             }
                         }
 
