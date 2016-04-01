@@ -21,7 +21,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.MapMaker;
+import com.google.common.collect.MigrateMap;
 import com.taobao.yugong.applier.AbstractRecordApplier.TableSqlUnit;
 import com.taobao.yugong.common.YuGongConstants;
 import com.taobao.yugong.common.db.meta.ColumnMeta;
@@ -74,7 +74,7 @@ public class OracleMaterializedIncRecordExtractor extends AbstractOracleRecordEx
     public void start() {
         super.start();
 
-        masterSqlCache = new MapMaker().makeMap();
+        masterSqlCache = MigrateMap.makeMap();
         String schemaName = context.getTableMeta().getSchema();
         String tableName = context.getTableMeta().getName();
 

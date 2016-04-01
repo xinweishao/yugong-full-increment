@@ -19,7 +19,7 @@ import org.springframework.jdbc.core.PreparedStatementCallback;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
-import com.google.common.collect.MapMaker;
+import com.google.common.collect.MigrateMap;
 import com.taobao.yugong.common.db.RecordDiffer;
 import com.taobao.yugong.common.db.meta.ColumnMeta;
 import com.taobao.yugong.common.db.meta.ColumnValue;
@@ -53,7 +53,7 @@ public class CheckRecordApplier extends AbstractRecordApplier {
         super.start();
 
         dbType = YuGongUtils.judgeDbType(context.getTargetDs());
-        tableCache = new MapMaker().makeComputingMap(new Function<List<String>, Table>() {
+        tableCache = MigrateMap.makeComputingMap(new Function<List<String>, Table>() {
 
             public Table apply(List<String> names) {
                 if (names.size() != 2) {
@@ -66,7 +66,7 @@ public class CheckRecordApplier extends AbstractRecordApplier {
             }
         });
 
-        selectSqlCache = new MapMaker().makeMap();
+        selectSqlCache = MigrateMap.makeMap();
     }
 
     public void stop() {
@@ -83,7 +83,7 @@ public class CheckRecordApplier extends AbstractRecordApplier {
     }
 
     protected void doApply(List<Record> records) {
-        Map<List<String>, List<Record>> buckets = new MapMaker().makeComputingMap(new Function<List<String>, List<Record>>() {
+        Map<List<String>, List<Record>> buckets = MigrateMap.makeComputingMap(new Function<List<String>, List<Record>>() {
 
             public List<Record> apply(List<String> names) {
                 return Lists.newArrayList();

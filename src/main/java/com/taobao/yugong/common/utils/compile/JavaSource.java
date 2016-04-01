@@ -11,7 +11,7 @@ import org.apache.oro.text.regex.Perl5Compiler;
 import org.apache.oro.text.regex.Perl5Matcher;
 
 import com.google.common.base.Function;
-import com.google.common.collect.MapMaker;
+import com.google.common.collect.MigrateMap;
 
 /**
  * @author agapple 2016年2月25日 下午10:49:10
@@ -21,7 +21,7 @@ public class JavaSource {
 
     private static Map<String, Pattern> patterns = null;
     static {
-        patterns = new MapMaker().softValues().makeComputingMap(new Function<String, Pattern>() {
+        patterns = MigrateMap.makeComputingMap(new Function<String, Pattern>() {
 
             public Pattern apply(String pattern) {
                 try {

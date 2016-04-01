@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import com.alibaba.druid.pool.DruidDataSource;
 import com.google.common.base.Function;
-import com.google.common.collect.MapMaker;
+import com.google.common.collect.MigrateMap;
 import com.taobao.yugong.common.lifecycle.AbstractYuGongLifeCycle;
 import com.taobao.yugong.common.lifecycle.YuGongLifeCycle;
 import com.taobao.yugong.common.model.DataSourceConfig;
@@ -35,7 +35,7 @@ public class DataSourceFactory extends AbstractYuGongLifeCycle implements YuGong
 
     public void start() {
         super.start();
-        dataSources = new MapMaker().makeComputingMap(new Function<DataSourceConfig, DataSource>() {
+        dataSources = MigrateMap.makeComputingMap(new Function<DataSourceConfig, DataSource>() {
 
             public DataSource apply(DataSourceConfig config) {
                 return createDataSource(config.getUrl(),

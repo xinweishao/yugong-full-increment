@@ -14,7 +14,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 
-import com.google.common.collect.MapMaker;
+import com.google.common.collect.MigrateMap;
 import com.taobao.yugong.common.db.meta.ColumnValue;
 import com.taobao.yugong.common.db.meta.Table;
 import com.taobao.yugong.common.db.meta.TableMetaGenerator;
@@ -54,9 +54,9 @@ public class IncrementRecordApplier extends AbstractRecordApplier {
     public void start() {
         super.start();
         dbType = YuGongUtils.judgeDbType(context.getTargetDs());
-        insertSqlCache = new MapMaker().makeMap();
-        updateSqlCache = new MapMaker().makeMap();
-        deleteSqlCache = new MapMaker().makeMap();
+        insertSqlCache = MigrateMap.makeMap();
+        updateSqlCache = MigrateMap.makeMap();
+        deleteSqlCache = MigrateMap.makeMap();
     }
 
     public void stop() {

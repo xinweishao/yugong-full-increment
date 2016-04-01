@@ -15,7 +15,7 @@ import org.springframework.jdbc.core.PreparedStatementCallback;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
-import com.google.common.collect.MapMaker;
+import com.google.common.collect.MigrateMap;
 import com.taobao.yugong.common.db.meta.ColumnValue;
 import com.taobao.yugong.common.db.meta.Table;
 import com.taobao.yugong.common.db.meta.TableMetaGenerator;
@@ -50,7 +50,7 @@ public class FullRecordApplier extends AbstractRecordApplier {
     public void start() {
         super.start();
         dbType = YuGongUtils.judgeDbType(context.getTargetDs());
-        applierSqlCache = new MapMaker().makeMap();
+        applierSqlCache = MigrateMap.makeMap();
     }
 
     public void stop() {
@@ -70,7 +70,7 @@ public class FullRecordApplier extends AbstractRecordApplier {
     }
 
     protected void doApply(List<Record> records) {
-        Map<List<String>, List<Record>> buckets = new MapMaker().makeComputingMap(new Function<List<String>, List<Record>>() {
+        Map<List<String>, List<Record>> buckets = MigrateMap.makeComputingMap(new Function<List<String>, List<Record>>() {
 
             public List<Record> apply(List<String> names) {
                 return Lists.newArrayList();

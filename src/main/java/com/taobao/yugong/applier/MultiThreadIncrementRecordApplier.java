@@ -16,7 +16,7 @@ import org.springframework.jdbc.core.PreparedStatementCallback;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
-import com.google.common.collect.MapMaker;
+import com.google.common.collect.MigrateMap;
 import com.taobao.yugong.common.YuGongConstants;
 import com.taobao.yugong.common.db.IncrementRecordMerger;
 import com.taobao.yugong.common.db.meta.ColumnValue;
@@ -102,10 +102,10 @@ public class MultiThreadIncrementRecordApplier extends IncrementRecordApplier {
      * 划分为table + I/U/D类型
      */
     protected Map<List<String>, Map<IncrementOpType, List<IncrementRecord>>> buildBucket(List records) {
-        Map<List<String>, Map<IncrementOpType, List<IncrementRecord>>> buckets = new MapMaker().makeComputingMap(new Function<List<String>, Map<IncrementOpType, List<IncrementRecord>>>() {
+        Map<List<String>, Map<IncrementOpType, List<IncrementRecord>>> buckets = MigrateMap.makeComputingMap(new Function<List<String>, Map<IncrementOpType, List<IncrementRecord>>>() {
 
             public Map<IncrementOpType, List<IncrementRecord>> apply(List<String> names) {
-                return new MapMaker().makeComputingMap(new Function<IncrementOpType, List<IncrementRecord>>() {
+                return MigrateMap.makeComputingMap(new Function<IncrementOpType, List<IncrementRecord>>() {
 
                     public List<IncrementRecord> apply(IncrementOpType opType) {
                         return Lists.newArrayList();
