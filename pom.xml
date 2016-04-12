@@ -5,7 +5,7 @@
 	<artifactId>yugong</artifactId>
 	<packaging>jar</packaging>
 	<name>yugong module for ${project.version}</name>
-	<version>1.0.1-SNAPSHOT</version>
+	<version>1.0.1</version>
 	<url>https://github.com/alibaba/yugong</url>
 	<parent>
 		<groupId>org.sonatype.oss</groupId>
