@@ -197,9 +197,6 @@ public class TableMetaGenerator {
                         String type = rs.getString(4);
 
                         if (!StringUtils.startsWithIgnoreCase(name, "MLOG$_")) {
-                            table = new Table("TABLE", schema, name);
-                            result.add(table);
-
                             table = new Table(type, StringUtils.isEmpty(catlog) ? schema : catlog, name);
                             result.add(table);
                         }

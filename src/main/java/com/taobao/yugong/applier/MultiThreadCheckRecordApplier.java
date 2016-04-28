@@ -24,6 +24,7 @@ public class MultiThreadCheckRecordApplier extends CheckRecordApplier {
     private int                threadSize = 5;
     private int                splitSize  = 50;
     private ThreadPoolExecutor executor;
+    private String             executorName;
 
     public MultiThreadCheckRecordApplier(YuGongContext context){
         super(context);
@@ -36,16 +37,28 @@ public class MultiThreadCheckRecordApplier extends CheckRecordApplier {
         this.splitSize = splitSize;
     }
 
+    public MultiThreadCheckRecordApplier(YuGongContext context, int threadSize, int splitSize,
+                                         ThreadPoolExecutor executor){
+        super(context);
+
+        this.threadSize = threadSize;
+        this.splitSize = splitSize;
+        this.executor = executor;
+    }
+
     public void start() {
         super.start();
 
-        executor = new ThreadPoolExecutor(threadSize,
-            threadSize,
-            60,
-            TimeUnit.SECONDS,
-            new ArrayBlockingQueue(threadSize * 2),
-            new NamedThreadFactory(this.getClass().getSimpleName() + "-" + context.getTableMeta().getFullName()),
-            new ThreadPoolExecutor.CallerRunsPolicy());
+        executorName = this.getClass().getSimpleName() + "-" + context.getTableMeta().getFullName();
+        if (executor == null) {
+            executor = new ThreadPoolExecutor(threadSize,
+                threadSize,
+                60,
+                TimeUnit.SECONDS,
+                new ArrayBlockingQueue(threadSize * 2),
+                new NamedThreadFactory(executorName),
+                new ThreadPoolExecutor.CallerRunsPolicy());
+        }
     }
 
     public void apply(final List<Record> records) throws YuGongException {
@@ -66,8 +79,15 @@ public class MultiThreadCheckRecordApplier extends CheckRecordApplier {
                     template.submit(new Runnable() {
 
                         public void run() {
-                            MDC.put(YuGongConstants.MDC_TABLE_SHIT_KEY, context.getTableMeta().getFullName());
-                            doApply(subList);
+                            String name = Thread.currentThread().getName();
+                            try {
+                                MDC.put(YuGongConstants.MDC_TABLE_SHIT_KEY, context.getTableMeta().getFullName());
+                                Thread.currentThread().setName(executorName);
+                                doApply(subList);
+                            } finally {
+                                Thread.currentThread().setName(name);
+                            }
+
                         }
                     });
                     index = end;// 移动到下一批次

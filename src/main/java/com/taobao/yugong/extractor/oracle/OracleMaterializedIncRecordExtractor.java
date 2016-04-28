@@ -66,6 +66,7 @@ public class OracleMaterializedIncRecordExtractor extends AbstractOracleRecordEx
     private int                             threadSize             = 5;
     private int                             splitSize              = 1;
     private ThreadPoolExecutor              executor;
+    private String                          executorName;
 
     public OracleMaterializedIncRecordExtractor(YuGongContext context){
         this.context = context;
@@ -93,13 +94,16 @@ public class OracleMaterializedIncRecordExtractor extends AbstractOracleRecordEx
         mlogExtractSql = new MessageFormat(MLOG_EXTRACT_FORMAT).format(new Object[] { colstr, schemaName, mlogTableName });
         mlogCleanSql = new MessageFormat(MLOG_CLEAN_FORMAT).format(new Object[] { schemaName, mlogTableName });
 
-        executor = new ThreadPoolExecutor(threadSize,
-            threadSize,
-            60,
-            TimeUnit.SECONDS,
-            new ArrayBlockingQueue<Runnable>(threadSize * 2),
-            new NamedThreadFactory(this.getClass().getSimpleName() + "-" + context.getTableMeta().getFullName()),
-            new ThreadPoolExecutor.CallerRunsPolicy());
+        executorName = this.getClass().getSimpleName() + "-" + context.getTableMeta().getFullName();
+        if (executor == null) {
+            executor = new ThreadPoolExecutor(threadSize,
+                threadSize,
+                60,
+                TimeUnit.SECONDS,
+                new ArrayBlockingQueue<Runnable>(threadSize * 2),
+                new NamedThreadFactory(executorName),
+                new ThreadPoolExecutor.CallerRunsPolicy());
+        }
 
         tracer.update(context.getTableMeta().getFullName(), ProgressStatus.INCING);
     }
@@ -210,8 +214,14 @@ public class OracleMaterializedIncRecordExtractor extends AbstractOracleRecordEx
                     template.submit(new Runnable() {
 
                         public void run() {
-                            MDC.put(YuGongConstants.MDC_TABLE_SHIT_KEY, context.getTableMeta().getFullName());
-                            buildMasterRecordOneByOne(jdbcTemplate, subList);
+                            String name = Thread.currentThread().getName();
+                            try {
+                                MDC.put(YuGongConstants.MDC_TABLE_SHIT_KEY, context.getTableMeta().getFullName());
+                                Thread.currentThread().setName(executorName);
+                                buildMasterRecordOneByOne(jdbcTemplate, subList);
+                            } finally {
+                                Thread.currentThread().setName(name);
+                            }
                         }
                     });
                     index = end;// 移动到下一批次
@@ -370,6 +380,10 @@ public class OracleMaterializedIncRecordExtractor extends AbstractOracleRecordEx
 
     public void setConcurrent(boolean concurrent) {
         this.concurrent = concurrent;
+    }
+
+    public void setExecutor(ThreadPoolExecutor executor) {
+        this.executor = executor;
     }
 
 }

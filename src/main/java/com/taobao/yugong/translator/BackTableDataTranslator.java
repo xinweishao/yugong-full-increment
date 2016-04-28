@@ -1,11 +1,13 @@
 package com.taobao.yugong.translator;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import javax.sql.DataSource;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.MDC;
 
 import com.taobao.yugong.common.YuGongConstants;
@@ -38,13 +40,20 @@ public abstract class BackTableDataTranslator extends AbstractDataTranslator imp
                 template.submit(new Runnable() {
 
                     public void run() {
+                        String name = Thread.currentThread().getName();
                         try {
                             MDC.put(YuGongConstants.MDC_TABLE_SHIT_KEY, spiltKey);
+                            Thread.currentThread().setName(this.getClass().getSimpleName()
+                                                           + "-"
+                                                           + StringUtils.join(Arrays.asList(record.getSchemaName(),
+                                                               record.getTableName()), '.'));
                             if (translator(sourceDs, record)) {
                                 result.add(record);
                             }
                         } catch (Throwable e) {
                             throw new YuGongException("failed record data : " + record.toString(), e);
+                        } finally {
+                            Thread.currentThread().setName(name);
                         }
                     }
                 });

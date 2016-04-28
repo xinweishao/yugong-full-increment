@@ -77,6 +77,7 @@ public class YuGongInstance extends AbstractYuGongLifeCycle {
     private boolean              concurrent      = true;
     private int                  threadSize      = 5;
     private ThreadPoolExecutor   executor;
+    private String               executorName;
 
     public YuGongInstance(YuGongContext context){
         this.context = context;
@@ -90,13 +91,16 @@ public class YuGongInstance extends AbstractYuGongLifeCycle {
         try {
             tableController.acquire();// 尝试获取
 
-            executor = new ThreadPoolExecutor(threadSize,
-                threadSize,
-                60,
-                TimeUnit.SECONDS,
-                new ArrayBlockingQueue(threadSize * 2),
-                new NamedThreadFactory(this.getClass().getSimpleName() + "-" + context.getTableMeta().getFullName()),
-                new ThreadPoolExecutor.CallerRunsPolicy());
+            executorName = this.getClass().getSimpleName() + "-" + context.getTableMeta().getFullName();
+            if (extractor == null) {
+                executor = new ThreadPoolExecutor(threadSize,
+                    threadSize,
+                    60,
+                    TimeUnit.SECONDS,
+                    new ArrayBlockingQueue(threadSize * 2),
+                    new NamedThreadFactory(executorName),
+                    new ThreadPoolExecutor.CallerRunsPolicy());
+            }
 
             // 后续可改进为按类型识别添加
             coreTranslators.add(new OracleIncreamentDataTranslator());
@@ -321,9 +325,9 @@ public class YuGongInstance extends AbstractYuGongLifeCycle {
             worker.setName(this.getClass().getSimpleName() + "-" + context.getTableMeta().getFullName());
             worker.start();
 
-            logger.info("table[{}] start successful. extractor:{} , applier:{}",
-                new Object[] { context.getTableMeta().getFullName(), extractor.getClass().getName(),
-                        applier.getClass().getName() });
+            logger.info("table[{}] start successful. extractor:{} , applier:{}, translator:{}", new Object[] {
+                    context.getTableMeta().getFullName(), extractor.getClass().getName(), applier.getClass().getName(),
+                    translator != null ? translator.getClass().getName() : "NULL" });
         } catch (InterruptedException e) {
             progressTracer.update(context.getTableMeta().getFullName(), ProgressStatus.FAILED);
             exception = new YuGongException(e);
@@ -484,6 +488,10 @@ public class YuGongInstance extends AbstractYuGongLifeCycle {
 
     public void setConcurrent(boolean concurrent) {
         this.concurrent = concurrent;
+    }
+
+    public void setExecutor(ThreadPoolExecutor executor) {
+        this.executor = executor;
     }
 
 }
