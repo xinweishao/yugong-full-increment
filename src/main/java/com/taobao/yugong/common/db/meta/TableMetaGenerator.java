@@ -34,8 +34,9 @@ import com.taobao.yugong.exception.YuGongException;
  */
 public class TableMetaGenerator {
 
-    private static final String mlogQuerySql  = "select master,log_table from all_mview_logs where master = ?";
-    private static final String queryShardKey = "show partitions from ?";
+    private static final String mlogQuerySql       = "select master,log_table from all_mview_logs where master = ?";
+    private static final String mlogSchemaQuerySql = "select master,log_table from all_mview_logs where master = ? and log_owner = ?";
+    private static final String queryShardKey      = "show partitions from ?";
 
     /**
      * 获取对应的table meta信息，精确匹配
@@ -251,14 +252,17 @@ public class TableMetaGenerator {
      */
     public static String getMLogTableName(final DataSource dataSource, final String schemaName, final String tableName) {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        return (String) jdbcTemplate.execute(mlogQuerySql, new PreparedStatementCallback() {
+        String sql = StringUtils.isNotEmpty(schemaName) ? mlogSchemaQuerySql : mlogQuerySql;
+        return (String) jdbcTemplate.execute(sql, new PreparedStatementCallback() {
 
             public Object doInPreparedStatement(PreparedStatement ps) throws SQLException, DataAccessException {
                 DatabaseMetaData metaData = ps.getConnection().getMetaData();
-                // String sName = getIdentifierName(schemaName, metaData);
+                String sName = getIdentifierName(schemaName, metaData);
                 String tName = getIdentifierName(tableName, metaData);
-
                 ps.setString(1, tName);
+                if (StringUtils.isNotEmpty(schemaName)) {
+                    ps.setString(2, sName);
+                }
                 ResultSet rs = ps.executeQuery();
                 String log = null;
                 if (rs.next()) {
