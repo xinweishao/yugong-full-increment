@@ -339,22 +339,35 @@ public class TableMetaGenerator {
      */
     public static String getShardKeyByDRDS(final DataSource dataSource, final String schemaName, final String tableName) {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        return (String) jdbcTemplate.execute(queryShardKey, new PreparedStatementCallback() {
+        try {
+            return (String) jdbcTemplate.execute(queryShardKey, new PreparedStatementCallback() {
 
-            public Object doInPreparedStatement(PreparedStatement ps) throws SQLException, DataAccessException {
-                DatabaseMetaData metaData = ps.getConnection().getMetaData();
-                // String sName = getIdentifierName(schemaName, metaData);
-                String tName = getIdentifierName(tableName, metaData);
+                public Object doInPreparedStatement(PreparedStatement ps) throws SQLException, DataAccessException {
+                    DatabaseMetaData metaData = ps.getConnection().getMetaData();
+                    // String sName = getIdentifierName(schemaName, metaData);
+                    String tName = getIdentifierName(tableName, metaData);
 
-                ps.setString(1, tName);
-                ResultSet rs = ps.executeQuery();
-                String log = null;
-                if (rs.next()) {
-                    log = rs.getString("KEYS");
+                    ps.setString(1, tName);
+                    ResultSet rs = ps.executeQuery();
+                    String log = null;
+                    if (rs.next()) {
+                        log = rs.getString("KEYS");
+                    }
+                    return log;
                 }
-                return log;
+            });
+        } catch (DataAccessException e) {
+            // 兼容下oracle源库和目标库DRDS表名不一致的情况,识别一下表名不存在
+            Throwable cause = e.getRootCause();
+            if (cause instanceof SQLException) {
+                // ER_NO_SUCH_TABLE
+                if (((SQLException) cause).getErrorCode() == 1146) {
+                    return null;
+                }
             }
-        });
+
+            throw e;
+        }
     }
 
     /**
