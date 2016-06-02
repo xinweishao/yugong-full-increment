@@ -650,6 +650,10 @@ public class YuGongController extends AbstractYuGongLifeCycle {
      * @return
      */
     private String getExtKey(String tableName) {
+        if (StringUtils.isEmpty(tableName)) {
+            return null;
+        }
+
         String[] paramArray = tableName.split("#");
         if (paramArray.length == 1) {
             return null;
