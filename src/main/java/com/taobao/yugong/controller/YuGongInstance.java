@@ -92,7 +92,7 @@ public class YuGongInstance extends AbstractYuGongLifeCycle {
             tableController.acquire();// 尝试获取
 
             executorName = this.getClass().getSimpleName() + "-" + context.getTableMeta().getFullName();
-            if (extractor == null) {
+            if (executor == null) {
                 executor = new ThreadPoolExecutor(threadSize,
                     threadSize,
                     60,
