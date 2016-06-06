@@ -603,9 +603,32 @@ public class YuGongController extends AbstractYuGongLifeCycle {
                     newExtKeys.add(key);
                 }
             }
+
             if (newExtKeys.size() > 0) {
                 extKey = StringUtils.join(newExtKeys, ",");
                 table.setExtKey(extKey);
+
+                // 调整一下原始表结构信息,将extKeys当做主键处理
+                // 主要为简化extKeys变更时,等同于主键进行处理
+                List<ColumnMeta> primaryKeys = table.getPrimaryKeys();
+                List<ColumnMeta> newColumns = Lists.newArrayList();
+                for (ColumnMeta column : table.getColumns()) {
+                    boolean exist = false;
+                    for (String key : newExtKeys) {
+                        if (column.getName().equalsIgnoreCase(key)) {
+                            primaryKeys.add(column);
+                            exist = true;
+                            break;
+                        }
+                    }
+
+                    if (!exist) {
+                        newColumns.add(column);
+                    }
+                }
+
+                table.setPrimaryKeys(primaryKeys);
+                table.setColumns(newColumns);
             }
         }
     }

@@ -2,7 +2,6 @@ package com.taobao.yugong.common.model.record;
 
 import java.util.List;
 
-import com.google.common.collect.Lists;
 import com.taobao.yugong.common.db.meta.ColumnValue;
 
 /**
@@ -13,9 +12,7 @@ import com.taobao.yugong.common.db.meta.ColumnValue;
 public class OracleIncrementRecord extends IncrementRecord {
 
     private ColumnValue       rowId;
-    private DiscardType       discardType      = DiscardType.NONE;
-    private List<ColumnValue> afterExtColumns  = Lists.newArrayList(); // 当前行记录里的最新值
-    private List<ColumnValue> beforeExtColumns = Lists.newArrayList(); // mlog里记录的扩展列,不能和主键混用
+    private DiscardType       discardType = DiscardType.NONE;
 
     public OracleIncrementRecord(){
         super();
@@ -66,22 +63,6 @@ public class OracleIncrementRecord extends IncrementRecord {
         public boolean isNotDiscard() {
             return this == DiscardType.NONE;
         }
-    }
-
-    public List<ColumnValue> getBeforeExtColumns() {
-        return beforeExtColumns;
-    }
-
-    public void setBeforeExtColumns(List<ColumnValue> beforeExtColumns) {
-        this.beforeExtColumns = beforeExtColumns;
-    }
-
-    public List<ColumnValue> getAfterExtColumns() {
-        return afterExtColumns;
-    }
-
-    public void setAfterExtColumns(List<ColumnValue> afterExtColumns) {
-        this.afterExtColumns = afterExtColumns;
     }
 
 }

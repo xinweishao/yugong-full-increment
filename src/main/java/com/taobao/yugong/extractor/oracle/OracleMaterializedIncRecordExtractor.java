@@ -13,7 +13,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.MDC;
 import org.springframework.dao.DataAccessException;
@@ -49,7 +48,9 @@ import com.taobao.yugong.exception.YuGongException;
  */
 public class OracleMaterializedIncRecordExtractor extends AbstractOracleRecordExtractor {
 
-    private static final String             MLOG_EXTRACT_FORMAT    = "select rowid,{0} from {1}.{2} where rownum <= ?";
+    // private static final String MLOG_EXTRACT_FORMAT =
+    // "select rowid,{0} from {1}.{2} where rownum <= ?";
+    private static final String             MLOG_EXTRACT_FORMAT    = "select * from (select rowid,{0} from {1}.{2} order by sequence$$ asc) where rownum <= ?";
     // private static final String MASTER_FORMAT =
     // "select  /*+index(t {0})*/ {1} from {2}.{3} t where {4}=?";
     private static final String             MASTER_MULTI_PK_FORMAT = "select {0} from {1}.{2} t where {3}";
@@ -167,7 +168,6 @@ public class OracleMaterializedIncRecordExtractor extends AbstractOracleRecordEx
                     IncrementOpType opType = getDmlType(rs);
                     List<ColumnValue> primaryKeys = new ArrayList<ColumnValue>();
                     List<ColumnValue> columns = new ArrayList<ColumnValue>();
-                    List<ColumnValue> extColumns = new ArrayList<ColumnValue>();
 
                     for (ColumnMeta column : context.getTableMeta().getPrimaryKeys()) {
                         if (pkListHave(mlogMeta.getColumns(), column.getName())) {
@@ -179,9 +179,9 @@ public class OracleMaterializedIncRecordExtractor extends AbstractOracleRecordEx
                     for (ColumnMeta column : context.getTableMeta().getColumns()) {
                         if (pkListHave(mlogMeta.getColumns(), column.getName())) {
                             ColumnValue col = getColumnValue(rs, context.getSourceEncoding(), column);
-                            // 针对非主键的列,添加为特殊的extColumn
+                            // 针对非主键的列,比如拆分字段,一起当做数据主键
                             // 扩展列可能会发生变化,反查时不能带这个字段
-                            extColumns.add(col);
+                            primaryKeys.add(col);
                         }
                     }
 
@@ -192,7 +192,6 @@ public class OracleMaterializedIncRecordExtractor extends AbstractOracleRecordEx
                         columns);
                     record.setRowId(rowId);
                     record.setOpType(opType);
-                    record.setBeforeExtColumns(extColumns);
                     result.add(record);
                 }
 
@@ -262,44 +261,18 @@ public class OracleMaterializedIncRecordExtractor extends AbstractOracleRecordEx
                         ResultSet rs = ps.executeQuery();
                         // 一条日志对应一条主表记录
                         List<ColumnValue> columns = new ArrayList<ColumnValue>();
-                        List<ColumnValue> afterExtColumns = new ArrayList<ColumnValue>();
                         boolean exist = false;
                         if (rs.next()) {
                             exist = true;
                             // 反查获取到完整行记录
                             for (ColumnMeta col : context.getTableMeta().getColumns()) {
                                 ColumnValue cv = getColumnValue(rs, context.getSourceEncoding(), col);
-                                // 识别下extColumns是否存在变化,如果发生了变化拆分为DELETE+INSERT
-                                boolean isext = false;
-                                for (ColumnValue extValue : record.getBeforeExtColumns()) {
-                                    if (extValue.getColumn().getName().equalsIgnoreCase(col.getName())) {
-                                        isext = true;
-                                        if (!ObjectUtils.equals(extValue.getValue(), cv.getValue())) {
-                                            // 将当前反查的列记录为after值
-                                            afterExtColumns.add(cv);
-                                        }
-                                    }
-                                }
-
-                                // 排除ext列信息
-                                if (!isext) {
-                                    columns.add(cv);
-                                }
+                                columns.add(cv);
                             }
                         }
 
                         if (!columns.isEmpty()) {
                             record.setColumns(columns);
-                        }
-
-                        // 调整一下before/after值
-                        // 如果未发生过变更,则after有值,before为null
-                        // 如果发生过变更,则before和after均有值
-                        if (!afterExtColumns.isEmpty()) {
-                            record.setAfterExtColumns(afterExtColumns);
-                        } else {
-                            record.setAfterExtColumns(record.getBeforeExtColumns());
-                            record.setBeforeExtColumns(new ArrayList<ColumnValue>());
                         }
 
                         if ((record.getOpType() == IncrementOpType.I || record.getOpType() == IncrementOpType.U)
@@ -363,7 +336,13 @@ public class OracleMaterializedIncRecordExtractor extends AbstractOracleRecordEx
 
     private IncrementOpType getDmlType(ResultSet rs) throws SQLException {
         String dmlType = rs.getString("DMLTYPE$$");
-        return IncrementOpType.valueOf(dmlType);
+        // 针对主键或者拆分条件的变更,会表现为OLD_NEW=O + N,但是拆分条件的变更DMLTYPE=U,需要强制修改为D操作
+        String oldNew = rs.getString("OLD_NEW$$");
+        if (oldNew.equalsIgnoreCase("O")) {
+            return IncrementOpType.D;
+        } else {
+            return IncrementOpType.valueOf(dmlType);
+        }
     }
 
     public void setSleepTime(long sleepTime) {
