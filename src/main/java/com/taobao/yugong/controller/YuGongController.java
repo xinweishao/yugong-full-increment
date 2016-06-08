@@ -167,7 +167,11 @@ public class YuGongController extends AbstractYuGongLifeCycle {
             RecordPositioner positioner = choosePositioner(tableHolder);
             RecordExtractor extractor = chooseExtractor(tableHolder, context, runMode, positioner);
             RecordApplier applier = chooseApplier(tableHolder, context, runMode);
-            DataTranslator translator = choseTranslator(tableHolder);
+            // 可能在装载DRDS时,已经加载了一次translator处理
+            DataTranslator translator = tableHolder.translator;
+            if (translator == null) {
+                translator = choseTranslator(tableHolder);
+            }
             YuGongInstance instance = new YuGongInstance(context);
             StatAggregation statAggregation = new StatAggregation(statBufferSize, statPrintInterval);
             instance.setExtractor(extractor);
@@ -521,9 +525,10 @@ public class YuGongController extends AbstractYuGongLifeCycle {
                             && !isBlackTable(table.getFullName(), tableBlackList)) {
                             TableMetaGenerator.buildColumns(globalContext.getSourceDs(), table);
                             // 构建一下拆分条件
-                            buildExtKeys(table, (String) obj, targetDbType);
+                            DataTranslator translator = buildExtKeys(table, (String) obj, targetDbType);
                             TableHolder holder = new TableHolder(table);
                             holder.ignoreSchema = ignoreSchema;
+                            holder.translator = translator;
                             if (!tables.contains(holder)) {
                                 tables.add(holder);
                             }
@@ -538,8 +543,9 @@ public class YuGongController extends AbstractYuGongLifeCycle {
                     && !isBlackTable(table.getFullName(), tableBlackList)) {
                     TableMetaGenerator.buildColumns(globalContext.getSourceDs(), table);
                     // 构建一下拆分条件
-                    buildExtKeys(table, null, targetDbType);
+                    DataTranslator translator = buildExtKeys(table, null, targetDbType);
                     TableHolder holder = new TableHolder(table);
+                    holder.translator = translator;
                     if (!tables.contains(holder)) {
                         tables.add(holder);
                     }
@@ -576,13 +582,31 @@ public class YuGongController extends AbstractYuGongLifeCycle {
     /**
      * 尝试构建拆分字段,如果tableStr指定了拆分字段则读取之,否则在目标库找对应的拆分字段
      */
-    private void buildExtKeys(Table table, String tableStr, DbType targetDbType) {
+    private DataTranslator buildExtKeys(Table table, String tableStr, DbType targetDbType) {
+        DataTranslator translator = null;
         String extKey = getExtKey(tableStr);
-        if (extKey == null && targetDbType.isDRDS()) {
+        if (targetDbType.isDRDS()) {
+            // 只针对目标为DRDS时处理
+            try {
+                translator = buildTranslator(table.getName());
+            } catch (Exception e) {
+                throw new YuGongException(e);
+            }
             // 使用源表的表名查询一次拆分表名
-            extKey = TableMetaGenerator.getShardKeyByDRDS(globalContext.getTargetDs(),
-                table.getSchema(),
-                table.getName());
+            String schemaName = translator.translatorSchema();
+            String tableName = translator.translatorTable();
+            if (schemaName == null) {
+                schemaName = table.getSchema();
+            }
+            if (tableName == null) {
+                tableName = table.getName();
+            }
+            String drdsExtKey = TableMetaGenerator.getShardKeyByDRDS(globalContext.getTargetDs(), schemaName, tableName);
+            if (extKey != null && !StringUtils.equalsIgnoreCase(drdsExtKey, extKey)) {
+                logger.warn("table:[{}] is not matched drds shardKey:[{}]", tableStr, drdsExtKey);
+            }
+
+            extKey = drdsExtKey;
         }
 
         if (extKey != null) {
@@ -631,6 +655,8 @@ public class YuGongController extends AbstractYuGongLifeCycle {
                 table.setColumns(newColumns);
             }
         }
+
+        return translator;
     }
 
     private AlarmService initAlarmService() {
@@ -703,8 +729,9 @@ public class YuGongController extends AbstractYuGongLifeCycle {
             this.table = table;
         }
 
-        Table   table;
-        boolean ignoreSchema = false;
+        Table          table;
+        boolean        ignoreSchema = false;
+        DataTranslator translator   = null;
 
         @Override
         public int hashCode() {
