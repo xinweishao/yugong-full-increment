@@ -17,13 +17,13 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
  */
 public class MailAlarmService extends AbstractAlarmService {
 
-    private static final String TITLE = "alarm_from_yugong";
-    private JavaMailSender mailSender;
-    private String emailUsername;
-    private String emailPassword;
-    private String emailHost;
-    private int stmpPort = 465;
-    private boolean sslSupport = true;
+    private static final String TITLE      = "alarm_from_yugong";
+    private JavaMailSender      mailSender;
+    private String              emailUsername;
+    private String              emailPassword;
+    private String              emailHost;
+    private int                 stmpPort   = 465;
+    private boolean             sslSupport = true;
 
     @Override
     public void start() {

@@ -195,6 +195,7 @@ public class OracleMaterializedIncRecordExtractor extends AbstractOracleRecordEx
                     result.add(record);
                 }
 
+                rs.close();
                 return result;
             }
         });

@@ -146,6 +146,7 @@ public class OracleOnceFullRecordExtractor extends AbstractOracleRecordExtractor
                     }
 
                     setStatus(ExtractStatus.TABLE_END);
+                    rs.close();
                     return null;
                 }
             });
