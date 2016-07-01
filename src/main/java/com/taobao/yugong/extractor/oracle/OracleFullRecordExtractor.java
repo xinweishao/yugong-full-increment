@@ -100,7 +100,13 @@ public class OracleFullRecordExtractor extends AbstractOracleRecordExtractor {
                 position = new IdPosition();
             }
             position.setCurrentProgress(ProgressStatus.FULLING);
-            position.setId((Number) record.getPrimaryKeys().get(0).getValue());// 更新一下id
+            List<ColumnValue> pks = record.getPrimaryKeys();
+            if (YuGongUtils.isNotEmpty(pks)) {
+                Object value = pks.get(0).getValue();
+                if (value instanceof Number) {
+                    position.setId((Number) value);// 更新一下id
+                }
+            }
             return position;
         }
 
