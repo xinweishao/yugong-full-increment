@@ -668,6 +668,7 @@ public class YuGongController extends AbstractYuGongLifeCycle {
             alarmService.setEmailUsername(config.getString("yugong.alarm.email.username"));
             alarmService.setStmpPort(config.getInt("yugong.alarm.email.stmp.port", 465));
             alarmService.setSslSupport(config.getBoolean("yugong.alarm.email.ssl.support", true));
+            alarmService.start();
             return alarmService;
         } else {
             return new LogAlarmService();
