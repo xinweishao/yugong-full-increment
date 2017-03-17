@@ -70,24 +70,24 @@ import com.taobao.yugong.translator.DataTranslator;
  */
 public class YuGongController extends AbstractYuGongLifeCycle {
 
-    private DataSourceFactory        dataSourceFactory = new DataSourceFactory();
-    private JdkCompiler              compiler          = new JdkCompiler();
-    private Configuration            config;
+    private DataSourceFactory dataSourceFactory = new DataSourceFactory();
+    private JdkCompiler compiler = new JdkCompiler();
+    private Configuration config;
 
-    private RunMode                  runMode;
-    private YuGongContext            globalContext;
-    private DbType                   sourceDbType      = DbType.ORACLE;
-    private DbType                   targetDbType      = DbType.MYSQL;
-    private File                     translatorDir;
-    private AlarmService             alarmService;
+    private RunMode runMode;
+    private YuGongContext globalContext;
+    private DbType sourceDbType = DbType.ORACLE;
+    private DbType targetDbType = DbType.MYSQL;
+    private File translatorDir;
+    private AlarmService alarmService;
 
-    private TableController          tableController;
-    private ProgressTracer           progressTracer;
-    private List<YuGongInstance>     instances         = Lists.newArrayList();
+    private TableController tableController;
+    private ProgressTracer progressTracer;
+    private List<YuGongInstance> instances = Lists.newArrayList();
     private ScheduledExecutorService schedule;
     // 全局的工作线程池
-    private ThreadPoolExecutor       extractorExecutor = null;
-    private ThreadPoolExecutor       applierExecutor   = null;
+    private ThreadPoolExecutor extractorExecutor = null;
+    private ThreadPoolExecutor applierExecutor = null;
 
     public YuGongController(Configuration config){
         this.config = config;
@@ -592,14 +592,21 @@ public class YuGongController extends AbstractYuGongLifeCycle {
             } catch (Exception e) {
                 throw new YuGongException(e);
             }
-            // 使用源表的表名查询一次拆分表名
-            String schemaName = translator.translatorSchema();
-            String tableName = translator.translatorTable();
-            if (schemaName == null) {
-                schemaName = table.getSchema();
-            }
-            if (tableName == null) {
-                tableName = table.getName();
+
+            String schemaName = table.getSchema();
+            String tableName = table.getName();
+
+            if (translator != null) {
+                // 使用源表的表名查询一次拆分表名
+                String tschemaName = translator.translatorSchema();
+                String ttableName = translator.translatorTable();
+                if (tschemaName != null) {
+                    schemaName = tschemaName;
+                }
+
+                if (ttableName != null) {
+                    tableName = ttableName;
+                }
             }
             String drdsExtKey = TableMetaGenerator.getShardKeyByDRDS(globalContext.getTargetDs(), schemaName, tableName);
             if (extKey != null && !StringUtils.equalsIgnoreCase(drdsExtKey, extKey)) {
@@ -731,9 +738,9 @@ public class YuGongController extends AbstractYuGongLifeCycle {
             this.table = table;
         }
 
-        Table          table;
-        boolean        ignoreSchema = false;
-        DataTranslator translator   = null;
+        Table table;
+        boolean ignoreSchema = false;
+        DataTranslator translator = null;
 
         @Override
         public int hashCode() {
