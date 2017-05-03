@@ -37,6 +37,7 @@ import com.taobao.yugong.extractor.oracle.OracleFullRecordExtractor;
 import com.taobao.yugong.extractor.oracle.OracleMaterializedIncRecordExtractor;
 import com.taobao.yugong.extractor.oracle.OracleOnceFullRecordExtractor;
 import com.taobao.yugong.extractor.oracle.OracleRecRecordExtractor;
+import com.taobao.yugong.extractor.sqlserver.SqlServerFullRecordExtractor;
 import com.taobao.yugong.positioner.FileMixedRecordPositioner;
 import com.taobao.yugong.positioner.MemoryRecordPositioner;
 import com.taobao.yugong.positioner.RecordPositioner;
@@ -93,6 +94,7 @@ public class YuGongController extends AbstractYuGongLifeCycle {
     this.config = config;
   }
 
+  @Override
   public void start() {
     MDC.remove(YuGongConstants.MDC_TABLE_SHIT_KEY);
     super.start();
@@ -250,6 +252,7 @@ public class YuGongController extends AbstractYuGongLifeCycle {
     tableController.waitForDone();
   }
 
+  @Override
   public void stop() {
     super.stop();
     for (YuGongInstance instance : instances) {
@@ -269,40 +272,53 @@ public class YuGongController extends AbstractYuGongLifeCycle {
   private RecordExtractor chooseExtractor(TableHolder tableHolder, YuGongContext context, RunMode runMode,
       RecordPositioner positioner) {
     boolean once = config.getBoolean("yugong.extractor.once", false);
-    if (sourceDbType == DbType.ORACLE) {
-      if (runMode == RunMode.FULL || runMode == RunMode.CHECK) {
-        String tablename = tableHolder.table.getName();
-        String fullName = tableHolder.table.getFullName();
-        // 优先找tableName
-        String extractSql = config.getString("yugong.extractor.sql." + tablename);
-        if (StringUtils.isEmpty(extractSql)) {
-          extractSql = config.getString("yugong.extractor.sql." + fullName,
-              config.getString("yugong.extractor.sql"));
-        }
+    if (runMode == RunMode.FULL || runMode == RunMode.CHECK) {
+      String tablename = tableHolder.table.getName();
+      String fullName = tableHolder.table.getFullName();
+      // 优先找tableName
+      String extractSql = config.getString("yugong.extractor.sql." + tablename);
+      if (StringUtils.isEmpty(extractSql)) {
+        extractSql = config.getString("yugong.extractor.sql." + fullName,
+            config.getString("yugong.extractor.sql"));
+      }
 
-        // 优先找tableName
-        String tableOnceStr = config.getString("yugong.extractor.once." + tablename);
-        if (StringUtils.isEmpty(tableOnceStr)) {
-          tableOnceStr = config.getString("yugong.extractor.once." + fullName);
-        }
-        boolean tableOnce = false;
-        if (StringUtils.isNotEmpty(tableOnceStr)) {
-          tableOnce = BooleanUtils.toBooleanObject(tableOnceStr).booleanValue();
-        }
-        boolean forceFull = !tableOnce && StringUtils.isNotEmpty(extractSql);
-        if (forceFull
-            || (isOnlyPkIsNumber(tableHolder.table) && !once && !tableOnce && StringUtils.isEmpty(extractSql))) {
+      // 优先找tableName
+      String tableOnceStr = config.getString("yugong.extractor.once." + tablename);
+      if (StringUtils.isEmpty(tableOnceStr)) {
+        tableOnceStr = config.getString("yugong.extractor.once." + fullName);
+      }
+      boolean tableOnce = false;
+      if (StringUtils.isNotEmpty(tableOnceStr)) {
+        tableOnce = BooleanUtils.toBooleanObject(tableOnceStr);
+      }
+      boolean forceFull = !tableOnce && StringUtils.isNotEmpty(extractSql);
+      if (forceFull
+          || (isOnlyPkIsNumber(tableHolder.table) && !once && !tableOnce && StringUtils.isEmpty(extractSql))) {
+        if (sourceDbType == DbType.ORACLE) {
           OracleFullRecordExtractor recordExtractor = new OracleFullRecordExtractor(context);
           recordExtractor.setExtractSql(extractSql);
           recordExtractor.setTracer(progressTracer);
           return recordExtractor;
+        } else if (sourceDbType == DbType.SqlServer) {
+          SqlServerFullRecordExtractor recordExtractor = new SqlServerFullRecordExtractor(context);
+          recordExtractor.setExtractSql(extractSql);
+          recordExtractor.setTracer(progressTracer);
+          return recordExtractor;
         } else {
+          throw new YuGongException("unsupport " + sourceDbType);
+        }
+      } else {
+        if (sourceDbType == DbType.ORACLE) {
           OracleOnceFullRecordExtractor recordExtractor = new OracleOnceFullRecordExtractor(context);
           recordExtractor.setExtractSql(extractSql);
           recordExtractor.setTracer(progressTracer);
           return recordExtractor;
+        } else {
+          throw new YuGongException("unsupport " + sourceDbType);
         }
-      } else if (runMode == RunMode.INC) {
+      }
+    } else if (runMode == RunMode.INC) {
+      if (sourceDbType == DbType.ORACLE) {
         OracleMaterializedIncRecordExtractor recordExtractor = new OracleMaterializedIncRecordExtractor(context);
         recordExtractor.setConcurrent(config.getBoolean("yugong.extractor.concurrent.enable", true));
         recordExtractor.setSleepTime(config.getLong("yugong.extractor.noupdate.sleep", 1000L));
@@ -310,33 +326,41 @@ public class YuGongController extends AbstractYuGongLifeCycle {
         recordExtractor.setExecutor(extractorExecutor);
         recordExtractor.setTracer(progressTracer);
         return recordExtractor;
-      } else if (runMode == RunMode.MARK || runMode == RunMode.CLEAR) {
+      } else {
+        throw new YuGongException("unsupport " + sourceDbType);
+      }
+    } else if (runMode == RunMode.MARK || runMode == RunMode.CLEAR) {
+      if (sourceDbType == DbType.ORACLE) {
         return new OracleRecRecordExtractor(context);
       } else {
-        // 不会有并发问题，所以共用一份context
-        AbstractRecordExtractor markExtractor = (AbstractRecordExtractor) chooseExtractor(tableHolder,
-            context,
-            RunMode.MARK,
-            positioner);
-        AbstractRecordExtractor fullExtractor = (AbstractRecordExtractor) chooseExtractor(tableHolder,
-            context,
-            RunMode.FULL,
-            positioner);
-        AbstractRecordExtractor incExtractor = (AbstractRecordExtractor) chooseExtractor(tableHolder,
-            context,
-            RunMode.INC,
-            positioner);
-        fullExtractor.setTracer(progressTracer);
-        incExtractor.setTracer(progressTracer);
+        throw new YuGongException("unsupport " + sourceDbType);
+      }
+    } else {
+      // 不会有并发问题，所以共用一份context
+      AbstractRecordExtractor markExtractor = (AbstractRecordExtractor) chooseExtractor(tableHolder,
+          context,
+          RunMode.MARK,
+          positioner);
+      AbstractRecordExtractor fullExtractor = (AbstractRecordExtractor) chooseExtractor(tableHolder,
+          context,
+          RunMode.FULL,
+          positioner);
+      AbstractRecordExtractor incExtractor = (AbstractRecordExtractor) chooseExtractor(tableHolder,
+          context,
+          RunMode.INC,
+          positioner);
+      fullExtractor.setTracer(progressTracer);
+      incExtractor.setTracer(progressTracer);
+      if (sourceDbType == DbType.ORACLE) {
         OracleAllRecordExtractor allExtractor = new OracleAllRecordExtractor(context);
         allExtractor.setMarkExtractor((AbstractOracleRecordExtractor) markExtractor);
         allExtractor.setFullExtractor((AbstractOracleRecordExtractor) fullExtractor);
         allExtractor.setIncExtractor((AbstractOracleRecordExtractor) incExtractor);
         allExtractor.setPositioner(positioner);
         return allExtractor;
+      } else {
+        throw new YuGongException("unsupport " + sourceDbType);
       }
-    } else {
-      throw new YuGongException("unsupport " + sourceDbType);
     }
   }
 

@@ -19,7 +19,8 @@ public abstract class AbstractOracleRecordExtractor extends AbstractRecordExtrac
    * 2.  如果为字符串类型，并且需要进行转码，那么进行编码转换。
    * </pre>
    */
-  protected ColumnValue getColumnValue(ResultSet rs, String encoding, ColumnMeta col) throws SQLException {
+  public ColumnValue getColumnValue(ResultSet rs, String encoding, ColumnMeta col) throws 
+      SQLException {
     Object value = null;
     if (col.getType() == Types.DATE) {
       value = rs.getTimestamp(col.getName());
