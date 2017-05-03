@@ -9,7 +9,7 @@ import org.junit.Test;
  * @author agapple 2014年2月25日 下午11:38:06
  * @since 1.0.0
  */
-public class YuGongControllerTest {
+public class YuGongControllerIT {
 
   @Test
   public void testSimple() throws Exception {

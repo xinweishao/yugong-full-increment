@@ -3,12 +3,15 @@ package com.taobao.yugong;
 import com.taobao.yugong.common.model.DataSourceConfig;
 import com.taobao.yugong.common.model.DbType;
 
+import org.junit.Test;
+
 /**
  * @author agapple 2014年2月25日 下午11:38:06
  * @since 1.0.0
  */
-public class BaseDbTest {
+public class BaseDbIT {
 
+  @Test
   public DataSourceConfig getOracleConfig() {
     DataSourceConfig config = new DataSourceConfig();
     config.setUsername("test");
@@ -20,6 +23,7 @@ public class BaseDbTest {
     return config;
   }
 
+  @Test
   public DataSourceConfig getMysqlConfig() {
     DataSourceConfig config = new DataSourceConfig();
     config.setUsername("test");

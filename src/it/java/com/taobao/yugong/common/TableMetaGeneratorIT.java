@@ -1,6 +1,6 @@
 package com.taobao.yugong.common;
 
-import com.taobao.yugong.BaseDbTest;
+import com.taobao.yugong.BaseDbIT;
 import com.taobao.yugong.common.db.DataSourceFactory;
 import com.taobao.yugong.common.db.meta.Table;
 import com.taobao.yugong.common.db.meta.TableMetaGenerator;
@@ -15,7 +15,7 @@ import javax.sql.DataSource;
  * @author agapple 2014年2月25日 下午11:38:06
  * @since 1.0.0
  */
-public class TableMetaGeneratorTest extends BaseDbTest {
+public class TableMetaGeneratorIT extends BaseDbIT {
 
   @Test
   public void testOracle() {
