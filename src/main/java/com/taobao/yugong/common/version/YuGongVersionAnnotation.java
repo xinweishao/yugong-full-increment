@@ -9,13 +9,13 @@ import java.lang.annotation.Target;
 @Target(ElementType.PACKAGE)
 public @interface YuGongVersionAnnotation {
 
-    String date();
+  String date();
 
-    String url();
+  String url();
 
-    String branch();
+  String branch();
 
-    String version();
+  String version();
 
-    String hexVersion();
+  String hexVersion();
 }

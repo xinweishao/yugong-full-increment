@@ -6,7 +6,7 @@ package com.taobao.yugong;
  */
 public class YugongIntegrationTest {
 
-    public static void main(String[] args) throws Throwable {
-        YuGongLauncher.main(args);
-    }
+  public static void main(String[] args) throws Throwable {
+    YuGongLauncher.main(args);
+  }
 }

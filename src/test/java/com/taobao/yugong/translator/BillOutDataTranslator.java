@@ -8,11 +8,11 @@ import com.taobao.yugong.common.model.record.Record;
  */
 public class BillOutDataTranslator extends AbstractDataTranslator implements DataTranslator {
 
-    public boolean translator(Record record) {
-        record.setTableName("BILL_OUT_TEST");
-        // 将分库键做为主键
-        record.addPrimaryKey(record.removeColumnByName("REF_USER_ID"));
-        return super.translator(record);
-    }
+  public boolean translator(Record record) {
+    record.setTableName("BILL_OUT_TEST");
+    // 将分库键做为主键
+    record.addPrimaryKey(record.removeColumnByName("REF_USER_ID"));
+    return super.translator(record);
+  }
 
 }

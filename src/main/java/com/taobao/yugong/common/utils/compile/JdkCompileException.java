@@ -9,31 +9,31 @@ import javax.tools.JavaFileObject;
  */
 public class JdkCompileException extends Exception {
 
-    private static final long                             serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    private transient DiagnosticCollector<JavaFileObject> diagnostics;
+  private transient DiagnosticCollector<JavaFileObject> diagnostics;
 
-    public JdkCompileException(String message, Throwable cause, DiagnosticCollector<JavaFileObject> diagnostics){
-        super(message, cause);
-        setDiagnostics(diagnostics);
-    }
+  public JdkCompileException(String message, Throwable cause, DiagnosticCollector<JavaFileObject> diagnostics) {
+    super(message, cause);
+    setDiagnostics(diagnostics);
+  }
 
-    public JdkCompileException(String message, DiagnosticCollector<JavaFileObject> diagnostics){
-        super(message);
-        setDiagnostics(diagnostics);
-    }
+  public JdkCompileException(String message, DiagnosticCollector<JavaFileObject> diagnostics) {
+    super(message);
+    setDiagnostics(diagnostics);
+  }
 
-    public JdkCompileException(Throwable cause, DiagnosticCollector<JavaFileObject> diagnostics){
-        super(cause);
-        setDiagnostics(diagnostics);
-    }
+  public JdkCompileException(Throwable cause, DiagnosticCollector<JavaFileObject> diagnostics) {
+    super(cause);
+    setDiagnostics(diagnostics);
+  }
 
-    private void setDiagnostics(DiagnosticCollector<JavaFileObject> diagnostics) {
-        this.diagnostics = diagnostics;
-    }
+  private void setDiagnostics(DiagnosticCollector<JavaFileObject> diagnostics) {
+    this.diagnostics = diagnostics;
+  }
 
-    public DiagnosticCollector<JavaFileObject> getDiagnostics() {
-        return diagnostics;
-    }
+  public DiagnosticCollector<JavaFileObject> getDiagnostics() {
+    return diagnostics;
+  }
 
 }

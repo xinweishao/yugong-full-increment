@@ -6,5 +6,5 @@ package com.taobao.yugong.common.utils.compile;
  */
 public interface JavaSourceCompiler {
 
-    Class compile(String source);
+  Class compile(String source);
 }

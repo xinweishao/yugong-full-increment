@@ -5,12 +5,20 @@ package com.taobao.yugong.common.model;
  * @since 3.0.0
  */
 public enum ExtractStatus {
-    /** 正常提取 */
-    NORMAL,
-    /** 追上 */
-    CATCH_UP,
-    /** 无变更 */
-    NO_UPDATE,
-    /** 处理结束 */
-    TABLE_END;
+  /**
+   * 正常提取
+   */
+  NORMAL,
+  /**
+   * 追上
+   */
+  CATCH_UP,
+  /**
+   * 无变更
+   */
+  NO_UPDATE,
+  /**
+   * 处理结束
+   */
+  TABLE_END;
 }

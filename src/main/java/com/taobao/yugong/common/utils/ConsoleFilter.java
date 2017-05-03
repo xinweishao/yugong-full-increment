@@ -8,20 +8,21 @@ import ch.qos.logback.core.spi.FilterReply;
 
 public class ConsoleFilter extends Filter<ILoggingEvent> {
 
-    private static boolean isEclipse = false;
-    static {
-        // 脚本启动时,一定会带上appName
-        String appname = System.getProperty("appName");
-        isEclipse = StringUtils.isEmpty(appname);
-    }
+  private static boolean isEclipse = false;
 
-    @Override
-    public FilterReply decide(ILoggingEvent event) {
-        if (isEclipse) {
-            // 只有在eclipse启动时才输出
-            return FilterReply.ACCEPT;
-        } else {
-            return FilterReply.DENY;
-        }
+  static {
+    // 脚本启动时,一定会带上appName
+    String appname = System.getProperty("appName");
+    isEclipse = StringUtils.isEmpty(appname);
+  }
+
+  @Override
+  public FilterReply decide(ILoggingEvent event) {
+    if (isEclipse) {
+      // 只有在eclipse启动时才输出
+      return FilterReply.ACCEPT;
+    } else {
+      return FilterReply.DENY;
     }
+  }
 }

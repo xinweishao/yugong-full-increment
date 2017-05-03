@@ -5,5 +5,5 @@ package com.taobao.yugong.common.model;
  * @since 1.0.0
  */
 public enum ProgressStatus {
-    UNKNOW, MARK, FULLING, INCING, CLEAR, FAILED, SUCCESS;
+  UNKNOW, MARK, FULLING, INCING, CLEAR, FAILED, SUCCESS;
 }

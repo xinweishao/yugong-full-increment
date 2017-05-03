@@ -5,33 +5,39 @@ package com.taobao.yugong.common.model;
  */
 public enum DbType {
 
-    /** mysql DB */
-    MYSQL("com.mysql.jdbc.Driver"),
-    /** drds DB */
-    DRDS("com.mysql.jdbc.Driver"),
-    /** oracle DB */
-    ORACLE("oracle.jdbc.driver.OracleDriver");
+  /**
+   * mysql DB
+   */
+  MYSQL("com.mysql.jdbc.Driver"),
+  /**
+   * drds DB
+   */
+  DRDS("com.mysql.jdbc.Driver"),
+  /**
+   * oracle DB
+   */
+  ORACLE("oracle.jdbc.driver.OracleDriver");
 
-    private String driver;
+  private String driver;
 
-    DbType(String driver){
-        this.driver = driver;
-    }
+  DbType(String driver) {
+    this.driver = driver;
+  }
 
-    public String getDriver() {
-        return driver;
-    }
+  public String getDriver() {
+    return driver;
+  }
 
-    public boolean isMysql() {
-        return this.equals(DbType.MYSQL);
-    }
+  public boolean isMysql() {
+    return this.equals(DbType.MYSQL);
+  }
 
-    public boolean isDRDS() {
-        return this.equals(DbType.DRDS);
-    }
+  public boolean isDRDS() {
+    return this.equals(DbType.DRDS);
+  }
 
-    public boolean isOracle() {
-        return this.equals(DbType.ORACLE);
-    }
+  public boolean isOracle() {
+    return this.equals(DbType.ORACLE);
+  }
 
 }

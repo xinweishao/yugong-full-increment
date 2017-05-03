@@ -6,7 +6,7 @@ package com.taobao.yugong.common.db.sql;
  */
 public class SqlTemplates {
 
-    public static SqlTemplate       COMMON = new SqlTemplate();
-    public static MysqlSqlTemplate  MYSQL  = new MysqlSqlTemplate();
-    public static OracleSqlTemplate ORACLE = new OracleSqlTemplate();
+  public static SqlTemplate COMMON = new SqlTemplate();
+  public static MysqlSqlTemplate MYSQL = new MysqlSqlTemplate();
+  public static OracleSqlTemplate ORACLE = new OracleSqlTemplate();
 }
