@@ -1,6 +1,7 @@
 package com.taobao.yugong.common.db.meta;
 
 import com.google.common.collect.Lists;
+import com.taobao.yugong.common.model.DbType;
 import com.taobao.yugong.common.utils.LikeUtil;
 import com.taobao.yugong.exception.YuGongException;
 
@@ -41,114 +42,117 @@ public class TableMetaGenerator {
   /**
    * 获取对应的table meta信息，精确匹配
    */
-  public static Table getTableMeta(final DataSource dataSource, final String schemaName, final String tableName) {
+  public static Table getTableMeta(final DbType dbType, final DataSource dataSource, final String 
+      schemaName, final String tableName) {
     JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-    return (Table) jdbcTemplate.execute(new ConnectionCallback() {
+    return (Table) jdbcTemplate.execute((ConnectionCallback) conn -> {
+      DatabaseMetaData metaData = conn.getMetaData();
+      String schemaNameRaw = getIdentifierName(schemaName, metaData);
+      String tableNameRaw = getIdentifierName(tableName, metaData);
 
-      public Object doInConnection(Connection conn) throws SQLException, DataAccessException {
-        DatabaseMetaData metaData = conn.getMetaData();
-        String sName = getIdentifierName(schemaName, metaData);
-        String tName = getIdentifierName(tableName, metaData);
+      ResultSet rs = null;
+      if (dbType == DbType.MYSQL || dbType == DbType.ORACLE || dbType == DbType.DRDS) {
+        rs = metaData.getTables(schemaNameRaw, schemaNameRaw, tableNameRaw, new String[]{"TABLE"});
+      } else if (dbType == DbType.SqlServer) {
+        rs = metaData.getTables(schemaNameRaw, null, tableNameRaw, new String[]{"TABLE"});
+      } else {
+        throw new YuGongException("unknown db type");
+      }
+      Table table = null;
+      while (rs.next()) {
+        String catlog = rs.getString(1);
+        String schema = rs.getString(2);
+        String name = rs.getString(3);
+        String type = rs.getString(4);
 
-        ResultSet rs = null;
-        rs = metaData.getTables(sName, sName, tName, new String[]{"TABLE"});
-        Table table = null;
-        while (rs.next()) {
-          String catlog = rs.getString(1);
-          String schema = rs.getString(2);
-          String name = rs.getString(3);
-          String type = rs.getString(4);
-
-          if ((sName == null || LikeUtil.isMatch(sName, catlog) || LikeUtil.isMatch(sName, schema))
-              && LikeUtil.isMatch(tName, name)) {
-            table = new Table(type, StringUtils.isEmpty(catlog) ? schema : catlog, name);
-            break;
-          }
+        if ((schemaNameRaw == null || LikeUtil.isMatch(schemaNameRaw, catlog) || LikeUtil.isMatch(schemaNameRaw, schema))
+            && LikeUtil.isMatch(tableNameRaw, name)) {
+          table = new Table(type, StringUtils.isEmpty(catlog) ? schema : catlog, name);
+          break;
         }
-        rs.close();
+      }
+      rs.close();
 
-        if (table == null) {
-          throw new YuGongException("table[" + schemaName + "." + tableName + "] is not found");
-        }
-
-        // 查询所有字段
-        rs = metaData.getColumns(sName, sName, tName, null);
-        List<ColumnMeta> columnList = new ArrayList<ColumnMeta>();
-        while (rs.next()) {
-          String catlog = rs.getString(1);
-          String schema = rs.getString(2);
-          String name = rs.getString(3);
-          if ((sName == null || LikeUtil.isMatch(sName, catlog) || LikeUtil.isMatch(sName, schema))
-              && LikeUtil.isMatch(tName, name)) {
-            String columnName = rs.getString(4); // COLUMN_NAME
-            int columnType = rs.getInt(5);
-            String typeName = rs.getString(6);
-            columnType = convertSqlType(columnType, typeName);
-            ColumnMeta col = new ColumnMeta(columnName, columnType);
-            columnList.add(col);
-          }
-        }
-        rs.close();
-
-        // 查询主键信息
-        List<String> primaryKeys = new ArrayList<String>();
-        rs = metaData.getPrimaryKeys(sName, sName, tName);
-        while (rs.next()) {
-          String catlog = rs.getString(1);
-          String schema = rs.getString(2);
-          String name = rs.getString(3);
-          if ((sName == null || LikeUtil.isMatch(sName, catlog) || LikeUtil.isMatch(sName, schema))
-              && LikeUtil.isMatch(tName, name)) {
-            primaryKeys.add(StringUtils.upperCase(rs.getString(4)));
-          }
-        }
-        rs.close();
-
-        List<String> uniqueKeys = new ArrayList<String>();
-        if (primaryKeys.isEmpty()) {
-          String lastIndexName = null;
-          rs = metaData.getIndexInfo(sName, sName, tName, true, true);
-          while (rs.next()) {
-            String catlog = rs.getString(1);
-            String schema = rs.getString(2);
-            String name = rs.getString(3);
-            if ((sName == null || LikeUtil.isMatch(sName, catlog) || LikeUtil.isMatch(sName, schema))
-                && LikeUtil.isMatch(tName, name)) {
-              String indexName = StringUtils.upperCase(rs.getString(6));
-              if ("PRIMARY".equals(indexName)) {
-                continue;
-              }
-
-              if (lastIndexName == null) {
-                lastIndexName = indexName;
-              } else if (!lastIndexName.equals(indexName)) {
-                break;
-              }
-
-              uniqueKeys.add(StringUtils.upperCase(rs.getString(9)));
-            }
-          }
-          rs.close();
-
-          // 如果无主键，使用唯一键
-          primaryKeys.addAll(uniqueKeys);
-        }
-
-        Set<ColumnMeta> columns = new HashSet<ColumnMeta>();
-        Set<ColumnMeta> pks = new HashSet<ColumnMeta>();
-        for (ColumnMeta columnMeta : columnList) {
-          if (primaryKeys.contains(columnMeta.getName())) {
-            pks.add(columnMeta);
-          } else {
-            columns.add(columnMeta);
-          }
-        }
-
-        table.getColumns().addAll(columns);
-        table.getPrimaryKeys().addAll(pks);
-        return table;
+      if (table == null) {
+        throw new YuGongException("table[" + schemaName + "." + tableName + "] is not found");
       }
 
+      // 查询所有字段
+      rs = metaData.getColumns(schemaNameRaw, schemaNameRaw, tableNameRaw, null);
+      List<ColumnMeta> columnList = new ArrayList<ColumnMeta>();
+      while (rs.next()) {
+        String catlog = rs.getString(1);
+        String schema = rs.getString(2);
+        String name = rs.getString(3);
+        if ((schemaNameRaw == null || LikeUtil.isMatch(schemaNameRaw, catlog) || LikeUtil.isMatch(schemaNameRaw, schema))
+            && LikeUtil.isMatch(tableNameRaw, name)) {
+          String columnName = rs.getString(4); // COLUMN_NAME
+          int columnType = rs.getInt(5);
+          String typeName = rs.getString(6);
+          columnType = convertSqlType(columnType, typeName);
+          ColumnMeta col = new ColumnMeta(columnName, columnType);
+          columnList.add(col);
+        }
+      }
+      rs.close();
+
+      // 查询主键信息
+      List<String> primaryKeys = new ArrayList<String>();
+      rs = metaData.getPrimaryKeys(schemaNameRaw, schemaNameRaw, tableNameRaw);
+      while (rs.next()) {
+        String catlog = rs.getString(1);
+        String schema = rs.getString(2);
+        String name = rs.getString(3);
+        if ((schemaNameRaw == null || LikeUtil.isMatch(schemaNameRaw, catlog) || LikeUtil.isMatch(schemaNameRaw, schema))
+            && LikeUtil.isMatch(tableNameRaw, name)) {
+          primaryKeys.add(StringUtils.upperCase(rs.getString(4)));
+        }
+      }
+      rs.close();
+
+      List<String> uniqueKeys = new ArrayList<String>();
+      if (primaryKeys.isEmpty()) {
+        String lastIndexName = null;
+        rs = metaData.getIndexInfo(schemaNameRaw, schemaNameRaw, tableNameRaw, true, true);
+        while (rs.next()) {
+          String catlog = rs.getString(1);
+          String schema = rs.getString(2);
+          String name = rs.getString(3);
+          if ((schemaNameRaw == null || LikeUtil.isMatch(schemaNameRaw, catlog) || LikeUtil.isMatch(schemaNameRaw, schema))
+              && LikeUtil.isMatch(tableNameRaw, name)) {
+            String indexName = StringUtils.upperCase(rs.getString(6));
+            if ("PRIMARY".equals(indexName)) {
+              continue;
+            }
+
+            if (lastIndexName == null) {
+              lastIndexName = indexName;
+            } else if (!lastIndexName.equals(indexName)) {
+              break;
+            }
+
+            uniqueKeys.add(StringUtils.upperCase(rs.getString(9)));
+          }
+        }
+        rs.close();
+
+        // 如果无主键，使用唯一键
+        primaryKeys.addAll(uniqueKeys);
+      }
+
+      Set<ColumnMeta> columns = new HashSet<ColumnMeta>();
+      Set<ColumnMeta> pks = new HashSet<ColumnMeta>();
+      for (ColumnMeta columnMeta : columnList) {
+        if (primaryKeys.contains(columnMeta.getName())) {
+          pks.add(columnMeta);
+        } else {
+          columns.add(columnMeta);
+        }
+      }
+
+      table.getColumns().addAll(columns);
+      table.getPrimaryKeys().addAll(pks);
+      return table;
     });
   }
 
@@ -211,30 +215,33 @@ public class TableMetaGenerator {
   /**
    * 返回就诶过 key:column name , value=index name
    */
-  public static Map<String/* column name */, String /* index name */> getTableIndex(final DataSource dataSource,
-      final String schemaName,
-      final String tableName) {
+  public static Map<String, String> getTableIndex(final DbType dbType, final DataSource dataSource,
+      final String schemaName, final String tableName) {
     JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-    return (Map<String, String>) jdbcTemplate.execute(new ConnectionCallback() {
+    return (Map<String, String>) jdbcTemplate.execute((ConnectionCallback) conn -> {
+      DatabaseMetaData metaData = conn.getMetaData();
+      String schemaNameRaw = getIdentifierName(schemaName, metaData);
+      String tableNameRaw = getIdentifierName(tableName, metaData);
 
-      public Object doInConnection(Connection conn) throws SQLException, DataAccessException {
-        DatabaseMetaData metaData = conn.getMetaData();
-        String sName = getIdentifierName(schemaName, metaData);
-        String tName = getIdentifierName(tableName, metaData);
-
-        ResultSet rs = metaData.getIndexInfo(sName, sName, tName, false, true);
-        Map<String, String> indexes = new HashMap<String, String>();
-        while (rs.next()) {
-          String columnName = rs.getString(9);
-          String indexName = rs.getString(6);
-          if (columnName != null && indexName != null) {
-            indexes.put(columnName, indexName);
-          }
-        }
-
-        rs.close();
-        return indexes;
+      ResultSet rs;
+      if (dbType == DbType.MYSQL || dbType == DbType.ORACLE || dbType == DbType.DRDS) {
+        rs = metaData.getIndexInfo(schemaNameRaw, schemaNameRaw, tableNameRaw, false, true);
+      } else if (dbType == DbType.SqlServer) {
+        rs = metaData.getIndexInfo(schemaNameRaw, null, tableNameRaw, false, true);
+      } else {
+        throw new YuGongException("unknown db type");
       }
+      Map<String, String> indexes = new HashMap<>();
+      while (rs.next()) {
+        String columnName = rs.getString(9);
+        String indexName = rs.getString(6);
+        if (columnName != null && indexName != null) {
+          indexes.put(columnName, indexName);
+        }
+      }
+
+      rs.close();
+      return indexes;
     });
   }
 

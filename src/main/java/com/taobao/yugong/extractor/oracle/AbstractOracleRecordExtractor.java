@@ -3,13 +3,14 @@ package com.taobao.yugong.extractor.oracle;
 import com.taobao.yugong.common.db.meta.ColumnMeta;
 import com.taobao.yugong.common.db.meta.ColumnValue;
 import com.taobao.yugong.common.utils.YuGongUtils;
+import com.taobao.yugong.extractor.AbstractFullRecordExtractor;
 import com.taobao.yugong.extractor.AbstractRecordExtractor;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 
-public abstract class AbstractOracleRecordExtractor extends AbstractRecordExtractor {
+public abstract class AbstractOracleRecordExtractor extends AbstractFullRecordExtractor {
 
   /**
    * 从oracle的resultset中得到value
@@ -19,6 +20,7 @@ public abstract class AbstractOracleRecordExtractor extends AbstractRecordExtrac
    * 2.  如果为字符串类型，并且需要进行转码，那么进行编码转换。
    * </pre>
    */
+  @Override
   public ColumnValue getColumnValue(ResultSet rs, String encoding, ColumnMeta col) throws 
       SQLException {
     Object value = null;

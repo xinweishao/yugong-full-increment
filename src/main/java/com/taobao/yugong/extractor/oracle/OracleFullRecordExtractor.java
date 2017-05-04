@@ -13,9 +13,7 @@ import com.taobao.yugong.common.model.record.Record;
 import com.taobao.yugong.common.utils.YuGongUtils;
 import com.taobao.yugong.common.utils.thread.NamedThreadFactory;
 import com.taobao.yugong.exception.YuGongException;
-import com.taobao.yugong.extractor.ContinueExtractor;
-
-import lombok.Getter;
+import com.taobao.yugong.extractor.FullContinueExtractor;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -36,11 +34,7 @@ public class OracleFullRecordExtractor extends AbstractOracleRecordExtractor {
   private static final String MIN_PK_FORMAT = "select min({0}) from {1}.{2}";
   private YuGongContext context;
   private LinkedBlockingQueue<Record> queue;
-  @Getter
-  private String extractSql;
   private Thread extractorThread = null;
-  @Getter
-  private String getMinPkSql;
 
   public OracleFullRecordExtractor(YuGongContext context) {
     this.context = context;
@@ -69,7 +63,7 @@ public class OracleFullRecordExtractor extends AbstractOracleRecordExtractor {
     }
 
     extractorThread = new NamedThreadFactory(this.getClass().getSimpleName() + "-" + context.getTableMeta().getFullName())
-        .newThread(new ContinueExtractor(this, context, queue));
+        .newThread(new FullContinueExtractor(this, context, queue));
     extractorThread.start();
 
     queue = new LinkedBlockingQueue<>(context.getOnceCrawNum() * 2);

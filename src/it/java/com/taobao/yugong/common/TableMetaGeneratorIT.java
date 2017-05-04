@@ -4,7 +4,9 @@ import com.taobao.yugong.BaseDbIT;
 import com.taobao.yugong.common.db.DataSourceFactory;
 import com.taobao.yugong.common.db.meta.Table;
 import com.taobao.yugong.common.db.meta.TableMetaGenerator;
+import com.taobao.yugong.common.model.DbType;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Map;
@@ -25,19 +27,21 @@ public class TableMetaGeneratorIT extends BaseDbIT {
     String schemaName = "test";
     String tableName = "test_all_target";
     DataSource oracle = dataSourceFactory.getDataSource(getOracleConfig());
-    Table table = TableMetaGenerator.getTableMeta(oracle, schemaName, tableName);
+    Table table = TableMetaGenerator.getTableMeta(DbType.ORACLE, oracle, schemaName, tableName);
     System.out.println(table);
 
-    Map<String, String> index = TableMetaGenerator.getTableIndex(oracle, schemaName, tableName);
+    Map<String, String> index = TableMetaGenerator.getTableIndex(DbType.ORACLE, oracle, schemaName, 
+        tableName);
     System.out.println(index);
 
     String mlogName = TableMetaGenerator.getMLogTableName(oracle, schemaName, tableName);
     System.out.println(mlogName);
 
-    Table mtable = TableMetaGenerator.getTableMeta(oracle, schemaName, mlogName);
+    Table mtable = TableMetaGenerator.getTableMeta(DbType.SqlServer, oracle, schemaName, mlogName);
     System.out.println(mtable);
 
-    Map<String, String> mindex = TableMetaGenerator.getTableIndex(oracle, schemaName, mlogName);
+    Map<String, String> mindex = TableMetaGenerator.getTableIndex(DbType.ORACLE, oracle, 
+        schemaName, mlogName);
     System.out.println(mindex);
     dataSourceFactory.stop();
   }
@@ -50,11 +54,29 @@ public class TableMetaGeneratorIT extends BaseDbIT {
     String schemaName = "test";
     String tableName = "yugong_example_date_pk";
     DataSource mysql = dataSourceFactory.getDataSource(getMysqlConfig());
-    Table table = TableMetaGenerator.getTableMeta(mysql, schemaName, tableName);
+    Table table = TableMetaGenerator.getTableMeta(DbType.MYSQL, mysql, schemaName, tableName);
     System.out.println(table);
 
-    Map<String, String> index = TableMetaGenerator.getTableIndex(mysql, schemaName, tableName);
+    Map<String, String> index = TableMetaGenerator.getTableIndex(DbType.MYSQL, mysql, schemaName, 
+        tableName);
     System.out.println(index);
+    dataSourceFactory.stop();
+  }
+
+  @Test
+  public void testSqlServer() {
+    DataSourceFactory dataSourceFactory = new DataSourceFactory();
+    dataSourceFactory.start();
+
+    String schemaName = "HJ_VIP";
+    String tableName = "Activities";
+    DataSource sqlserver = dataSourceFactory.getDataSource(getSqlServerConfig());
+    Table table = TableMetaGenerator.getTableMeta(DbType.SqlServer, sqlserver, schemaName, tableName);
+    Assert.assertEquals(tableName, table.getName());
+
+    Map<String, String> index = TableMetaGenerator.getTableIndex(DbType.SqlServer, sqlserver, 
+        schemaName, tableName);
+    Assert.assertTrue(index.size() > 0);
     dataSourceFactory.stop();
   }
 }

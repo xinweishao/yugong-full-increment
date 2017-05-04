@@ -156,7 +156,7 @@ public class IncrementRecordApplier extends AbstractRecordApplier {
         if (sqlUnit == null) { // double-check
           sqlUnit = new TableSqlUnit();
           String applierSql = null;
-          Table meta = TableMetaGenerator.getTableMeta(context.getTargetDs(),
+          Table meta = TableMetaGenerator.getTableMeta(dbType, context.getTargetDs(),
               context.isIgnoreSchema() ? null : names.get(0),
               names.get(1));
 
@@ -230,7 +230,7 @@ public class IncrementRecordApplier extends AbstractRecordApplier {
         if (sqlUnit == null) { // double-check
           sqlUnit = new TableSqlUnit();
           String applierSql = null;
-          Table meta = TableMetaGenerator.getTableMeta(context.getTargetDs(),
+          Table meta = TableMetaGenerator.getTableMeta(dbType, context.getTargetDs(),
               context.isIgnoreSchema() ? null : names.get(0),
               names.get(1));
 
@@ -296,7 +296,7 @@ public class IncrementRecordApplier extends AbstractRecordApplier {
         if (sqlUnit == null) { // double-check
           sqlUnit = new TableSqlUnit();
           String applierSql = null;
-          Table meta = TableMetaGenerator.getTableMeta(context.getTargetDs(),
+          Table meta = TableMetaGenerator.getTableMeta(dbType, context.getTargetDs(),
               context.isIgnoreSchema() ? null : names.get(0),
               names.get(1));
 

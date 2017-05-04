@@ -1,26 +1,34 @@
 package com.taobao.yugong.extractor.sqlserver;
 
-import com.taobao.yugong.common.lifecycle.AbstractYuGongLifeCycle;
+import com.taobao.yugong.common.db.meta.ColumnMeta;
+import com.taobao.yugong.common.db.meta.ColumnValue;
 import com.taobao.yugong.common.model.YuGongContext;
 import com.taobao.yugong.common.model.position.Position;
 import com.taobao.yugong.common.model.record.Record;
 import com.taobao.yugong.exception.YuGongException;
-import com.taobao.yugong.extractor.AbstractRecordExtractor;
+import com.taobao.yugong.extractor.AbstractFullRecordExtractor;
 
+import lombok.Getter;
 import lombok.Setter;
 
-import org.springframework.jdbc.core.JdbcTemplate;
-
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.text.MessageFormat;
 import java.util.List;
 
-public class SqlServerFullRecordExtractor extends AbstractRecordExtractor {
+public class SqlServerFullRecordExtractor extends AbstractFullRecordExtractor {
 
   private final YuGongContext context;
-  @Setter
   private String extractSql;
+
+  private static final String MIN_PK_FORMAT = "select min({0}) from {1}.{2}";
 
   public SqlServerFullRecordExtractor(YuGongContext context) {
     this.context = context;
+    String primaryKey = context.getTableMeta().getPrimaryKeys().get(0).getName();
+    String schemaName = context.getTableMeta().getSchema();
+    String tableName = context.getTableMeta().getName();
+    this.getMinPkSql = MessageFormat.format(MIN_PK_FORMAT, primaryKey, schemaName, tableName);
   }
 
   @Override
@@ -33,28 +41,15 @@ public class SqlServerFullRecordExtractor extends AbstractRecordExtractor {
     return null;
   }
 
-  public void setExtractSql(String extractSql) {
-    this.extractSql = extractSql;
-  }
-
-  public String getExtractSql() {
-    return extractSql;
-  }
-
   @Override
   public void start() {
     super.start();
   }
 
-  public class ContinueExtractor extends AbstractYuGongLifeCycle implements Runnable {
-
-    private JdbcTemplate jdbcTemplate;
-//    private Object id = 0L;
-    private volatile boolean running = true;
-
-    @Override
-    public void run() {
-      
-    }
+  @Override
+  public ColumnValue getColumnValue(ResultSet rs, String encoding, ColumnMeta col)
+      throws SQLException {
+    Object value = rs.getObject(col.getName());
+    return new ColumnValue(col.clone(), value);
   }
 }
