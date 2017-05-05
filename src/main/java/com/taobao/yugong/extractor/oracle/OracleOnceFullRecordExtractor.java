@@ -113,42 +113,39 @@ public class OracleOnceFullRecordExtractor extends AbstractOracleRecordExtractor
     }
 
     public void run() {
-      jdbcTemplate.execute(new StatementCallback() {
+      jdbcTemplate.execute((StatementCallback) stmt -> {
+        stmt.setFetchSize(200);
+        stmt.execute(extractSql);
+        ResultSet rs = stmt.getResultSet();
+        while (rs.next()) {
+          List<ColumnValue> cms = new ArrayList<>();
+          List<ColumnValue> pks = new ArrayList<>();
 
-        public Object doInStatement(Statement stmt) throws SQLException, DataAccessException {
-          stmt.setFetchSize(200);
-          stmt.execute(extractSql);
-          ResultSet rs = stmt.getResultSet();
-          while (rs.next()) {
-            List<ColumnValue> cms = new ArrayList<ColumnValue>();
-            List<ColumnValue> pks = new ArrayList<ColumnValue>();
-
-            for (ColumnMeta pk : context.getTableMeta().getPrimaryKeys()) {
-              ColumnValue cv = getColumnValue(rs, context.getSourceEncoding(), pk);
-              pks.add(cv);
-            }
-
-            for (ColumnMeta col : context.getTableMeta().getColumns()) {
-              ColumnValue cv = getColumnValue(rs, context.getSourceEncoding(), col);
-              cms.add(cv);
-            }
-
-            Record re = new Record(context.getTableMeta().getSchema(),
-                context.getTableMeta().getName(),
-                pks,
-                cms);
-            try {
-              queue.put(re);
-            } catch (InterruptedException e) {
-              Thread.currentThread().interrupt(); // 传递
-              throw new YuGongException(e);
-            }
+          for (ColumnMeta pk : context.getTableMeta().getPrimaryKeys()) {
+            ColumnValue cv = getColumnValue(rs, context.getSourceEncoding(), pk);
+            pks.add(cv);
           }
 
-          setStatus(ExtractStatus.TABLE_END);
-          rs.close();
-          return null;
+          for (ColumnMeta col : context.getTableMeta().getColumns()) {
+            ColumnValue cv = getColumnValue(rs, context.getSourceEncoding(), col);
+            cms.add(cv);
+          }
+
+          Record re = new Record(context.getTableMeta().getSchema(),
+              context.getTableMeta().getName(),
+              pks,
+              cms);
+          try {
+            queue.put(re);
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt(); // 传递
+            throw new YuGongException(e);
+          }
         }
+
+        setStatus(ExtractStatus.TABLE_END);
+        rs.close();
+        return null;
       });
 
     }

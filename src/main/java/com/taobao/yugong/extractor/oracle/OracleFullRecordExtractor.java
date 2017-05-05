@@ -1,5 +1,6 @@
 package com.taobao.yugong.extractor.oracle;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.taobao.yugong.common.db.meta.ColumnValue;
 import com.taobao.yugong.common.db.sql.SqlTemplates;
@@ -19,6 +20,7 @@ import org.apache.commons.lang.StringUtils;
 
 import java.text.MessageFormat;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -36,8 +38,11 @@ public class OracleFullRecordExtractor extends AbstractOracleRecordExtractor {
   private LinkedBlockingQueue<Record> queue;
   private Thread extractorThread = null;
 
+  private static Map<String, Integer> PARAMETER_INDEX_MAP = ImmutableMap.of("id", 1, "limit", 2);
+
   public OracleFullRecordExtractor(YuGongContext context) {
     this.context = context;
+    this.parameterIndexMap = PARAMETER_INDEX_MAP;
   }
 
   @Override
@@ -61,7 +66,6 @@ public class OracleFullRecordExtractor extends AbstractOracleRecordExtractor {
     if (getMinPkSql == null && StringUtils.isNotBlank(primaryKey)) {
       this.getMinPkSql = new MessageFormat(MIN_PK_FORMAT).format(new Object[]{primaryKey, schemaName, tableName});
     }
-
     extractorThread = new NamedThreadFactory(this.getClass().getSimpleName() + "-" + context.getTableMeta().getFullName())
         .newThread(new FullContinueExtractor(this, context, queue));
     extractorThread.start();

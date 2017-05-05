@@ -13,6 +13,8 @@ import com.taobao.yugong.common.model.position.Position;
 import com.taobao.yugong.common.model.record.Record;
 import com.taobao.yugong.exception.YuGongException;
 
+import lombok.Getter;
+
 import org.apache.commons.lang.StringUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCallback;
@@ -20,6 +22,7 @@ import org.springframework.jdbc.core.PreparedStatementCallback;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 
 public class FullContinueExtractor extends AbstractYuGongLifeCycle implements Runnable {
@@ -28,7 +31,10 @@ public class FullContinueExtractor extends AbstractYuGongLifeCycle implements Ru
   private JdbcTemplate jdbcTemplate;
   private Object id = 0L;
   private YuGongContext context;
+  @VisibleForTesting
+  @Getter
   private BlockingQueue<Record> queue;
+  private Map<String, Integer> paramterIndexMap;
   private volatile boolean running = true;
 
   public FullContinueExtractor(AbstractFullRecordExtractor abstractRecordExtractor,
@@ -36,6 +42,7 @@ public class FullContinueExtractor extends AbstractYuGongLifeCycle implements Ru
     this.fullRecordExtractor = abstractRecordExtractor;
     this.context = context;
     this.queue = queue;
+    this.paramterIndexMap = abstractRecordExtractor.getParameterIndexMap();
     jdbcTemplate = new JdbcTemplate(context.getSourceDs());
 
     Position position = context.getLastPosition();
@@ -97,8 +104,8 @@ public class FullContinueExtractor extends AbstractYuGongLifeCycle implements Ru
   @VisibleForTesting
   protected void queryAndSaveToQueue() {
     jdbcTemplate.execute(fullRecordExtractor.getExtractSql(), (PreparedStatementCallback) ps -> {
-          ps.setObject(1, id);
-          ps.setInt(2, context.getOnceCrawNum());
+          ps.setObject(paramterIndexMap.get("id"), id);
+          ps.setInt(paramterIndexMap.get("limit"), context.getOnceCrawNum());
           ps.setFetchSize(200);
           ResultSet rs = ps.executeQuery();
 

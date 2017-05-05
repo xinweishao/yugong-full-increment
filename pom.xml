@@ -331,9 +331,6 @@
                 <includes>
                     <include>**/*</include>
                 </includes>
-                <excludes>
-                    <exclude>**/.svn/</exclude>
-                </excludes>
             </resource>
         </resources>
         <testResources>
@@ -342,9 +339,12 @@
                 <includes>
                     <include>**/*</include>
                 </includes>
-                <excludes>
-                    <exclude>**/.svn/</exclude>
-                </excludes>
+            </testResource>
+            <testResource>
+                <directory>src/it/resources</directory>
+                <includes>
+                    <include>**/*</include>
+                </includes>
             </testResource>
         </testResources>
     </build>

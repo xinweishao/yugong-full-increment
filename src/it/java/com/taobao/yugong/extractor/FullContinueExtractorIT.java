@@ -1,5 +1,7 @@
 package com.taobao.yugong.extractor;
 
+import com.google.common.collect.ImmutableMap;
+import com.taobao.yugong.BaseDbIT;
 import com.taobao.yugong.common.db.DataSourceFactory;
 import com.taobao.yugong.common.db.meta.ColumnMeta;
 import com.taobao.yugong.common.db.meta.ColumnValue;
@@ -12,6 +14,7 @@ import com.taobao.yugong.common.model.record.Record;
 import com.taobao.yugong.exception.YuGongException;
 import com.taobao.yugong.extractor.sqlserver.SqlServerFullRecordExtractor;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.sql.ResultSet;
@@ -24,25 +27,27 @@ import javax.sql.DataSource;
 
 import static org.junit.Assert.*;
 
-public class FullContinueExtractorIT {
+public class FullContinueExtractorIT extends BaseDbIT {
   @Test
   public void queryAndSaveToQueueSQLServer() throws Exception {
     YuGongContext context = new YuGongContext();
     DataSourceFactory dataSourceFactory = new DataSourceFactory();
     dataSourceFactory.start();
-    Properties properties = new Properties();
-    properties.setProperty("maxActive", "200");
-    DataSource dataSource = dataSourceFactory.getDataSource(
-        "jdbc:sqlserver://192.168.21.28:2433", "user_3D", "555555", DbType.SqlServer, properties);
+//    Properties properties = new Properties();
+//    properties.setProperty("maxActive", "200");
+    DataSource dataSource = dataSourceFactory.getDataSource(getSqlServerConfig());
     Table tableMeta = TableMetaGenerator.getTableMeta(DbType.SqlServer, dataSource, "HJ_VIP", 
         "Activities");
-    context.setTableMeta(tableMeta);
 
+    context.setTableMeta(tableMeta);
     context.setSourceDs(dataSource);
+    context.setOnceCrawNum(200);
     
     FullContinueExtractor extractor = new FullContinueExtractor(
         new SqlServerFullRecordExtractor(context), context, new LinkedBlockingQueue<>());
     extractor.queryAndSaveToQueue();
+    Assert.assertTrue(extractor.getQueue().size() >= 17);
+    
     dataSourceFactory.stop();
   }
 

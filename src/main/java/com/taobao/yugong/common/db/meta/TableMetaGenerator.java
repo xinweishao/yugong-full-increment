@@ -78,7 +78,13 @@ public class TableMetaGenerator {
       }
 
       // 查询所有字段
-      rs = metaData.getColumns(schemaNameRaw, schemaNameRaw, tableNameRaw, null);
+      if (dbType == DbType.MYSQL || dbType == DbType.ORACLE || dbType == DbType.DRDS) {
+        rs = metaData.getColumns(schemaNameRaw, schemaNameRaw, tableNameRaw, null);
+      } else if (dbType == DbType.SqlServer) {
+        rs = metaData.getColumns(schemaNameRaw, null, tableNameRaw, null);
+      } else {
+        throw new YuGongException("unknown db type");
+      }
       List<ColumnMeta> columnList = new ArrayList<ColumnMeta>();
       while (rs.next()) {
         String catlog = rs.getString(1);
@@ -97,8 +103,14 @@ public class TableMetaGenerator {
       rs.close();
 
       // 查询主键信息
-      List<String> primaryKeys = new ArrayList<String>();
-      rs = metaData.getPrimaryKeys(schemaNameRaw, schemaNameRaw, tableNameRaw);
+      List<String> primaryKeys = new ArrayList<>();
+      if (dbType == DbType.MYSQL || dbType == DbType.ORACLE || dbType == DbType.DRDS) {
+        rs = metaData.getPrimaryKeys(schemaNameRaw, schemaNameRaw, tableNameRaw);
+      } else if (dbType == DbType.SqlServer) {
+        rs = metaData.getPrimaryKeys(schemaNameRaw, null, tableNameRaw);
+      } else {
+        throw new YuGongException("unknown db type");
+      }
       while (rs.next()) {
         String catlog = rs.getString(1);
         String schema = rs.getString(2);
@@ -113,7 +125,13 @@ public class TableMetaGenerator {
       List<String> uniqueKeys = new ArrayList<String>();
       if (primaryKeys.isEmpty()) {
         String lastIndexName = null;
-        rs = metaData.getIndexInfo(schemaNameRaw, schemaNameRaw, tableNameRaw, true, true);
+        if (dbType == DbType.MYSQL || dbType == DbType.ORACLE || dbType == DbType.DRDS) {
+          rs = metaData.getIndexInfo(schemaNameRaw, schemaNameRaw, tableNameRaw, true, true);
+        } else if (dbType == DbType.SqlServer) {
+          rs = metaData.getIndexInfo(schemaNameRaw, null, tableNameRaw, true, true);
+        } else {
+          throw new YuGongException("unknown db type");
+        }
         while (rs.next()) {
           String catlog = rs.getString(1);
           String schema = rs.getString(2);
