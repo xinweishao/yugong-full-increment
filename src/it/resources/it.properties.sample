@@ -1,0 +1,4 @@
+sqlserver.username=test
+sqlserver.password=test
+sqlserver.url=jdbc:sqlserver://127.0.0.1:2433
+sqlserver.encode=UTF-8
