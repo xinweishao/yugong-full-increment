@@ -1,4 +1,4 @@
-package com.taobao.yugong.extractor.sqlserver;
+package com.taobao.yugong.extractor.mysql;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
@@ -10,14 +10,14 @@ import java.text.MessageFormat;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class SqlServerFullRecordExtractor extends AbstractFullRecordExtractor {
+public class MysqlFullRecordExtractor extends AbstractFullRecordExtractor {
 
-  private static final String MIN_PK_FORMAT = "select min({0}) from {1}.dbo.{2}";
+  private static final String MIN_PK_FORMAT = "select min({0}) from {1}.{2}";
   private static final String DEFALT_EXTRACT_SQL_FORMAT =
-      "select TOP (?) {0} from {1}.dbo.{2} where {3} > ? order by {3} asc;";
-  private static Map<String, Integer> PARAMETER_INDEX_MAP = ImmutableMap.of("id", 2, "limit", 1);
+      "select {0} from {1}.{2} where {3} > ? order by {3} asc limit ?;";
+  private static Map<String, Integer> PARAMETER_INDEX_MAP = ImmutableMap.of("id", 1, "limit", 2);
 
-  public SqlServerFullRecordExtractor(YuGongContext context) {
+  public MysqlFullRecordExtractor(YuGongContext context) {
     this.context = context;
     String primaryKey = context.getTableMeta().getPrimaryKeys().get(0).getName();
     String schemaName = context.getTableMeta().getSchema();

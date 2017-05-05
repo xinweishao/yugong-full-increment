@@ -79,31 +79,6 @@ public class OracleOnceFullRecordExtractor extends AbstractOracleRecordExtractor
     return null;
   }
 
-  public List<Record> extract() throws YuGongException {
-    List<Record> records = Lists.newArrayListWithCapacity(context.getOnceCrawNum());
-    for (int i = 0; i < context.getOnceCrawNum(); i++) {
-      Record r = queue.poll();
-      if (r != null) {
-        records.add(r);
-      } else if (status() == ExtractStatus.TABLE_END) {
-        // 验证下是否已经结束了
-        Record r1 = queue.poll();
-        if (r1 != null) {
-          records.add(r1);
-        } else {
-          // 已经取到低了，没有数据了
-          break;
-        }
-      } else {
-        // 没去到数据
-        i--;
-        continue;
-      }
-    }
-
-    return records;
-  }
-
   public class ContinueExtractor implements Runnable {
 
     private JdbcTemplate jdbcTemplate;

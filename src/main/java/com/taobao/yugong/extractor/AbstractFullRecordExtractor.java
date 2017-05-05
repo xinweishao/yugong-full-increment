@@ -38,8 +38,11 @@ public abstract class AbstractFullRecordExtractor extends AbstractRecordExtracto
   @Getter
   protected LinkedBlockingQueue<Record> queue;
 
-  public abstract ColumnValue getColumnValue(ResultSet rs, String encoding, ColumnMeta col) throws
-      SQLException;
+  public ColumnValue getColumnValue(ResultSet rs, String encoding, ColumnMeta col)
+      throws SQLException {
+    Object value = rs.getObject(col.getName());
+    return new ColumnValue(col.clone(), value);
+  }
 
   public String getExtractSql() {
     return extractSql;
@@ -115,7 +118,4 @@ public abstract class AbstractFullRecordExtractor extends AbstractRecordExtracto
     return records;
   }
 
-  public void setExtractSql(String extractSql) {
-    this.extractSql = extractSql;
-  }
 }

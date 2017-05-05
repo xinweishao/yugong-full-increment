@@ -44,10 +44,10 @@ public class BaseDbIT {
 
   public DataSourceConfig getMysqlConfig() {
     DataSourceConfig config = new DataSourceConfig();
-    config.setUsername("test");
-    config.setPassword("test");
-    config.setUrl("jdbc:mysql://127.0.0.1:3306");
-    config.setEncode("UTF-8");
+    config.setUsername(properties.getProperty("mysql.username"));
+    config.setPassword(properties.getProperty("mysql.password"));
+    config.setUrl(properties.getProperty("mysql.url"));
+    config.setEncode(properties.getProperty("mysql.encode"));
     config.setType(DbType.MYSQL);
 
     return config;
