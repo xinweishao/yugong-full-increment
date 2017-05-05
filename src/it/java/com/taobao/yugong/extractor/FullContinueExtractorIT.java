@@ -8,9 +8,11 @@ import com.taobao.yugong.common.db.meta.ColumnValue;
 import com.taobao.yugong.common.db.meta.Table;
 import com.taobao.yugong.common.db.meta.TableMetaGenerator;
 import com.taobao.yugong.common.model.DbType;
+import com.taobao.yugong.common.model.RunMode;
 import com.taobao.yugong.common.model.YuGongContext;
 import com.taobao.yugong.common.model.position.Position;
 import com.taobao.yugong.common.model.record.Record;
+import com.taobao.yugong.common.stats.ProgressTracer;
 import com.taobao.yugong.exception.YuGongException;
 import com.taobao.yugong.extractor.sqlserver.SqlServerFullRecordExtractor;
 
