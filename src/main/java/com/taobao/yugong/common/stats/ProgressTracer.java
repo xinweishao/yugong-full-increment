@@ -75,13 +75,13 @@ public class ProgressTracer {
     int unknow = this.total - fulling - incing - failed - success;
     String msg = null;
     if (mode == RunMode.ALL) {
-      msg = String.format(ALL_FORMAT, new Object[]{unknow, fulling, incing, success, failed});
+      msg = String.format(ALL_FORMAT, unknow, fulling, incing, success, failed);
     } else if (mode == RunMode.FULL) {
-      msg = String.format(FULL_FORMAT, new Object[]{unknow, fulling, success, failed});
+      msg = String.format(FULL_FORMAT, unknow, fulling, success, failed);
     } else if (mode == RunMode.INC) {
-      msg = String.format(INC_FORMAT, new Object[]{unknow, incing, success, failed});
+      msg = String.format(INC_FORMAT, unknow, incing, success, failed);
     } else if (mode == RunMode.CHECK) {
-      msg = String.format(CHECK_FORMAT, new Object[]{unknow, fulling, success, failed});
+      msg = String.format(CHECK_FORMAT, unknow, fulling, success, failed);
     }
 
     logger.info("{}", msg);

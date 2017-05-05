@@ -104,8 +104,14 @@ public class DataSourceFactory extends AbstractYuGongLifeCycle implements YuGong
         dataSource.setValidationQuery("select 1");
         dataSource.setExceptionSorter("com.alibaba.druid.pool.vendor.MySqlExceptionSorter");
         dataSource.setValidConnectionCheckerClassName("com.alibaba.druid.pool.vendor.MySqlValidConnectionChecker");
+      } else if (dbType.isSqlServer()) {
+        dataSource.setValidationQuery("select 1");
+        dataSource.setExceptionSorter("com.alibaba.druid.pool.vendor.NullExceptionSorter");
+        dataSource.setValidConnectionCheckerClassName("com.alibaba.druid.pool.vendor.MSSQLValidConnectionChecker");
+        dataSource.setValidationQueryTimeout(5);
       } else {
-        logger.error("Unknow database type");
+        logger.error("Unknown database type");
+        throw new YuGongException("Unknown database type");
       }
       return dataSource;
     } catch (Throwable e) {

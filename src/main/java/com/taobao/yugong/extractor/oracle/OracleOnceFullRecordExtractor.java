@@ -79,31 +79,6 @@ public class OracleOnceFullRecordExtractor extends AbstractOracleRecordExtractor
     return null;
   }
 
-  public List<Record> extract() throws YuGongException {
-    List<Record> records = Lists.newArrayListWithCapacity(context.getOnceCrawNum());
-    for (int i = 0; i < context.getOnceCrawNum(); i++) {
-      Record r = queue.poll();
-      if (r != null) {
-        records.add(r);
-      } else if (status() == ExtractStatus.TABLE_END) {
-        // 验证下是否已经结束了
-        Record r1 = queue.poll();
-        if (r1 != null) {
-          records.add(r1);
-        } else {
-          // 已经取到低了，没有数据了
-          break;
-        }
-      } else {
-        // 没去到数据
-        i--;
-        continue;
-      }
-    }
-
-    return records;
-  }
-
   public class ContinueExtractor implements Runnable {
 
     private JdbcTemplate jdbcTemplate;
@@ -113,42 +88,39 @@ public class OracleOnceFullRecordExtractor extends AbstractOracleRecordExtractor
     }
 
     public void run() {
-      jdbcTemplate.execute(new StatementCallback() {
+      jdbcTemplate.execute((StatementCallback) stmt -> {
+        stmt.setFetchSize(200);
+        stmt.execute(extractSql);
+        ResultSet rs = stmt.getResultSet();
+        while (rs.next()) {
+          List<ColumnValue> cms = new ArrayList<>();
+          List<ColumnValue> pks = new ArrayList<>();
 
-        public Object doInStatement(Statement stmt) throws SQLException, DataAccessException {
-          stmt.setFetchSize(200);
-          stmt.execute(extractSql);
-          ResultSet rs = stmt.getResultSet();
-          while (rs.next()) {
-            List<ColumnValue> cms = new ArrayList<ColumnValue>();
-            List<ColumnValue> pks = new ArrayList<ColumnValue>();
-
-            for (ColumnMeta pk : context.getTableMeta().getPrimaryKeys()) {
-              ColumnValue cv = getColumnValue(rs, context.getSourceEncoding(), pk);
-              pks.add(cv);
-            }
-
-            for (ColumnMeta col : context.getTableMeta().getColumns()) {
-              ColumnValue cv = getColumnValue(rs, context.getSourceEncoding(), col);
-              cms.add(cv);
-            }
-
-            Record re = new Record(context.getTableMeta().getSchema(),
-                context.getTableMeta().getName(),
-                pks,
-                cms);
-            try {
-              queue.put(re);
-            } catch (InterruptedException e) {
-              Thread.currentThread().interrupt(); // 传递
-              throw new YuGongException(e);
-            }
+          for (ColumnMeta pk : context.getTableMeta().getPrimaryKeys()) {
+            ColumnValue cv = getColumnValue(rs, context.getSourceEncoding(), pk);
+            pks.add(cv);
           }
 
-          setStatus(ExtractStatus.TABLE_END);
-          rs.close();
-          return null;
+          for (ColumnMeta col : context.getTableMeta().getColumns()) {
+            ColumnValue cv = getColumnValue(rs, context.getSourceEncoding(), col);
+            cms.add(cv);
+          }
+
+          Record re = new Record(context.getTableMeta().getSchema(),
+              context.getTableMeta().getName(),
+              pks,
+              cms);
+          try {
+            queue.put(re);
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt(); // 传递
+            throw new YuGongException(e);
+          }
         }
+
+        setStatus(ExtractStatus.TABLE_END);
+        rs.close();
+        return null;
       });
 
     }

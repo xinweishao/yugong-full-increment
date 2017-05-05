@@ -3,6 +3,8 @@ package com.taobao.yugong.common.db.meta;
 import com.google.common.collect.Lists;
 import com.taobao.yugong.common.utils.YuGongToStringStyle;
 
+import lombok.Data;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.ToStringBuilder;
 
@@ -14,6 +16,7 @@ import java.util.List;
  * @author agapple 2013-9-3 下午2:51:56
  * @since 3.0.0
  */
+@Data
 public class Table {
 
   private String type;
@@ -38,48 +41,8 @@ public class Table {
     this.columns = columns;
   }
 
-  public String getType() {
-    return type;
-  }
-
-  public void setType(String type) {
-    this.type = type;
-  }
-
-  public String getSchema() {
-    return schema;
-  }
-
-  public void setSchema(String schema) {
-    this.schema = schema;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public void setName(String name) {
-    this.name = name;
-  }
-
-  public List<ColumnMeta> getPrimaryKeys() {
-    return primaryKeys;
-  }
-
-  public void setPrimaryKeys(List<ColumnMeta> primaryKeys) {
-    this.primaryKeys = primaryKeys;
-  }
-
   public void addPrimaryKey(ColumnMeta primaryKey) {
     this.primaryKeys.add(primaryKey);
-  }
-
-  public List<ColumnMeta> getColumns() {
-    return columns;
-  }
-
-  public void setColumns(List<ColumnMeta> columns) {
-    this.columns = columns;
   }
 
   public void addColumn(ColumnMeta column) {
@@ -110,14 +73,6 @@ public class Table {
    */
   public String getFullName() {
     return schema + "." + name;
-  }
-
-  public String getExtKey() {
-    return extKey;
-  }
-
-  public void setExtKey(String extKey) {
-    this.extKey = extKey;
   }
 
   public String toString() {

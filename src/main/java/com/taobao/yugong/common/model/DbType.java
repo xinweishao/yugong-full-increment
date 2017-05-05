@@ -16,7 +16,8 @@ public enum DbType {
   /**
    * oracle DB
    */
-  ORACLE("oracle.jdbc.driver.OracleDriver");
+  ORACLE("oracle.jdbc.driver.OracleDriver"),
+  SqlServer("com.microsoft.sqlserver.jdbc.SQLServerDriver");
 
   private String driver;
 
@@ -38,6 +39,10 @@ public enum DbType {
 
   public boolean isOracle() {
     return this.equals(DbType.ORACLE);
+  }
+
+  public boolean isSqlServer() {
+    return this.equals(DbType.SqlServer);
   }
 
 }

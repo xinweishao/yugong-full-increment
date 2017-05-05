@@ -60,7 +60,7 @@ public class CheckRecordApplier extends AbstractRecordApplier {
           throw new YuGongException("names[" + names.toString() + "] is not valid");
         }
 
-        return TableMetaGenerator.getTableMeta(context.getTargetDs(),
+        return TableMetaGenerator.getTableMeta(dbType, context.getTargetDs(),
             context.isIgnoreSchema() ? null : names.get(0),
             names.get(1));
       }
@@ -115,7 +115,7 @@ public class CheckRecordApplier extends AbstractRecordApplier {
     final Map<String, Integer> indexs = sqlUnit.applierIndexs;
     final List<ColumnMeta> primaryKeys = getPrimaryMetas(batchRecords.get(0));
     final List<ColumnMeta> columns = getColumnMetas(batchRecords.get(0));
-    Table meta = TableMetaGenerator.getTableMeta(context.getTargetDs(),
+    Table meta = TableMetaGenerator.getTableMeta(dbType, context.getTargetDs(),
         context.isIgnoreSchema() ? null : batchRecords.get(0).getSchemaName(),
         batchRecords.get(0).getTableName());
 
@@ -357,7 +357,7 @@ public class CheckRecordApplier extends AbstractRecordApplier {
         if (sqlUnit == null) { // double-check
           sqlUnit = new TableSqlUnit();
           String applierSql = null;
-          Table meta = TableMetaGenerator.getTableMeta(context.getTargetDs(),
+          Table meta = TableMetaGenerator.getTableMeta(dbType, context.getTargetDs(),
               context.isIgnoreSchema() ? null : names.get(0),
               names.get(1));
 
