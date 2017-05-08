@@ -21,55 +21,10 @@ public abstract class AbstractOracleRecordExtractor extends AbstractFullRecordEx
    * </pre>
    */
   @Override
-  public ColumnValue getColumnValue(ResultSet rs, String encoding, ColumnMeta col) throws 
-      SQLException {
-    Object value = null;
-    if (col.getType() == Types.DATE) {
-      value = rs.getTimestamp(col.getName());
-      col = new ColumnMeta(col.getName(), Types.TIMESTAMP);
-    } else if (col.getType() == Types.TIMESTAMP) {
-      value = rs.getTimestamp(col.getName());
-      col = new ColumnMeta(col.getName(), Types.TIMESTAMP);
-    } else if (YuGongUtils.isCharType(col.getType())) {
-      // byte[] bytes = rs.getBytes(col.getName());
-      // if (bytes == null) {
-      // value = rs.getObject(col.getName());
-      // } else {
-      // try {
-      // value = new String(bytes, encoding);
-      // } catch (UnsupportedEncodingException e) {
-      // throw new YuGongException("codec error!!", e);
-      // }
-      // }
-      value = rs.getString(col.getName());
-    } else if (YuGongUtils.isClobType(col.getType())) {
-      // Clob c = rs.getClob(col.getName());
-      // if (c == null) {
-      // value = rs.getObject(col.getName());
-      // } else {
-      // InputStream is = c.getAsciiStream();
-      // byte[] bb = new byte[(int) c.length()];
-      // try {
-      // is.read(bb);
-      // } catch (IOException e) {
-      // throw new SQLException("read from clob error,column:" +
-      // col.getName(), e);
-      // }
-      //
-      // try {
-      // value = new String(bb, encoding);
-      // } catch (UnsupportedEncodingException e) {
-      // throw new RuntimeException("codec error!!", e);
-      // }
-      // }
-      value = rs.getString(col.getName());
-    } else if (YuGongUtils.isBlobType(col.getType())) {
-      value = rs.getBytes(col.getName());
-    } else {
-      value = rs.getObject(col.getName());
-    }
-
+  public ColumnValue getColumnValue(ResultSet resultSet, String encoding, ColumnMeta colmnMeta)
+      throws SQLException {
+    ColumnValue columnValue = YuGongUtils.getColumnValue(resultSet, encoding, colmnMeta);
     // 使用clone对象，避免translator修改了引用
-    return new ColumnValue(col.clone(), value);
+    return new ColumnValue(colmnMeta.clone(), columnValue);
   }
 }
