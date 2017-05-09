@@ -38,22 +38,25 @@ public class RecordDiffer {
     record_format += "\t{3}" + SEP;
   }
 
-  public static void diff(Record record1, Record record2) {
+  public static String diff(Record record1, Record record2) {
+    String message = "";
     if (record2 == null) {
-      diffLogger.info(diffMessage(record1.getSchemaName(),
+      message = diffMessage(record1.getSchemaName(),
           record1.getTableName(),
           record1.getPrimaryKeys(),
-          "record not found"));
-      return;
+          "record not found");
+      diffLogger.info(message);
+      return message;
     }
 
     if (record1.getColumns().size() > record2.getColumns().size()) {
-      diffLogger.info(diffMessage(record1.getSchemaName(),
+      message = diffMessage(record1.getSchemaName(),
           record1.getTableName(),
           record1.getPrimaryKeys(),
-          "column size is great than target column size"));
+          "column size is great than target column size");
+      diffLogger.info(message);
 
-      return;
+      return message;
     }
 
     StringBuilder diff = new StringBuilder();
@@ -66,14 +69,18 @@ public class RecordDiffer {
     }
 
     if (!same) {
-      diffLogger.info(diffMessage(record1.getSchemaName(),
+      message = diffMessage(record1.getSchemaName(),
           record2.getTableName(),
           record1.getPrimaryKeys(),
-          diff.toString()));
+          diff.toString());
+      diffLogger.info(message);
+      return message;
     }
+    return message;
   }
 
-  private static boolean campareOneColumn(ColumnValue column1, ColumnValue column2, StringBuilder diff) {
+  private static boolean campareOneColumn(ColumnValue column1, ColumnValue column2,
+      StringBuilder diff) {
     if (!column1.isCheck() || !column2.isCheck()) {
       return true;// 可能不需要做对比，忽略
     }
@@ -172,7 +179,8 @@ public class RecordDiffer {
     throw new YuGongException("column[" + columnName + "] is not found.");
   }
 
-  private static String diffMessage(String schemaName, String tableName, List<ColumnValue> primaryKeys, String message) {
+  private static String diffMessage(String schemaName, String tableName,
+      List<ColumnValue> primaryKeys, String message) {
     return MessageFormat.format(record_format,
         schemaName,
         tableName,

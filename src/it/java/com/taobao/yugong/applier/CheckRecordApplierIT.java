@@ -12,6 +12,7 @@ import com.taobao.yugong.common.model.record.Record;
 import com.taobao.yugong.common.stats.ProgressTracer;
 import com.taobao.yugong.extractor.sqlserver.SqlServerFullRecordExtractor;
 import com.taobao.yugong.translator.NameDataTranslator;
+import com.taobao.yugong.translator.NameTableMetaTranslator;
 
 import org.junit.Test;
 
@@ -20,7 +21,7 @@ import java.util.List;
 import javax.sql.DataSource;
 
 public class CheckRecordApplierIT extends BaseDbIT {
-  
+
   @Test
   public void doApply() throws Exception {
     YuGongContext context = new YuGongContext();
@@ -37,7 +38,7 @@ public class CheckRecordApplierIT extends BaseDbIT {
     SqlServerFullRecordExtractor extractor = new SqlServerFullRecordExtractor(context);
     extractor.setTracer(progressTracer);
     extractor.initContinueExtractor();
-//    extractor.getFullContinueExtractor().start(); // get fetch size with blocking queue
+    //    extractor.getFullContinueExtractor().start(); // get fetch size with blocking queue
     extractor.start();
 
     List<Record> records = extractor.extract();
@@ -46,7 +47,7 @@ public class CheckRecordApplierIT extends BaseDbIT {
 
     YuGongContext applierContext = new YuGongContext();
     DataSource applierDataSource = dataSourceFactory.getDataSource(getMysqlConfig());
-//    ProgressTracer applierProgressTracer = new ProgressTracer(RunMode.CHECK, 1);
+    //    ProgressTracer applierProgressTracer = new ProgressTracer(RunMode.CHECK, 1);
     applierContext.setTargetDs(applierDataSource);
     applierContext.setOnceCrawNum(200);
     CheckRecordApplier applier = new CheckRecordApplier(applierContext);
@@ -68,14 +69,21 @@ public class CheckRecordApplierIT extends BaseDbIT {
     translator.setColumnCaseFormatFrom(CaseFormat.UPPER_CAMEL);
     translator.setColumnCaseFormatTo(CaseFormat.LOWER_UNDERSCORE);
 
-    applier.start();
-    applier.apply(translator.translator(records));
-    
-//    extractor.start();
+    NameTableMetaTranslator tableMetaTranslator = new NameTableMetaTranslator();
+    tableMetaTranslator.setTableCaseFormatFrom(CaseFormat.UPPER_UNDERSCORE);
+    tableMetaTranslator.setTableCaseFormatTo(CaseFormat.LOWER_UNDERSCORE);
+    tableMetaTranslator.setColumnCaseFormatFrom(CaseFormat.UPPER_CAMEL);
+    tableMetaTranslator.setColumnCaseFormatTo(CaseFormat.LOWER_UNDERSCORE);
+    applier.setTableMetaTranslator(tableMetaTranslator);
 
-//    instance.setExtractor(sqlServerFullRecordExtractor);
-//    instance.setApplier(applier);
-//    instance.start();
+    applier.start();
+    List<String> diffs = applier.doApply(translator.translator(records));
+
+    //    extractor.start();
+
+    //    instance.setExtractor(sqlServerFullRecordExtractor);
+    //    instance.setApplier(applier);
+    //    instance.start();
   }
 
 }

@@ -246,7 +246,7 @@ public class FullRecordApplier extends AbstractRecordApplier {
             index++;
           }
           // 检查下是否少了列
-          checkColumns(meta, indexs);
+          checkIndexColumns(meta, indexs);
 
           sqlUnit.applierSql = applierSql;
           sqlUnit.applierIndexs = indexs;

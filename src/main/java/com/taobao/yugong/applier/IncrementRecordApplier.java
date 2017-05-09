@@ -209,7 +209,7 @@ public class IncrementRecordApplier extends AbstractRecordApplier {
             index++;
           }
           // 检查下是否少了列
-          checkColumns(meta, indexs);
+          checkIndexColumns(meta, indexs);
 
           sqlUnit.applierSql = applierSql;
           sqlUnit.applierIndexs = indexs;
@@ -275,7 +275,7 @@ public class IncrementRecordApplier extends AbstractRecordApplier {
             index++;
           }
           // 检查下是否少了列
-          checkColumns(meta, indexs);
+          checkIndexColumns(meta, indexs);
 
           sqlUnit.applierSql = applierSql;
           sqlUnit.applierIndexs = indexs;
@@ -310,7 +310,7 @@ public class IncrementRecordApplier extends AbstractRecordApplier {
             index++;
           }
           // 检查下是否少了列
-          checkColumns(meta, indexs);
+          checkIndexColumns(meta, indexs);
 
           sqlUnit.applierSql = applierSql;
           sqlUnit.applierIndexs = indexs;

@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 
 /**
@@ -68,7 +69,6 @@ public class CheckRecordApplier extends AbstractRecordApplier {
   }
 
   public void apply(List<Record> records) throws YuGongException {
-    // no one,just return
     if (YuGongUtils.isEmpty(records)) {
       return;
     }
@@ -76,8 +76,9 @@ public class CheckRecordApplier extends AbstractRecordApplier {
     doApply(records);
   }
 
-  protected void doApply(List<Record> records) {
+  protected List<String> doApply(List<Record> records) {
     Map<List<String>, List<Record>> buckets = MigrateMap.makeComputingMap(names -> Lists.newArrayList());
+    List<String> diffResults = Lists.newArrayList();
 
     // 根据目标库的不同，划分为多个bucket
     for (Record record : records) {
@@ -93,8 +94,9 @@ public class CheckRecordApplier extends AbstractRecordApplier {
         queryRecords = queryOneByOne(jdbcTemplate, batchRecords);
       }
 
-      diff(batchRecords, queryRecords);
+      diffResults.addAll(diff(batchRecords, queryRecords));
     }
+    return diffResults;
   }
 
   protected List<Record> queryByBatch(JdbcTemplate jdbcTemplate, final List<Record> batchRecords) {
@@ -254,7 +256,8 @@ public class CheckRecordApplier extends AbstractRecordApplier {
    * @param records1 源库的数据
    * @param records2 目标库的数据
    */
-  protected void diff(List<Record> records1, List<Record> records2) {
+  protected List<String> diff(List<Record> records1, List<Record> records2) {
+    List<String> diffResults = Lists.newArrayList();
 
     Map<List<String>, Record> recordMap2 = new HashMap<>();
     for (Record record : records2) {
@@ -274,16 +277,18 @@ public class CheckRecordApplier extends AbstractRecordApplier {
         objs.add(ObjectUtils.toString(pk.getValue()));
       }
 
-      RecordDiffer.diff(record, recordMap2.remove(objs));
+      diffResults.add(RecordDiffer.diff(record, recordMap2.remove(objs)));
     }
 
     // 比对record2多余的数据
     for (Record record2 : recordMap2.values()) {
-      RecordDiffer.diff(null, record2);
+      diffResults.add(RecordDiffer.diff(null, record2));
     }
+    return diffResults;
   }
 
   protected TableSqlUnit getSqlUnit(Record record) {
+    // TODO 获取 target SQL 相关内容，不应该依赖 Record
     List<String> names = Arrays.asList(record.getSchemaName(), record.getTableName());
     TableSqlUnit sqlUnit = selectSqlCache.get(names);
     if (sqlUnit != null) {
@@ -298,9 +303,10 @@ public class CheckRecordApplier extends AbstractRecordApplier {
             context.isIgnoreSchema() ? null : names.get(0),
             names.get(1));
 
-        String[] primaryKeys = getPrimaryNames(record);
-        String[] columns = getColumnNames(record);
-
+        List<String> columns = meta.getColumns().stream().map(ColumnMeta::getName)
+            .collect(Collectors.toList());
+        List<String> primaryKeys = meta.getPrimaryKeys().stream().map(ColumnMeta::getName)
+            .collect(Collectors.toList());
         if (dbType == DbType.MYSQL) {
           applierSql = SqlTemplates.MYSQL.getSelectSql(meta.getSchema(),
               meta.getName(),
@@ -330,7 +336,7 @@ public class CheckRecordApplier extends AbstractRecordApplier {
         }
 
         // 检查下是否少了列
-        checkColumns(meta, indexs); // TODO add translator
+        checkIndexColumns(meta, indexs); // TODO add translator
 
         sqlUnit.applierSql = applierSql;
         sqlUnit.applierIndexs = indexs;
