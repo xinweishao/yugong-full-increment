@@ -183,10 +183,10 @@ public class YuGongUtils {
     Object value;
     if (columnMeta.getType() == Types.DATE) {
       value = resultSet.getTimestamp(columnMeta.getName());
-      columnMeta = new ColumnMeta(columnMeta.getName(), Types.TIMESTAMP);
+      columnMeta = new ColumnMeta(columnMeta.getRawName(), Types.TIMESTAMP);
     } else if (columnMeta.getType() == Types.TIMESTAMP) {
       value = resultSet.getTimestamp(columnMeta.getName());
-      columnMeta = new ColumnMeta(columnMeta.getName(), Types.TIMESTAMP);
+      columnMeta = new ColumnMeta(columnMeta.getRawName(), Types.TIMESTAMP);
     } else if (YuGongUtils.isCharType(columnMeta.getType())) {
       // byte[] bytes = rs.getBytes(col.getName());
       // if (bytes == null) {

@@ -47,7 +47,6 @@ public class SqlServerFullRecordExtractorIT extends BaseDbIT {
     Table tableMeta = TableMetaGenerator.getTableMeta(DbType.SqlServer, dataSource, "HJ_VIP",
         "ShopProduct");
     ProgressTracer progressTracer = new ProgressTracer(RunMode.CHECK, 1);
-
     context.setTableMeta(tableMeta);
     context.setSourceDs(dataSource);
     context.setOnceCrawNum(200);
@@ -56,16 +55,6 @@ public class SqlServerFullRecordExtractorIT extends BaseDbIT {
     sqlServerFullRecordExtractor.setTracer(progressTracer);
     sqlServerFullRecordExtractor.start();
 
-    //    ScheduledThreadPoolExecutor scheduledThreadPoolExecutor = new ScheduledThreadPoolExecutor(1);
-    //    scheduledThreadPoolExecutor.scheduleAtFixedRate(() -> {
-    //          System.out.println(sqlServerFullRecordExtractor.getQueue().size());
-    //          List<Record> queueData = Lists.newArrayList();
-    //          sqlServerFullRecordExtractor.getQueue().drainTo(queueData);
-    //          if (queueData.size() > 0)  {
-    //            System.out.println(queueData.get(queueData.size()));
-    //          }
-    //        },
-    //        1000 * 2, 500, TimeUnit.MILLISECONDS);
     Executors.newSingleThreadExecutor().execute(() -> {
       while (true) {
         try {
@@ -73,9 +62,6 @@ public class SqlServerFullRecordExtractorIT extends BaseDbIT {
         } catch (InterruptedException e) {
           e.printStackTrace();
         }
-        //        if (record != null) {
-//          System.out.println(record.getColumnByName("ProductID").getValue());
-//        }
         meter.mark();
       }
     });

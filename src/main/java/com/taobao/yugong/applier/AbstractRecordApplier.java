@@ -40,9 +40,11 @@ public abstract class AbstractRecordApplier extends AbstractYuGongLifeCycle impl
 
   /**
    * 检查下是否存在必要的字段
+   * @param meta Source table meta
+   * @param indexs target table index
    */
   protected void checkColumns(Table meta, Map<String, Integer> indexs) {
-    Set<String> idx = new HashSet<String>();
+    Set<String> idx = new HashSet<>();
     for (ColumnMeta column : meta.getColumns()) {
       idx.add(column.getName());
     }

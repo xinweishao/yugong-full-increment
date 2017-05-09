@@ -78,5 +78,7 @@ public class TableMetaGeneratorIT extends BaseDbIT {
         schemaName, tableName);
     Assert.assertTrue(index.size() > 0);
     dataSourceFactory.stop();
+    Assert.assertEquals("STARTDATETIME", table.getColumns().get(0).getName());
+    Assert.assertEquals("StartDateTime", table.getColumns().get(0).getRawName());
   }
 }
