@@ -7,6 +7,10 @@ import com.taobao.yugong.common.db.meta.Table;
 import com.taobao.yugong.common.lifecycle.AbstractYuGongLifeCycle;
 import com.taobao.yugong.common.model.record.Record;
 import com.taobao.yugong.exception.YuGongException;
+import com.taobao.yugong.translator.TableMetaTranslator;
+
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.HashSet;
 import java.util.List;
@@ -17,7 +21,12 @@ import java.util.Set;
  * @author agapple 2014年2月25日 下午11:38:06
  * @since 1.0.0
  */
-public abstract class AbstractRecordApplier extends AbstractYuGongLifeCycle implements RecordApplier {
+public abstract class AbstractRecordApplier extends AbstractYuGongLifeCycle
+    implements RecordApplier {
+
+  @Getter
+  @Setter
+  private TableMetaTranslator tableMetaTranslator;
 
   public static class TableSqlUnit {
 
@@ -40,16 +49,18 @@ public abstract class AbstractRecordApplier extends AbstractYuGongLifeCycle impl
 
   /**
    * 检查下是否存在必要的字段
-   * @param meta Source table meta
    * @param indexs target table index
    */
-  protected void checkColumns(Table meta, Map<String, Integer> indexs) {
+  protected void checkColumns(Table sourceTableMeta, Map<String, Integer> indexs) {  // TODO need a table trans
+    if (this.tableMetaTranslator != null) {
+      tableMetaTranslator.translator(sourceTableMeta);
+    }
     Set<String> idx = new HashSet<>();
-    for (ColumnMeta column : meta.getColumns()) {
+    for (ColumnMeta column : sourceTableMeta.getColumns()) {
       idx.add(column.getName());
     }
 
-    for (ColumnMeta column : meta.getPrimaryKeys()) {
+    for (ColumnMeta column : sourceTableMeta.getPrimaryKeys()) {
       idx.add(column.getName());
     }
 
