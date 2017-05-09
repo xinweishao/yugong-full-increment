@@ -261,23 +261,23 @@ public class CheckRecordApplier extends AbstractRecordApplier {
 
     Map<List<String>, Record> recordMap2 = new HashMap<>();
     for (Record record : records2) {
-      List<String> objs = Lists.newArrayList();
+      List<String> primaryKeys2 = Lists.newArrayList();
       for (ColumnValue pk : record.getPrimaryKeys()) {
-        objs.add(ObjectUtils.toString(pk.getValue()));
+        primaryKeys2.add(ObjectUtils.toString(pk.getValue()));
       }
 
-      recordMap2.put(objs, record);
+      recordMap2.put(primaryKeys2, record);
     }
 
     // 以records1为准
     for (Record record : records1) {
-      List<String> objs = Lists.newArrayList();
+      List<String> primaryKeys1 = Lists.newArrayList();
 
       for (ColumnValue pk : record.getPrimaryKeys()) {
-        objs.add(ObjectUtils.toString(pk.getValue()));
+        primaryKeys1.add(ObjectUtils.toString(pk.getValue()));
       }
 
-      diffResults.add(RecordDiffer.diff(record, recordMap2.remove(objs)));
+      diffResults.add(RecordDiffer.diff(record, recordMap2.remove(primaryKeys1)));
     }
 
     // 比对record2多余的数据

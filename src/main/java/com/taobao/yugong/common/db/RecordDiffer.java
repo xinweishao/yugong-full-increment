@@ -38,6 +38,9 @@ public class RecordDiffer {
     record_format += "\t{3}" + SEP;
   }
 
+  /**
+   * diff two record, ignore column order
+   */
   public static String diff(Record record1, Record record2) {
     String message = "";
     if (record2 == null) {
@@ -55,7 +58,6 @@ public class RecordDiffer {
           record1.getPrimaryKeys(),
           "column size is great than target column size");
       diffLogger.info(message);
-
       return message;
     }
 
