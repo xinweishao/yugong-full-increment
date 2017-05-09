@@ -45,7 +45,7 @@ public class TableMetaGenerator {
   public static Table getTableMeta(final DbType dbType, final DataSource dataSource, final String 
       schemaName, final String tableName) {
     JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-    return (Table) jdbcTemplate.execute((ConnectionCallback) conn -> {
+    Object result = jdbcTemplate.execute((ConnectionCallback) conn -> {
       DatabaseMetaData metaData = conn.getMetaData();
       String schemaNameIdentifier = getIdentifierName(schemaName, metaData);
       String tableNameIdentifier = getIdentifierName(tableName, metaData);
@@ -117,7 +117,8 @@ public class TableMetaGenerator {
         String name = rs.getString(3);
         if ((schemaNameIdentifier == null || LikeUtil.isMatch(schemaNameIdentifier, catlog) || LikeUtil.isMatch(schemaNameIdentifier, schema))
             && LikeUtil.isMatch(tableNameIdentifier, name)) {
-          primaryKeys.add(StringUtils.upperCase(rs.getString(4)));
+          //          primaryKeys.add(StringUtils.upperCase(rs.getString(4)));
+          primaryKeys.add(rs.getString(4));
         }
       }
       rs.close();
@@ -138,7 +139,8 @@ public class TableMetaGenerator {
           String name = rs.getString(3);
           if ((schemaNameIdentifier == null || LikeUtil.isMatch(schemaNameIdentifier, catlog) || LikeUtil.isMatch(schemaNameIdentifier, schema))
               && LikeUtil.isMatch(tableNameIdentifier, name)) {
-            String indexName = StringUtils.upperCase(rs.getString(6));
+            //            String indexName = StringUtils.upperCase(rs.getString(6));
+            String indexName = rs.getString(6);
             if ("PRIMARY".equals(indexName)) {
               continue;
             }
@@ -149,7 +151,8 @@ public class TableMetaGenerator {
               break;
             }
 
-            uniqueKeys.add(StringUtils.upperCase(rs.getString(9)));
+            //            uniqueKeys.add(StringUtils.upperCase(rs.getString(9)));
+            uniqueKeys.add(rs.getString(9));
           }
         }
         rs.close();
@@ -172,6 +175,7 @@ public class TableMetaGenerator {
       table.getPrimaryKeys().addAll(pks);
       return table;
     });
+    return (Table) result;
   }
 
   /**
@@ -236,7 +240,7 @@ public class TableMetaGenerator {
   public static Map<String, String> getTableIndex(final DbType dbType, final DataSource dataSource,
       final String schemaName, final String tableName) {
     JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-    return (Map<String, String>) jdbcTemplate.execute((ConnectionCallback) conn -> {
+    Object result = jdbcTemplate.execute((ConnectionCallback) conn -> {
       DatabaseMetaData metaData = conn.getMetaData();
       String schemaNameIdentifier = getIdentifierName(schemaName, metaData);
       String tableNameIdentifier = getIdentifierName(tableName, metaData);
@@ -261,6 +265,7 @@ public class TableMetaGenerator {
       rs.close();
       return indexes;
     });
+    return (Map<String, String>)result;
   }
 
   /**
@@ -405,15 +410,16 @@ public class TableMetaGenerator {
    * </pre>
    */
   private static String getIdentifierName(String name, DatabaseMetaData metaData) throws SQLException {
-    if (metaData.storesMixedCaseIdentifiers()) {
-      return name; // 保留原始名
-    } else if (metaData.storesUpperCaseIdentifiers()) {
-      return StringUtils.upperCase(name);
-    } else if (metaData.storesLowerCaseIdentifiers()) {
-      return StringUtils.lowerCase(name);
-    } else {
-      return name;
-    }
+    return name;  // hack, disable auto convert
+//    if (metaData.storesMixedCaseIdentifiers()) {
+//      return name; // 保留原始名
+//    } else if (metaData.storesUpperCaseIdentifiers()) {
+//      return StringUtils.upperCase(name);
+//    } else if (metaData.storesLowerCaseIdentifiers()) {
+//      return StringUtils.lowerCase(name);
+//    } else {
+//      return name;
+//    }
   }
 
   private static int convertSqlType(int columnType, String typeName) {
