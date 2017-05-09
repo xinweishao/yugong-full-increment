@@ -5,6 +5,7 @@ import com.taobao.yugong.common.model.record.Record;
 
 import org.apache.commons.lang.StringUtils;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -13,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class ColumnTranslator implements TableTranslator {
+public class ColumnTranslator implements RecordTranslator {
 
   protected Collection<String> includeColumns = new HashSet<>();
   protected Collection<String> excludeColumns = new HashSet<>();
@@ -26,10 +27,8 @@ public class ColumnTranslator implements TableTranslator {
    * 包含的同步列
    */
   public ColumnTranslator include(String... columns) {
-    for (String column : columns) {
-//      includeColumns.add(StringUtils.upperCase(column));
-      includeColumns.add(column);
-    }
+    //      includeColumns.add(StringUtils.upperCase(column));
+    includeColumns.addAll(Arrays.asList(columns));
     return this;
   }
 
@@ -37,10 +36,8 @@ public class ColumnTranslator implements TableTranslator {
    * 排除的同步列
    */
   public ColumnTranslator exclude(String... columns) {
-    for (String column : columns) {
-//      excludeColumns.add(StringUtils.upperCase(column));
-      excludeColumns.add(column);
-    }
+    //      excludeColumns.add(StringUtils.upperCase(column));
+    excludeColumns.addAll(Arrays.asList(columns));
     return this;
   }
 
@@ -69,11 +66,7 @@ public class ColumnTranslator implements TableTranslator {
    */
   public ColumnTranslator alias(String srcColumn, String targetColumn) {
     String sourceColumn = StringUtils.upperCase(srcColumn);
-    Set<String> targetColumnSet = columnAlias.get(sourceColumn);
-    if (targetColumnSet == null) {
-      targetColumnSet = new HashSet<>(2);
-      columnAlias.put(sourceColumn, targetColumnSet);
-    }
+    Set<String> targetColumnSet = columnAlias.computeIfAbsent(sourceColumn, k -> new HashSet<>(2));
     targetColumnSet.add(StringUtils.upperCase(targetColumn));
     return this;
   }
@@ -95,7 +88,7 @@ public class ColumnTranslator implements TableTranslator {
       // 删除掉不需要的列
       List<ColumnValue> pks = record.getPrimaryKeys();
       List<ColumnValue> columns = record.getColumns();
-      Set<String> allColumns = new HashSet<String>();
+      Set<String> allColumns = new HashSet<>();
       for (ColumnValue pk : pks) {
         allColumns.add(StringUtils.upperCase(pk.getColumn().getName()));
       }

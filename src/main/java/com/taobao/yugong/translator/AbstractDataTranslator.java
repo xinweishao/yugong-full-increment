@@ -16,7 +16,7 @@ public class AbstractDataTranslator implements DataTranslator {
 
   @Getter
   @Setter
-  protected TableTranslator translator;
+  protected RecordTranslator translator;
 
   /**
    * 转换schemaName,如果返回null,则以每条数据Record的转义为准
