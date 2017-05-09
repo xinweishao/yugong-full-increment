@@ -25,9 +25,12 @@ public class NameTableMetaTranslatorTest {
     
     tableMetaTranslator.translator(table);
     Assert.assertEquals("table", table.getName());
-    Assert.assertEquals("id", table.getColumns().get(0).getRawName());
-    Assert.assertEquals("name", table.getColumns().get(1).getRawName());
-    Assert.assertEquals("shop_product", table.getColumns().get(2).getRawName());
+    Assert.assertEquals("id", table.getColumns().get(0).getName());
+    Assert.assertEquals("name", table.getColumns().get(1).getName());
+    Assert.assertEquals("shop_product", table.getColumns().get(2).getName());
+//    Assert.assertEquals("id", table.getColumns().get(0).getRawName());
+//    Assert.assertEquals("name", table.getColumns().get(1).getRawName());
+//    Assert.assertEquals("shop_product", table.getColumns().get(2).getRawName());
   }
 
 }

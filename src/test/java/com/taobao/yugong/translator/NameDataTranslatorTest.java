@@ -5,8 +5,6 @@ import com.google.common.base.CaseFormat;
 import org.junit.Assert;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
-
 public class NameDataTranslatorTest {
   @Test
   public void tableCaseConvert() throws Exception {

@@ -16,22 +16,25 @@ import org.apache.commons.lang.builder.ToStringBuilder;
 @Data
 public class ColumnMeta {
 
-  private String rawName;
+//  private String rawName;
   private String name;
   private int type;
 
   public ColumnMeta(String columnName, int columnType) {
-    this.rawName = columnName;
-    this.name = StringUtils.upperCase(columnName);// 统一为大写
+//    this.rawName = columnName;
+    this.name = columnName;
+//    this.name = StringUtils.upperCase(columnName);// 统一为大写
     this.type = columnType;
   }
 
   public void setName(String name) {
-    this.name = StringUtils.upperCase(name);
+//    this.name = StringUtils.upperCase(name);
+    this.name = name;
   }
 
   public ColumnMeta clone() {
-    return new ColumnMeta(this.rawName, this.type);
+//    return new ColumnMeta(this.rawName, this.type);
+    return new ColumnMeta(this.name, this.type);
   }
 
   public String toString() {

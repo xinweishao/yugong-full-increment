@@ -237,6 +237,12 @@
             <artifactId>metrics-core</artifactId>
             <version>${metrics.version}</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/commons-beanutils/commons-beanutils -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.5</version>
+        </dependency>
     </dependencies>
 
     <build>

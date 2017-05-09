@@ -1,5 +1,6 @@
 package com.taobao.yugong.applier;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MigrateMap;
 import com.taobao.yugong.common.db.RecordDiffer;
@@ -97,6 +98,8 @@ public class CheckRecordApplier extends AbstractRecordApplier {
   }
 
   protected List<Record> queryByBatch(JdbcTemplate jdbcTemplate, final List<Record> batchRecords) {
+    Preconditions.checkArgument(batchRecords.size() > 0, "do not exists data");
+
     TableSqlUnit sqlUnit = getSqlUnit(batchRecords.get(0));
     final String schemaName = batchRecords.get(0).getSchemaName();
     final String tableName = batchRecords.get(0).getTableName();
@@ -308,10 +311,12 @@ public class CheckRecordApplier extends AbstractRecordApplier {
               meta.getName(),
               primaryKeys,
               columns);
+        } else {
+          // FIXME throw exception
         }
 
         int index = 1;
-        Map<String, Integer> indexs = new HashMap<String, Integer>();
+        Map<String, Integer> indexs = new HashMap<>();
         for (String column : primaryKeys) {
           indexs.put(column, index);
           index++;
@@ -325,7 +330,7 @@ public class CheckRecordApplier extends AbstractRecordApplier {
         }
 
         // 检查下是否少了列
-        checkColumns(meta, indexs);
+        checkColumns(meta, indexs); // TODO add translator
 
         sqlUnit.applierSql = applierSql;
         sqlUnit.applierIndexs = indexs;

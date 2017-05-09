@@ -51,16 +51,13 @@ public abstract class AbstractRecordApplier extends AbstractYuGongLifeCycle
    * 检查下是否存在必要的字段
    * @param indexs target table index
    */
-  protected void checkColumns(Table sourceTableMeta, Map<String, Integer> indexs) {  // TODO need a table trans
-    if (this.tableMetaTranslator != null) {
-      tableMetaTranslator.translator(sourceTableMeta);
-    }
+  protected void checkColumns(Table targetTableMeta, Map<String, Integer> indexs) {  // TODO need a table trans
     Set<String> idx = new HashSet<>();
-    for (ColumnMeta column : sourceTableMeta.getColumns()) {
+    for (ColumnMeta column : targetTableMeta.getColumns()) {
       idx.add(column.getName());
     }
 
-    for (ColumnMeta column : sourceTableMeta.getPrimaryKeys()) {
+    for (ColumnMeta column : targetTableMeta.getPrimaryKeys()) {
       idx.add(column.getName());
     }
 

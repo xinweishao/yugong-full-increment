@@ -51,10 +51,12 @@ public class NameDataTranslator extends AbstractDataTranslator {
   public boolean translator(Record record) {
     record.setTableName(tableCaseConvert(record.getTableName()));
     if (columnCaseFormatFrom != null && columnCaseFormatTo != null) {
-      for (ColumnValue column : record.getColumns()) {
-//        column.getColumn().setRawName(columnCaseConvert(column.getColumn().getRawName()));
-        column.getColumn().setName(columnCaseConvert(column.getColumn().getName()));
-      }
+      record.getColumns().forEach(x -> {
+        x.getColumn().setName(columnCaseConvert(x.getColumn().getName()));
+      });
+      record.getPrimaryKeys().forEach( x -> {
+        x.getColumn().setName(columnCaseConvert(x.getColumn().getName()));
+      });
     }
     return super.translator(record);
   }
