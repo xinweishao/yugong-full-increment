@@ -46,7 +46,6 @@ public class CheckRecordApplierIT extends BaseDbIT {
 //    final String sourceTable = "ShopMultiProduct";
 //    final String sourceTable = "ShopServiceProduct";
     String targetSchema = "hj_product";
-    //    String targetTable = "shop_product";
     Table tableMeta = TableMetaGenerator.getTableMeta(DbType.SqlServer, dataSource, sourceSchema,
         sourceTable);
     ProgressTracer progressTracer = new ProgressTracer(RunMode.CHECK, 1);
@@ -57,16 +56,12 @@ public class CheckRecordApplierIT extends BaseDbIT {
     SqlServerFullRecordExtractor extractor = new SqlServerFullRecordExtractor(context);
     extractor.setTracer(progressTracer);
     extractor.initContinueExtractor();
-    //    extractor.getFullContinueExtractor().start(); // get fetch size with blocking queue
     extractor.start();
 
     List<Record> records = extractor.extract();
 
-    //    YuGongInstance instance = new YuGongInstance(context);
-
     YuGongContext applierContext = new YuGongContext();
     DataSource applierDataSource = dataSourceFactory.getDataSource(getMysqlConfig());
-    //    ProgressTracer applierProgressTracer = new ProgressTracer(RunMode.CHECK, 1);
     applierContext.setTargetDs(applierDataSource);
     applierContext.setOnceCrawNum(200);
     CheckRecordApplier applier = new CheckRecordApplier(applierContext);
@@ -111,12 +106,6 @@ public class CheckRecordApplierIT extends BaseDbIT {
     applier.start();
     List<String> diffs = applier.doApply(translator.translator(records));
     Assert.assertEquals(diffs.toString(), 0, diffs.size());
-
-    //    extractor.start();
-
-    //    instance.setExtractor(sqlServerFullRecordExtractor);
-    //    instance.setApplier(applier);
-    //    instance.start();
   }
 
 }
