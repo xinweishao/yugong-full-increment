@@ -1,6 +1,7 @@
 package com.taobao.yugong.applier;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MigrateMap;
 import com.taobao.yugong.common.db.RecordDiffer;
@@ -277,12 +278,18 @@ public class CheckRecordApplier extends AbstractRecordApplier {
         primaryKeys1.add(ObjectUtils.toString(pk.getValue()));
       }
 
-      diffResults.add(RecordDiffer.diff(record, recordMap2.remove(primaryKeys1)));
+      String diff = RecordDiffer.diff(record, recordMap2.remove(primaryKeys1));
+      if (!Strings.isNullOrEmpty(diff)) {
+        diffResults.add(diff);
+      }
     }
 
     // 比对record2多余的数据
     for (Record record2 : recordMap2.values()) {
-      diffResults.add(RecordDiffer.diff(null, record2));
+      String diff = RecordDiffer.diff(null, record2);
+      if (!Strings.isNullOrEmpty(diff)) {
+        diffResults.add(diff);
+      }
     }
     return diffResults;
   }

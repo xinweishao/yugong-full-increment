@@ -67,7 +67,7 @@ public class RecordDiffer {
 
     for (int i = 0; i < size; i++) {
       ColumnValue column = record1.getColumns().get(i);
-      same &= campareOneColumn(column, getColumn(record2, column.getColumn().getName()), diff);
+      same &= compareOneColumn(column, getColumn(record2, column.getColumn().getName()), diff);
     }
 
     if (!same) {
@@ -81,7 +81,7 @@ public class RecordDiffer {
     return message;
   }
 
-  private static boolean campareOneColumn(ColumnValue column1, ColumnValue column2,
+  private static boolean compareOneColumn(ColumnValue column1, ColumnValue column2,
       StringBuilder diff) {
     if (!column1.isCheck() || !column2.isCheck()) {
       return true;// 可能不需要做对比，忽略
@@ -115,6 +115,11 @@ public class RecordDiffer {
           String v2 = value2.toString();
           // 2012-02-02 02:02:02 与 2012-02-02 肯定是一种包含关系
           if (v1.contains(v2) || v2.contains(v1)) {
+            return true;
+          }
+          // ignore difference in 1 second
+          if (Math.abs(((Date)value1).getTime() - ((Date) value2).getTime()) < 1000) {
+            // TODO add configurable
             return true;
           }
         } else {

@@ -14,6 +14,7 @@ import com.taobao.yugong.extractor.sqlserver.SqlServerFullRecordExtractor;
 import com.taobao.yugong.translator.NameDataTranslator;
 import com.taobao.yugong.translator.NameTableMetaTranslator;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.List;
@@ -28,8 +29,12 @@ public class CheckRecordApplierIT extends BaseDbIT {
     DataSourceFactory dataSourceFactory = new DataSourceFactory();
     dataSourceFactory.start();
     DataSource dataSource = dataSourceFactory.getDataSource(getSqlServerConfig());
-    Table tableMeta = TableMetaGenerator.getTableMeta(DbType.SqlServer, dataSource, "HJ_VIP",
-        "ShopProduct");
+    final String sourceSchema = "HJ_VIP";
+    final String sourceTable = "CategoryProperty";
+    String targetSchema = "hj_product";
+    String targetTable = "shop_product";
+    Table tableMeta = TableMetaGenerator.getTableMeta(DbType.SqlServer, dataSource, sourceSchema,
+        sourceTable);
     ProgressTracer progressTracer = new ProgressTracer(RunMode.CHECK, 1);
     context.setTableMeta(tableMeta);
     context.setSourceDs(dataSource);
@@ -52,25 +57,25 @@ public class CheckRecordApplierIT extends BaseDbIT {
     applierContext.setOnceCrawNum(200);
     CheckRecordApplier applier = new CheckRecordApplier(applierContext);
 
-    NameDataTranslator translator = new NameDataTranslator() {
+    NameDataTranslator translator = new NameDataTranslator() { // TODO configurable
       @Override
       public boolean translator(Record record) {
-        if (record.getSchemaName().equals("HJ_VIP")) {
-          record.setSchemaName("hj_product");
+        if (record.getSchemaName().equals(sourceSchema)) {
+          record.setSchemaName(targetSchema);
         }
-        if (record.getTableName().equals("ShopProduct")) {
-          record.setTableName("shop_product");
-        }
+//        if (record.getTableName().equals(sourceTable)) {
+//          record.setTableName(targetTable);
+//        }
         return super.translator(record);
       }
     };
-    translator.setTableCaseFormatFrom(CaseFormat.UPPER_UNDERSCORE);
+    translator.setTableCaseFormatFrom(CaseFormat.UPPER_CAMEL);
     translator.setTableCaseFormatTo(CaseFormat.LOWER_UNDERSCORE);
     translator.setColumnCaseFormatFrom(CaseFormat.UPPER_CAMEL);
     translator.setColumnCaseFormatTo(CaseFormat.LOWER_UNDERSCORE);
 
     NameTableMetaTranslator tableMetaTranslator = new NameTableMetaTranslator();
-    tableMetaTranslator.setTableCaseFormatFrom(CaseFormat.UPPER_UNDERSCORE);
+    tableMetaTranslator.setTableCaseFormatFrom(CaseFormat.UPPER_CAMEL);
     tableMetaTranslator.setTableCaseFormatTo(CaseFormat.LOWER_UNDERSCORE);
     tableMetaTranslator.setColumnCaseFormatFrom(CaseFormat.UPPER_CAMEL);
     tableMetaTranslator.setColumnCaseFormatTo(CaseFormat.LOWER_UNDERSCORE);
@@ -78,6 +83,7 @@ public class CheckRecordApplierIT extends BaseDbIT {
 
     applier.start();
     List<String> diffs = applier.doApply(translator.translator(records));
+    Assert.assertEquals(diffs.toString(), 0, diffs.size());
 
     //    extractor.start();
 
