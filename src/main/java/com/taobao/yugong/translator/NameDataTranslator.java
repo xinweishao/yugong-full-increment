@@ -43,6 +43,7 @@ public class NameDataTranslator extends AbstractDataTranslator {
     }
     if (columnCaseFormatFrom == CaseFormat.UPPER_CAMEL) {
       input = input.replace("ID", "Id"); // ugly solution
+      input = input.replace("IP", "Ip"); // ugly solution
     }
     return columnCaseFormatFrom.to(columnCaseFormatTo, input);
   }
