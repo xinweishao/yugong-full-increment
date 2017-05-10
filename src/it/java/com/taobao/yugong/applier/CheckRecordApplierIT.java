@@ -3,6 +3,7 @@ package com.taobao.yugong.applier;
 import com.google.common.base.CaseFormat;
 import com.taobao.yugong.BaseDbIT;
 import com.taobao.yugong.common.db.DataSourceFactory;
+import com.taobao.yugong.common.db.meta.ColumnValue;
 import com.taobao.yugong.common.db.meta.Table;
 import com.taobao.yugong.common.db.meta.TableMetaGenerator;
 import com.taobao.yugong.common.model.DbType;
@@ -30,9 +31,13 @@ public class CheckRecordApplierIT extends BaseDbIT {
     dataSourceFactory.start();
     DataSource dataSource = dataSourceFactory.getDataSource(getSqlServerConfig());
     final String sourceSchema = "HJ_VIP";
-    final String sourceTable = "CategoryProperty";
+//    final String sourceTable = "ShopProduct";
+    final String sourceTable = "FrontCategory";
+//    final String sourceTable = "FrontCategoryMapping";
+//    final String sourceTable = "ProductCategory";
+//    final String sourceTable = "ProductOperationLog";
     String targetSchema = "hj_product";
-    String targetTable = "shop_product";
+//    String targetTable = "shop_product";
     Table tableMeta = TableMetaGenerator.getTableMeta(DbType.SqlServer, dataSource, sourceSchema,
         sourceTable);
     ProgressTracer progressTracer = new ProgressTracer(RunMode.CHECK, 1);
@@ -66,6 +71,15 @@ public class CheckRecordApplierIT extends BaseDbIT {
 //        if (record.getTableName().equals(sourceTable)) {
 //          record.setTableName(targetTable);
 //        }
+        if (record.getTableName().equals("ProductOperationLog")) {
+          record.getColumnByName("Editdate").getColumn().setName("EditDate");
+        }
+        if (record.getTableName().equals("FrontCategory")) {
+          record.getColumnByName("BussinessID").getColumn().setName("BusinessID");
+        }
+        if (record.getTableName().equals("FrontCategory")) {
+          record.getColumnByName("IsHighLight").getColumn().setName("IsHightlight");
+        }
         return super.translator(record);
       }
     };

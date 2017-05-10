@@ -8,6 +8,7 @@ import com.taobao.yugong.exception.YuGongException;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.SystemUtils;
+import org.apache.commons.lang3.reflect.TypeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,17 +26,17 @@ import java.util.List;
 public class RecordDiffer {
 
   private static final String SEP = SystemUtils.LINE_SEPARATOR;
-  private static String record_format = null;
+  private static String RECORD_FORMAT = null;
   private static final Logger diffLogger = LoggerFactory.getLogger("check");
 
   static {
-    record_format = SEP + "-----------------" + SEP;
-    record_format += "- Schema: {0} , Table: {1}" + SEP;
-    record_format += "-----------------" + SEP;
-    record_format += "---Pks" + SEP;
-    record_format += "{2}" + SEP;
-    record_format += "---diff" + SEP;
-    record_format += "\t{3}" + SEP;
+    RECORD_FORMAT = SEP + "-----------------" + SEP;
+    RECORD_FORMAT += "- Schema: {0} , Table: {1}" + SEP;
+    RECORD_FORMAT += "-----------------" + SEP;
+    RECORD_FORMAT += "---Pks" + SEP;
+    RECORD_FORMAT += "{2}" + SEP;
+    RECORD_FORMAT += "---diff" + SEP;
+    RECORD_FORMAT += "\t{3}" + SEP;
   }
 
   /**
@@ -96,10 +97,18 @@ public class RecordDiffer {
     StringBuilder message = new StringBuilder();
     message.append(column1.getColumn())
         .append(" , values : [")
-        .append(ObjectUtils.toString(value1))
+        .append(ObjectUtils.toString(value1 == null ? "null" : value1))
         .append("] vs [")
-        .append(ObjectUtils.toString(value2))
-        .append("]\n\t");
+        .append(ObjectUtils.toString(value2 == null ? "null" : value2))
+        .append("]");
+    if (value1 != null && value2 != null && (value1.getClass() != value2.getClass())) {
+      message.append(", type : [")
+          .append(value1.getClass())
+          .append("] vs [")
+          .append(value2.getClass())
+          .append("]");
+    }
+    message.append("\n\t");
 
     if ((value1 == null && value2 != null) || (value1 != null && value2 == null)) {
       diff.append(message);
@@ -188,7 +197,7 @@ public class RecordDiffer {
 
   private static String diffMessage(String schemaName, String tableName,
       List<ColumnValue> primaryKeys, String message) {
-    return MessageFormat.format(record_format,
+    return MessageFormat.format(RECORD_FORMAT,
         schemaName,
         tableName,
         RecordDumper.dumpRecordColumns(primaryKeys),

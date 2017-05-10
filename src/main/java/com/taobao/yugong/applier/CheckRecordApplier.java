@@ -2,6 +2,7 @@ package com.taobao.yugong.applier;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MigrateMap;
 import com.taobao.yugong.common.db.RecordDiffer;
@@ -101,28 +102,30 @@ public class CheckRecordApplier extends AbstractRecordApplier {
   }
 
   protected List<Record> queryByBatch(JdbcTemplate jdbcTemplate, final List<Record> batchRecords) {
-    Preconditions.checkArgument(batchRecords.size() > 0, "do not exists data");
+    if (batchRecords.size() == 0) {
+      return Lists.newArrayList();
+    }
 
-    TableSqlUnit sqlUnit = getSqlUnit(batchRecords.get(0));
-    final String schemaName = batchRecords.get(0).getSchemaName();
-    final String tableName = batchRecords.get(0).getTableName();
-    final Map<String, Integer> indexs = sqlUnit.applierIndexs;
-    final List<ColumnMeta> primaryKeys = getPrimaryMetas(batchRecords.get(0));
-    final List<ColumnMeta> columns = getColumnMetas(batchRecords.get(0));
-    Table meta = TableMetaGenerator.getTableMeta(dbType, context.getTargetDs(),
-        context.isIgnoreSchema() ? null : batchRecords.get(0).getSchemaName(),
-        batchRecords.get(0).getTableName());
+    Record sampleRecord = batchRecords.get(0);
+    Table table = tableCache.get(ImmutableList.of(
+        sampleRecord.getSchemaName(), sampleRecord.getTableName()));
+    TableSqlUnit sqlUnit = getSqlUnit(sampleRecord);
+    final String schemaName = table.getSchema();
+    final String tableName = table.getName();
+    final Map<String, Integer> indexs = sqlUnit.applierIndexs; // FIXME use applier data
+    final List<ColumnMeta> primaryKeys = table.getPrimaryKeys();
+    final List<ColumnMeta> columns = table.getColumns();
 
     String selectSql = null;
     if (dbType == DbType.MYSQL) {
-      selectSql = SqlTemplates.MYSQL.getSelectInSql(meta.getSchema(),
-          meta.getName(),
+      selectSql = SqlTemplates.MYSQL.getSelectInSql(table.getSchema(),
+          table.getName(),
           YuGongUtils.getColumnNameArray(primaryKeys),
           YuGongUtils.getColumnNameArray(columns),
           batchRecords.size());
     } else if (dbType == DbType.ORACLE) {
-      selectSql = SqlTemplates.ORACLE.getSelectInSql(meta.getSchema(),
-          meta.getName(),
+      selectSql = SqlTemplates.ORACLE.getSelectInSql(table.getSchema(),
+          table.getName(),
           YuGongUtils.getColumnNameArray(primaryKeys),
           YuGongUtils.getColumnNameArray(columns),
           batchRecords.size());
@@ -130,7 +133,7 @@ public class CheckRecordApplier extends AbstractRecordApplier {
 
     Object results = jdbcTemplate.execute(selectSql, (PreparedStatementCallback) ps -> {
       // 批量查询，根据pks in 语法
-      int size = batchRecords.get(0).getPrimaryKeys().size();
+      int size = table.getPrimaryKeys().size();
       int i = 0;
       for (Record record : batchRecords) {
         int count = 0;
@@ -188,11 +191,20 @@ public class CheckRecordApplier extends AbstractRecordApplier {
    * 一条条记录串行处理
    */
   protected List<Record> queryOneByOne(JdbcTemplate jdbcTemplate, final List<Record> records) {
-    TableSqlUnit sqlUnit = getSqlUnit(records.get(0));
+    if (records.size() == 0) {
+      return Lists.newArrayList();
+    }
+
+    Record sampleRecord = records.get(0);
+    Table table = tableCache.get(ImmutableList.of(sampleRecord.getSchemaName(),
+        sampleRecord.getTableName()));
+    TableSqlUnit sqlUnit = getSqlUnit(sampleRecord);
     String selectSql = sqlUnit.applierSql;
     final Map<String, Integer> indexs = sqlUnit.applierIndexs;
-    final List<ColumnMeta> primaryKeys = getPrimaryMetas(records.get(0));
-    final List<ColumnMeta> columns = getColumnMetas(records.get(0));
+//    final List<ColumnMeta> primaryKeys = getPrimaryMetas(sampleRecord);
+    final List<ColumnMeta> primaryKeys = table.getPrimaryKeys();
+//    final List<ColumnMeta> columns = getColumnMetas(records.get(0));
+    final List<ColumnMeta> columns = table.getColumns();
     Object results = jdbcTemplate.execute(selectSql, (PreparedStatementCallback) ps -> {
       List<Record> result = Lists.newArrayList();
       for (Record record : records) {
@@ -222,20 +234,20 @@ public class CheckRecordApplier extends AbstractRecordApplier {
 
         ResultSet rs = ps.executeQuery();
         while (rs.next()) {
-          List<ColumnValue> cms = new ArrayList<>();
+          List<ColumnValue> columnValues = new ArrayList<>();
           List<ColumnValue> pks = new ArrayList<>();
           // 需要和源库转义后的record保持相同的primary/column顺序，否则对比会失败
           for (ColumnMeta pk : primaryKeys) {
-            ColumnValue cv = YuGongUtils.getColumnValue(rs, getTargetEncoding(), pk);
-            pks.add(cv);
+            ColumnValue columnValue = YuGongUtils.getColumnValue(rs, getTargetEncoding(), pk);
+            pks.add(columnValue);
           }
 
           for (ColumnMeta col : columns) {
-            ColumnValue cv = YuGongUtils.getColumnValue(rs, getTargetEncoding(), col);
-            cms.add(cv);
+            ColumnValue columnValue = YuGongUtils.getColumnValue(rs, getTargetEncoding(), col);
+            columnValues.add(columnValue);
           }
 
-          Record re = new Record(record.getSchemaName(), record.getTableName(), pks, cms);
+          Record re = new Record(record.getSchemaName(), record.getTableName(), pks, columnValues);
           result.add(re);
         }
       }
