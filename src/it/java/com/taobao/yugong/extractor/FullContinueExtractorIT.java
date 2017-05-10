@@ -49,7 +49,10 @@ public class FullContinueExtractorIT extends BaseDbIT {
         new SqlServerFullRecordExtractor(context), context, new LinkedBlockingQueue<>());
     extractor.queryAndSaveToQueue();
     Assert.assertTrue(extractor.getQueue().size() >= 17);
-    
+    Record record = extractor.getQueue().poll();
+//    Assert.assertEquals("StartDateTime", record.getColumns().get(0).getColumn().getRawName());
+    Assert.assertEquals("StartDateTime", record.getColumns().get(0).getColumn().getName());
+
     dataSourceFactory.stop();
   }
 

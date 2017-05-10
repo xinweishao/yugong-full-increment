@@ -12,6 +12,8 @@ import com.taobao.yugong.common.model.record.Record;
 import com.taobao.yugong.common.utils.thread.NamedThreadFactory;
 import com.taobao.yugong.exception.YuGongException;
 
+import lombok.Setter;
+
 import org.apache.commons.lang.StringUtils;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -34,6 +36,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class OracleOnceFullRecordExtractor extends AbstractOracleRecordExtractor {
 
   private static final String FORMAT = "select /*+parallel(t)*/ {0} from {1}.{2} t";
+  @Setter
   private String extractSql;
   private LinkedBlockingQueue<Record> queue;
   private Thread extractorThread = null;
@@ -107,9 +110,7 @@ public class OracleOnceFullRecordExtractor extends AbstractOracleRecordExtractor
           }
 
           Record re = new Record(context.getTableMeta().getSchema(),
-              context.getTableMeta().getName(),
-              pks,
-              cms);
+              context.getTableMeta().getName(), pks, cms);
           try {
             queue.put(re);
           } catch (InterruptedException e) {
@@ -124,15 +125,6 @@ public class OracleOnceFullRecordExtractor extends AbstractOracleRecordExtractor
       });
 
     }
-  }
-
-  public void setExtractSql(String extractSql) {
-    // if (StringUtils.isNotEmpty(extractSql)
-    // && (!StringUtils.contains(extractSql, "{2}") ||
-    // StringUtils.contains(extractSql, "{3}"))) {
-    // throw new YuGongException("extracSql is not valid . eg :" + FORMAT);
-    // }
-    this.extractSql = extractSql;
   }
 
 }

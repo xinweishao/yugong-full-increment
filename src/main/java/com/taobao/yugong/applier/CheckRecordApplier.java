@@ -1,5 +1,8 @@
 package com.taobao.yugong.applier;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MigrateMap;
 import com.taobao.yugong.common.db.RecordDiffer;
@@ -26,6 +29,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 
 /**
@@ -67,7 +71,6 @@ public class CheckRecordApplier extends AbstractRecordApplier {
   }
 
   public void apply(List<Record> records) throws YuGongException {
-    // no one,just return
     if (YuGongUtils.isEmpty(records)) {
       return;
     }
@@ -75,8 +78,9 @@ public class CheckRecordApplier extends AbstractRecordApplier {
     doApply(records);
   }
 
-  protected void doApply(List<Record> records) {
+  protected List<String> doApply(List<Record> records) {
     Map<List<String>, List<Record>> buckets = MigrateMap.makeComputingMap(names -> Lists.newArrayList());
+    List<String> diffResults = Lists.newArrayList();
 
     // 根据目标库的不同，划分为多个bucket
     for (Record record : records) {
@@ -85,46 +89,51 @@ public class CheckRecordApplier extends AbstractRecordApplier {
 
     JdbcTemplate jdbcTemplate = new JdbcTemplate(context.getTargetDs());
     for (final List<Record> batchRecords : buckets.values()) {
-      List<Record> queryRecords = null;
+      List<Record> queryRecords;
       if (context.isBatchApply()) {
         queryRecords = queryByBatch(jdbcTemplate, batchRecords);
       } else {
         queryRecords = queryOneByOne(jdbcTemplate, batchRecords);
       }
 
-      diff(batchRecords, queryRecords);
+      diffResults.addAll(diff(batchRecords, queryRecords));
     }
+    return diffResults;
   }
 
   protected List<Record> queryByBatch(JdbcTemplate jdbcTemplate, final List<Record> batchRecords) {
-    TableSqlUnit sqlUnit = getSqlUnit(batchRecords.get(0));
-    final String schemaName = batchRecords.get(0).getSchemaName();
-    final String tableName = batchRecords.get(0).getTableName();
-    final Map<String, Integer> indexs = sqlUnit.applierIndexs;
-    final List<ColumnMeta> primaryKeys = getPrimaryMetas(batchRecords.get(0));
-    final List<ColumnMeta> columns = getColumnMetas(batchRecords.get(0));
-    Table meta = TableMetaGenerator.getTableMeta(dbType, context.getTargetDs(),
-        context.isIgnoreSchema() ? null : batchRecords.get(0).getSchemaName(),
-        batchRecords.get(0).getTableName());
+    if (batchRecords.size() == 0) {
+      return Lists.newArrayList();
+    }
+
+    Record sampleRecord = batchRecords.get(0);
+    Table table = tableCache.get(ImmutableList.of(
+        sampleRecord.getSchemaName(), sampleRecord.getTableName()));
+    TableSqlUnit sqlUnit = getSqlUnit(sampleRecord);
+    final String schemaName = table.getSchema();
+    final String tableName = table.getName();
+    final Map<String, Integer> indexs = sqlUnit.applierIndexs; // FIXME use applier data
+    final List<ColumnMeta> primaryKeys = table.getPrimaryKeys();
+    final List<ColumnMeta> columns = table.getColumns();
 
     String selectSql = null;
     if (dbType == DbType.MYSQL) {
-      selectSql = SqlTemplates.MYSQL.getSelectInSql(meta.getSchema(),
-          meta.getName(),
+      selectSql = SqlTemplates.MYSQL.getSelectInSql(table.getSchema(),
+          table.getName(),
           YuGongUtils.getColumnNameArray(primaryKeys),
           YuGongUtils.getColumnNameArray(columns),
           batchRecords.size());
     } else if (dbType == DbType.ORACLE) {
-      selectSql = SqlTemplates.ORACLE.getSelectInSql(meta.getSchema(),
-          meta.getName(),
+      selectSql = SqlTemplates.ORACLE.getSelectInSql(table.getSchema(),
+          table.getName(),
           YuGongUtils.getColumnNameArray(primaryKeys),
           YuGongUtils.getColumnNameArray(columns),
           batchRecords.size());
     }
 
-    return (List<Record>) jdbcTemplate.execute(selectSql, (PreparedStatementCallback) ps -> {
+    Object results = jdbcTemplate.execute(selectSql, (PreparedStatementCallback) ps -> {
       // 批量查询，根据pks in 语法
-      int size = batchRecords.get(0).getPrimaryKeys().size();
+      int size = table.getPrimaryKeys().size();
       int i = 0;
       for (Record record : batchRecords) {
         int count = 0;
@@ -175,18 +184,28 @@ public class CheckRecordApplier extends AbstractRecordApplier {
 
       return result;
     });
+    return (List<Record>) results;
   }
 
   /**
    * 一条条记录串行处理
    */
   protected List<Record> queryOneByOne(JdbcTemplate jdbcTemplate, final List<Record> records) {
-    TableSqlUnit sqlUnit = getSqlUnit(records.get(0));
+    if (records.size() == 0) {
+      return Lists.newArrayList();
+    }
+
+    Record sampleRecord = records.get(0);
+    Table table = tableCache.get(ImmutableList.of(sampleRecord.getSchemaName(),
+        sampleRecord.getTableName()));
+    TableSqlUnit sqlUnit = getSqlUnit(sampleRecord);
     String selectSql = sqlUnit.applierSql;
     final Map<String, Integer> indexs = sqlUnit.applierIndexs;
-    final List<ColumnMeta> primaryKeys = getPrimaryMetas(records.get(0));
-    final List<ColumnMeta> columns = getColumnMetas(records.get(0));
-    return (List<Record>) jdbcTemplate.execute(selectSql, (PreparedStatementCallback) ps -> {
+//    final List<ColumnMeta> primaryKeys = getPrimaryMetas(sampleRecord);
+    final List<ColumnMeta> primaryKeys = table.getPrimaryKeys();
+//    final List<ColumnMeta> columns = getColumnMetas(records.get(0));
+    final List<ColumnMeta> columns = table.getColumns();
+    Object results = jdbcTemplate.execute(selectSql, (PreparedStatementCallback) ps -> {
       List<Record> result = Lists.newArrayList();
       for (Record record : records) {
 
@@ -215,26 +234,26 @@ public class CheckRecordApplier extends AbstractRecordApplier {
 
         ResultSet rs = ps.executeQuery();
         while (rs.next()) {
-          List<ColumnValue> cms = new ArrayList<ColumnValue>();
-          List<ColumnValue> pks = new ArrayList<ColumnValue>();
+          List<ColumnValue> columnValues = new ArrayList<>();
+          List<ColumnValue> pks = new ArrayList<>();
           // 需要和源库转义后的record保持相同的primary/column顺序，否则对比会失败
           for (ColumnMeta pk : primaryKeys) {
-            ColumnValue cv = YuGongUtils.getColumnValue(rs, getTargetEncoding(), pk);
-            pks.add(cv);
+            ColumnValue columnValue = YuGongUtils.getColumnValue(rs, getTargetEncoding(), pk);
+            pks.add(columnValue);
           }
 
           for (ColumnMeta col : columns) {
-            ColumnValue cv = YuGongUtils.getColumnValue(rs, getTargetEncoding(), col);
-            cms.add(cv);
+            ColumnValue columnValue = YuGongUtils.getColumnValue(rs, getTargetEncoding(), col);
+            columnValues.add(columnValue);
           }
 
-          Record re = new Record(record.getSchemaName(), record.getTableName(), pks, cms);
+          Record re = new Record(record.getSchemaName(), record.getTableName(), pks, columnValues);
           result.add(re);
         }
       }
       return result;
     });
-
+    return (List<Record>) results;
   }
 
   protected String getTargetEncoding() {
@@ -250,84 +269,97 @@ public class CheckRecordApplier extends AbstractRecordApplier {
    * @param records1 源库的数据
    * @param records2 目标库的数据
    */
-  protected void diff(List<Record> records1, List<Record> records2) {
+  protected List<String> diff(List<Record> records1, List<Record> records2) {
+    List<String> diffResults = Lists.newArrayList();
 
     Map<List<String>, Record> recordMap2 = new HashMap<>();
     for (Record record : records2) {
-      List<String> objs = Lists.newArrayList();
+      List<String> primaryKeys2 = Lists.newArrayList();
       for (ColumnValue pk : record.getPrimaryKeys()) {
-        objs.add(ObjectUtils.toString(pk.getValue()));
+        primaryKeys2.add(ObjectUtils.toString(pk.getValue()));
       }
 
-      recordMap2.put(objs, record);
+      recordMap2.put(primaryKeys2, record);
     }
 
     // 以records1为准
     for (Record record : records1) {
-      List<String> objs = Lists.newArrayList();
+      List<String> primaryKeys1 = Lists.newArrayList();
 
       for (ColumnValue pk : record.getPrimaryKeys()) {
-        objs.add(ObjectUtils.toString(pk.getValue()));
+        primaryKeys1.add(ObjectUtils.toString(pk.getValue()));
       }
 
-      RecordDiffer.diff(record, recordMap2.remove(objs));
+      String diff = RecordDiffer.diff(record, recordMap2.remove(primaryKeys1));
+      if (!Strings.isNullOrEmpty(diff)) {
+        diffResults.add(diff);
+      }
     }
 
     // 比对record2多余的数据
     for (Record record2 : recordMap2.values()) {
-      RecordDiffer.diff(null, record2);
+      String diff = RecordDiffer.diff(null, record2);
+      if (!Strings.isNullOrEmpty(diff)) {
+        diffResults.add(diff);
+      }
     }
+    return diffResults;
   }
 
   protected TableSqlUnit getSqlUnit(Record record) {
+    // TODO 获取 target SQL 相关内容，不应该依赖 Record
     List<String> names = Arrays.asList(record.getSchemaName(), record.getTableName());
     TableSqlUnit sqlUnit = selectSqlCache.get(names);
-    if (sqlUnit == null) {
-      synchronized (names) {
-        sqlUnit = selectSqlCache.get(names);
-        if (sqlUnit == null) { // double-check
-          sqlUnit = new TableSqlUnit();
-          String applierSql = null;
-          Table meta = TableMetaGenerator.getTableMeta(dbType, context.getTargetDs(),
-              context.isIgnoreSchema() ? null : names.get(0),
-              names.get(1));
+    if (sqlUnit != null) {
+      return sqlUnit;
+    }
+    synchronized (names) {
+      sqlUnit = selectSqlCache.get(names);
+      if (sqlUnit == null) { // double-check
+        sqlUnit = new TableSqlUnit();
+        String applierSql = null;
+        Table meta = TableMetaGenerator.getTableMeta(dbType, context.getTargetDs(),
+            context.isIgnoreSchema() ? null : names.get(0),
+            names.get(1));
 
-          String[] primaryKeys = getPrimaryNames(record);
-          String[] columns = getColumnNames(record);
+        List<String> columns = meta.getColumns().stream().map(ColumnMeta::getName)
+            .collect(Collectors.toList());
+        List<String> primaryKeys = meta.getPrimaryKeys().stream().map(ColumnMeta::getName)
+            .collect(Collectors.toList());
+        if (dbType == DbType.MYSQL) {
+          applierSql = SqlTemplates.MYSQL.getSelectSql(meta.getSchema(),
+              meta.getName(),
+              primaryKeys,
+              columns);
+        } else if (dbType == DbType.ORACLE) {
+          applierSql = SqlTemplates.ORACLE.getSelectSql(meta.getSchema(),
+              meta.getName(),
+              primaryKeys,
+              columns);
+        } else {
+          // FIXME throw exception
+        }
 
-          if (dbType == DbType.MYSQL) {
-            applierSql = SqlTemplates.MYSQL.getSelectSql(meta.getSchema(),
-                meta.getName(),
-                primaryKeys,
-                columns);
-          } else if (dbType == DbType.ORACLE) {
-            applierSql = SqlTemplates.ORACLE.getSelectSql(meta.getSchema(),
-                meta.getName(),
-                primaryKeys,
-                columns);
-          }
+        int index = 1;
+        Map<String, Integer> indexs = new HashMap<>();
+        for (String column : primaryKeys) {
+          indexs.put(column, index);
+          index++;
+        }
 
-          int index = 1;
-          Map<String, Integer> indexs = new HashMap<String, Integer>();
-          for (String column : primaryKeys) {
+        if (index == 1) { // 没有主键
+          for (String column : columns) {
             indexs.put(column, index);
             index++;
           }
-
-          if (index == 1) { // 没有主键
-            for (String column : columns) {
-              indexs.put(column, index);
-              index++;
-            }
-          }
-
-          // 检查下是否少了列
-          checkColumns(meta, indexs);
-
-          sqlUnit.applierSql = applierSql;
-          sqlUnit.applierIndexs = indexs;
-          selectSqlCache.put(names, sqlUnit);
         }
+
+        // 检查下是否少了列
+        checkIndexColumns(meta, indexs); // TODO add translator
+
+        sqlUnit.applierSql = applierSql;
+        sqlUnit.applierIndexs = indexs;
+        selectSqlCache.put(names, sqlUnit);
       }
     }
 

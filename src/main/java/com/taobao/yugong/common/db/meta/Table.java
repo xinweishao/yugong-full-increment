@@ -8,6 +8,7 @@ import lombok.Data;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.ToStringBuilder;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -17,7 +18,7 @@ import java.util.List;
  * @since 3.0.0
  */
 @Data
-public class Table {
+public class Table implements Serializable {
 
   private String type;
   private String schema;

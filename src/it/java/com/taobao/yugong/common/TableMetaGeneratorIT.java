@@ -51,8 +51,8 @@ public class TableMetaGeneratorIT extends BaseDbIT {
     DataSourceFactory dataSourceFactory = new DataSourceFactory();
     dataSourceFactory.start();
 
-    String schemaName = "test";
-    String tableName = "yugong_example_date_pk";
+    String schemaName = "hj_product";
+    String tableName = "shop_product";
     DataSource mysql = dataSourceFactory.getDataSource(getMysqlConfig());
     Table table = TableMetaGenerator.getTableMeta(DbType.MYSQL, mysql, schemaName, tableName);
     System.out.println(table);
@@ -78,5 +78,8 @@ public class TableMetaGeneratorIT extends BaseDbIT {
         schemaName, tableName);
     Assert.assertTrue(index.size() > 0);
     dataSourceFactory.stop();
+    Assert.assertEquals("StartDateTime", table.getColumns().get(0).getName());
+    Assert.assertEquals("Id", table.getPrimaryKeys().get(0).getName());
+//    Assert.assertEquals("StartDateTime", table.getColumns().get(0).getRawName());
   }
 }

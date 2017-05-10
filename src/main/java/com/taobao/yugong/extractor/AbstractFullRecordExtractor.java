@@ -1,5 +1,6 @@
 package com.taobao.yugong.extractor;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.taobao.yugong.common.db.meta.ColumnMeta;
 import com.taobao.yugong.common.db.meta.ColumnValue;
@@ -37,15 +38,14 @@ public abstract class AbstractFullRecordExtractor extends AbstractRecordExtracto
   protected Thread extractorThread;
   @Getter
   protected LinkedBlockingQueue<Record> queue;
+  @VisibleForTesting
+  @Getter
+  private FullContinueExtractor fullContinueExtractor;
 
   public ColumnValue getColumnValue(ResultSet rs, String encoding, ColumnMeta col)
       throws SQLException {
     Object value = rs.getObject(col.getName());
     return new ColumnValue(col.clone(), value);
-  }
-
-  public String getExtractSql() {
-    return extractSql;
   }
 
   @Override
@@ -60,12 +60,18 @@ public abstract class AbstractFullRecordExtractor extends AbstractRecordExtracto
     }
     tracer.update(context.getTableMeta().getFullName(), ProgressStatus.SUCCESS);
   }
+  
+  public void initContinueExtractor() {
+    fullContinueExtractor = new FullContinueExtractor(this, context, queue);
+  }
 
   @Override
   public void start() {
     super.start();
-    extractorThread = new NamedThreadFactory(this.getClass().getSimpleName() + "-" + context.getTableMeta().getFullName())
-        .newThread(new FullContinueExtractor(this, context, queue));
+    this.initContinueExtractor();
+    extractorThread = new NamedThreadFactory(
+        this.getClass().getSimpleName() + "-" + context.getTableMeta().getFullName()
+    ).newThread(fullContinueExtractor);
     extractorThread.start();
     tracer.update(context.getTableMeta().getFullName(), ProgressStatus.FULLING);
   }
@@ -93,6 +99,9 @@ public abstract class AbstractFullRecordExtractor extends AbstractRecordExtracto
     return null;
   }
 
+  /**
+   * extract n record from queue data, n is {@link YuGongContext#getOnceCrawNum()}
+   */
   public List<Record> extract() throws YuGongException {
     List<Record> records = Lists.newArrayListWithCapacity(context.getOnceCrawNum());
     for (int i = 0; i < context.getOnceCrawNum(); i++) {
