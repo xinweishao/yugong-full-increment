@@ -19,6 +19,11 @@ public class SqlServerFullRecordExtractor extends AbstractFullRecordExtractor {
 
   public SqlServerFullRecordExtractor(YuGongContext context) {
     this.context = context;
+  }
+
+  @Override
+  public void init() {
+    super.init();
     String primaryKey = context.getTableMeta().getPrimaryKeys().get(0).getName();
     String schemaName = context.getTableMeta().getSchema();
     String tableName = context.getTableMeta().getName();
@@ -32,5 +37,4 @@ public class SqlServerFullRecordExtractor extends AbstractFullRecordExtractor {
     }
     queue = new LinkedBlockingQueue<>(context.getOnceCrawNum() * 2);
   }
-
 }

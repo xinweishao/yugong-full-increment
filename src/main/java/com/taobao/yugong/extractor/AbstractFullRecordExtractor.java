@@ -47,6 +47,9 @@ public abstract class AbstractFullRecordExtractor extends AbstractRecordExtracto
     Object value = rs.getObject(col.getName());
     return new ColumnValue(col.clone(), value);
   }
+  
+  public void init() { // TODO move to LifeCycle
+  }
 
   @Override
   public void stop() {
@@ -68,6 +71,7 @@ public abstract class AbstractFullRecordExtractor extends AbstractRecordExtracto
   @Override
   public void start() {
     super.start();
+    this.init();
     this.initContinueExtractor();
     extractorThread = new NamedThreadFactory(
         this.getClass().getSimpleName() + "-" + context.getTableMeta().getFullName()

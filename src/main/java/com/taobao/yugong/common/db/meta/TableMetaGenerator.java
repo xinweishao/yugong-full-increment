@@ -29,6 +29,7 @@ import javax.sql.DataSource;
 
 /**
  * 基于mysql的table meta获取
+ * TODO ugly world here, refactory to 3 DB types implements
  *
  * @author agapple 2013-9-9 下午2:45:30
  * @since 3.0.0
@@ -50,7 +51,7 @@ public class TableMetaGenerator {
       String schemaNameIdentifier = getIdentifierName(schemaName, metaData);
       String tableNameIdentifier = getIdentifierName(tableName, metaData);
 
-      ResultSet rs = null;
+      ResultSet rs;
       if (dbType == DbType.MYSQL || dbType == DbType.ORACLE || dbType == DbType.DRDS) {
         rs = metaData.getTables(schemaNameIdentifier, schemaNameIdentifier, tableNameIdentifier, new String[]{"TABLE"});
       } else if (dbType == DbType.SQL_SERVER) {
@@ -77,30 +78,7 @@ public class TableMetaGenerator {
         throw new YuGongException("table[" + schemaName + "." + tableName + "] is not found");
       }
 
-      // 查询所有字段
-      if (dbType == DbType.MYSQL || dbType == DbType.ORACLE || dbType == DbType.DRDS) {
-        rs = metaData.getColumns(schemaNameIdentifier, schemaNameIdentifier, tableNameIdentifier, null);
-      } else if (dbType == DbType.SQL_SERVER) {
-        rs = metaData.getColumns(schemaNameIdentifier, null, tableNameIdentifier, null);
-      } else {
-        throw new YuGongException("unknown db type");
-      }
-      List<ColumnMeta> columnList = new ArrayList<ColumnMeta>();
-      while (rs.next()) {
-        String catlog = rs.getString(1);
-        String schema = rs.getString(2);
-        String name = rs.getString(3);
-        if ((schemaNameIdentifier == null || LikeUtil.isMatch(schemaNameIdentifier, catlog) || LikeUtil.isMatch(schemaNameIdentifier, schema))
-            && LikeUtil.isMatch(tableNameIdentifier, name)) {
-          String columnName = rs.getString(4); // COLUMN_NAME
-          int columnType = rs.getInt(5);
-          String typeName = rs.getString(6);
-          columnType = convertSqlType(columnType, typeName);
-          ColumnMeta col = new ColumnMeta(columnName, columnType);
-          columnList.add(col);
-        }
-      }
-      rs.close();
+      List<ColumnMeta> columnList = queryColumns(dbType, dataSource, table);
 
       // 查询主键信息
       List<String> primaryKeys = new ArrayList<>();
@@ -123,7 +101,7 @@ public class TableMetaGenerator {
       }
       rs.close();
 
-      List<String> uniqueKeys = new ArrayList<String>();
+      List<String> uniqueKeys = new ArrayList<>();
       if (primaryKeys.isEmpty()) {
         String lastIndexName = null;
         if (dbType == DbType.MYSQL || dbType == DbType.ORACLE || dbType == DbType.DRDS) {
@@ -180,58 +158,57 @@ public class TableMetaGenerator {
 
   /**
    * 查询所有的表，不返回表中的字段
+   * NOTE: scan all tables mode only support Oracle
    */
+  @Deprecated
   public static List<Table> getTableMetasWithoutColumn(final DataSource dataSource, final String schemaName,
       final String tableName) {
     JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-    return (List<Table>) jdbcTemplate.execute(new ConnectionCallback() {
+    Object metaResult = jdbcTemplate.execute((ConnectionCallback) conn -> {
+      DatabaseMetaData metaData = conn.getMetaData();
+      List<Table> result = Lists.newArrayList();
+      String databaseName = metaData.getDatabaseProductName();
+      String schemaNameIdentifier = getIdentifierName(schemaName, metaData);
+      String tableNameIdentifier = getIdentifierName(tableName, metaData);
+      ResultSet rs = null;
+      Table table = null;
+      if (StringUtils.startsWithIgnoreCase(databaseName, "oracle") && StringUtils.isEmpty(schemaName)
+          && StringUtils.isEmpty(tableName)) {
+        // 针对oracle，只查询用户表，忽略系统表
+        Statement stmt = conn.createStatement();
+        rs = stmt.executeQuery("SELECT SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA') AS SCHEMA_NAME , TABLE_NAME FROM USER_TABLES T , USER_USERS U WHERE U.USERNAME = SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA')");
 
-      public Object doInConnection(Connection conn) throws SQLException, DataAccessException {
-        DatabaseMetaData metaData = conn.getMetaData();
-        List<Table> result = Lists.newArrayList();
-        String databaseName = metaData.getDatabaseProductName();
-        String schemaNameIdentifier = getIdentifierName(schemaName, metaData);
-        String tableNameIdentifier = getIdentifierName(tableName, metaData);
-        ResultSet rs = null;
-        Table table = null;
-        if (StringUtils.startsWithIgnoreCase(databaseName, "oracle") && StringUtils.isEmpty(schemaName)
-            && StringUtils.isEmpty(tableName)) {
-          // 针对oracle，只查询用户表，忽略系统表
-          Statement stmt = conn.createStatement();
-          rs = stmt.executeQuery("SELECT SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA') AS SCHEMA_NAME , TABLE_NAME FROM USER_TABLES T , USER_USERS U WHERE U.USERNAME = SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA')");
-
-          while (rs.next()) {
-            String schema = rs.getString(1);
-            String name = rs.getString(2);
-            if (!StringUtils.startsWithIgnoreCase(name, "MLOG$_") && !StringUtils.startsWithIgnoreCase(name, "RUPD$_")) {
-              table = new Table("TABLE", schema, name);
-              result.add(table);
-            }
+        while (rs.next()) {
+          String schema = rs.getString(1);
+          String name = rs.getString(2);
+          if (!StringUtils.startsWithIgnoreCase(name, "MLOG$_") && !StringUtils.startsWithIgnoreCase(name, "RUPD$_")) {
+            table = new Table("TABLE", schema, name);
+            result.add(table);
           }
-
-          rs.close();
-          stmt.close();
-          return result;
-        } else {
-          rs = metaData.getTables(schemaNameIdentifier, schemaNameIdentifier, tableNameIdentifier, new String[]{"TABLE"});
-          while (rs.next()) {
-            String catlog = rs.getString(1);
-            String schema = rs.getString(2);
-            String name = rs.getString(3);
-            String type = rs.getString(4);
-
-            if (!StringUtils.startsWithIgnoreCase(name, "MLOG$_") && !StringUtils.startsWithIgnoreCase(name, "RUPD$_")) {
-              table = new Table(type, StringUtils.isEmpty(catlog) ? schema : catlog, name);
-              result.add(table);
-            }
-          }
-
-          rs.close();
-          return result;
         }
-      }
 
+        rs.close();
+        stmt.close();
+        return result;
+      } else {
+        rs = metaData.getTables(schemaNameIdentifier, schemaNameIdentifier, tableNameIdentifier, new String[]{"TABLE"});
+        while (rs.next()) {
+          String catlog = rs.getString(1);
+          String schema = rs.getString(2);
+          String name = rs.getString(3);
+          String type = rs.getString(4);
+
+          if (!StringUtils.startsWithIgnoreCase(name, "MLOG$_") && !StringUtils.startsWithIgnoreCase(name, "RUPD$_")) {
+            table = new Table(type, StringUtils.isEmpty(catlog) ? schema : catlog, name);
+            result.add(table);
+          }
+        }
+
+        rs.close();
+        return result;
+      }
     });
+    return (List<Table>) metaResult;
   }
 
   /**
@@ -300,67 +277,48 @@ public class TableMetaGenerator {
       }
     });
   }
+  
+  void doQueryColumn(DbType dbType, DataSource dataSource,
+      final Table table, ConnectionCallback conn) {
+    
+  }
 
-  public static void buildColumns(DataSource dataSource, final Table table) {
+  public static List<ColumnMeta> queryColumns(DbType dbType, DataSource dataSource,
+      final Table table) {
     JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-    jdbcTemplate.execute(new ConnectionCallback() {
-
-      public Object doInConnection(Connection conn) throws SQLException, DataAccessException {
-        DatabaseMetaData metaData = conn.getMetaData();
-        ResultSet rs;
-        // 查询所有字段
-        rs = metaData.getColumns(table.getSchema(), table.getSchema(), table.getName(), null);
-        List<ColumnMeta> columnList = new ArrayList<ColumnMeta>();
-
-        while (rs.next()) {
-          String catlog = rs.getString(1);
-          String schema = rs.getString(2);
-          String name = rs.getString(3);
-          if ((table.getSchema() == null || LikeUtil.isMatch(table.getSchema(), catlog) || LikeUtil.isMatch(table.getSchema(),
-              schema))
-              && LikeUtil.isMatch(table.getName(), name)) {
-            String columnName = rs.getString(4); // COLUMN_NAME
-            int columnType = rs.getInt(5);
-            String typeName = rs.getString(6);
-            columnType = convertSqlType(columnType, typeName);
-            ColumnMeta col = new ColumnMeta(columnName, columnType);
-            columnList.add(col);
-          }
-        }
-        rs.close();
-
-        // 查询主键信息
-        rs = metaData.getPrimaryKeys(table.getSchema(), table.getSchema(), table.getName());
-        List<String> primaryKeys = new ArrayList<String>();
-        while (rs.next()) {
-          String catlog = rs.getString(1);
-          String schema = rs.getString(2);
-          String name = rs.getString(3);
-          if ((table.getSchema() == null || StringUtils.equalsIgnoreCase(catlog, table.getSchema()) || StringUtils.equalsIgnoreCase(schema,
-              table.getSchema()))
-              && StringUtils.equalsIgnoreCase(name, table.getName())) {
-            primaryKeys.add(rs.getString(4));
-          }
-        }
-        rs.close();
-
-        Set<ColumnMeta> columns = new HashSet<ColumnMeta>();
-        Set<ColumnMeta> pks = new HashSet<ColumnMeta>();
-        for (ColumnMeta columnMeta : columnList) {
-          if (primaryKeys.contains(columnMeta.getName())) {
-            pks.add(columnMeta);
-          } else {
-            columns.add(columnMeta);
-          }
-        }
-
-        table.getColumns().addAll(columns);
-        table.getPrimaryKeys().addAll(pks);
-        return null;
+    Object result = jdbcTemplate.execute((ConnectionCallback) conn -> {
+      List<ColumnMeta> columns = new ArrayList<>();
+      DatabaseMetaData metaData = conn.getMetaData();
+      String schemaNameIdentifier = getIdentifierName(table.getSchema(), metaData);
+      String tableNameIdentifier = getIdentifierName(table.getName(), metaData);
+      // 查询所有字段
+      ResultSet rs;
+      if (dbType == DbType.MYSQL || dbType == DbType.ORACLE || dbType == DbType.DRDS) {
+        rs = metaData.getColumns(schemaNameIdentifier, schemaNameIdentifier, tableNameIdentifier, null);
+      } else if (dbType == DbType.SQL_SERVER) {
+        rs = metaData.getColumns(schemaNameIdentifier, null, tableNameIdentifier, null);
+      } else {
+        throw new YuGongException("unknown db type");
       }
-
+      while (rs.next()) {
+        String catlog = rs.getString(1);
+        String schema = rs.getString(2);
+        String name = rs.getString(3);
+        if ((schemaNameIdentifier == null || LikeUtil.isMatch(schemaNameIdentifier, catlog)
+            || LikeUtil.isMatch(schemaNameIdentifier, schema))
+            && LikeUtil.isMatch(tableNameIdentifier, name)) {
+          String columnName = rs.getString(4); // COLUMN_NAME
+          int columnType = rs.getInt(5);
+          String typeName = rs.getString(6);
+          columnType = convertSqlType(columnType, typeName);
+          ColumnMeta col = new ColumnMeta(columnName, columnType);
+          columns.add(col);
+        }
+      }
+      rs.close();
+      return columns;
     });
-
+    return (List<ColumnMeta>) result;
   }
 
   /**
@@ -369,23 +327,20 @@ public class TableMetaGenerator {
   public static String getShardKeyByDRDS(final DataSource dataSource, final String schemaName, final String tableName) {
     JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
     try {
-      return (String) jdbcTemplate.execute(queryShardKey, new PreparedStatementCallback() {
+      return (String) jdbcTemplate.execute(queryShardKey, (PreparedStatementCallback) ps -> {
+        DatabaseMetaData metaData = ps.getConnection().getMetaData();
+        // String sName = getIdentifierName(schemaName, metaData);
+        String tableNameIdentifier = getIdentifierName(tableName, metaData);
 
-        public Object doInPreparedStatement(PreparedStatement ps) throws SQLException, DataAccessException {
-          DatabaseMetaData metaData = ps.getConnection().getMetaData();
-          // String sName = getIdentifierName(schemaName, metaData);
-          String tableNameIdentifier = getIdentifierName(tableName, metaData);
-
-          ps.setString(1, tableNameIdentifier);
-          ResultSet rs = ps.executeQuery();
-          String log = null;
-          if (rs.next()) {
-            log = rs.getString("KEYS");
-          }
-
-          rs.close();
-          return log;
+        ps.setString(1, tableNameIdentifier);
+        ResultSet rs = ps.executeQuery();
+        String log = null;
+        if (rs.next()) {
+          log = rs.getString("KEYS");
         }
+
+        rs.close();
+        return log;
       });
     } catch (DataAccessException e) {
       // 兼容下oracle源库和目标库DRDS表名不一致的情况,识别一下表名不存在
@@ -409,17 +364,25 @@ public class TableMetaGenerator {
    * storesLowerCaseQuotedIdentifiers,storesMixedCaseIdentifiers,storesMixedCaseQuotedIdentifiers
    * </pre>
    */
-  private static String getIdentifierName(String name, DatabaseMetaData metaData) throws SQLException {
-    return name;  // hack, disable auto convert
-//    if (metaData.storesMixedCaseIdentifiers()) {
-//      return name; // 保留原始名
-//    } else if (metaData.storesUpperCaseIdentifiers()) {
-//      return StringUtils.upperCase(name);
-//    } else if (metaData.storesLowerCaseIdentifiers()) {
-//      return StringUtils.lowerCase(name);
-//    } else {
-//      return name;
-//    }
+  private static String getIdentifierNameBackup(String name, DatabaseMetaData metaData) throws 
+      SQLException {
+    if (metaData.storesMixedCaseIdentifiers()) {
+      return name; // 保留原始名
+    } else if (metaData.storesUpperCaseIdentifiers()) {
+      return StringUtils.upperCase(name);
+    } else if (metaData.storesLowerCaseIdentifiers()) {
+      return StringUtils.lowerCase(name);
+    } else {
+      return name;
+    }
+  }
+
+  /**
+   * return pure name
+   */
+  private static String getIdentifierName(String name, DatabaseMetaData metaData) throws 
+      SQLException {
+    return name;
   }
 
   private static int convertSqlType(int columnType, String typeName) {

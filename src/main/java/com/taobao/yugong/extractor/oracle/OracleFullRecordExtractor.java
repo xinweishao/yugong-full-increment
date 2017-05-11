@@ -40,6 +40,11 @@ public class OracleFullRecordExtractor extends AbstractOracleRecordExtractor {
   public OracleFullRecordExtractor(YuGongContext context) {
     super();
     this.context = context;
+  }
+
+  @Override
+  public void init() {
+    super.init();
     this.parameterIndexMap = PARAMETER_INDEX_MAP;
     String primaryKey = context.getTableMeta().getPrimaryKeys().get(0).getName();
     String schemaName = context.getTableMeta().getSchema();
@@ -60,5 +65,4 @@ public class OracleFullRecordExtractor extends AbstractOracleRecordExtractor {
       this.getMinPkSql = new MessageFormat(MIN_PK_FORMAT).format(new Object[]{primaryKey, schemaName, tableName});
     }
   }
-
 }
