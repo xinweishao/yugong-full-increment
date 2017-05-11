@@ -3,7 +3,6 @@ package com.taobao.yugong.extractor.sqlserver;
 import com.codahale.metrics.ConsoleReporter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.Timer;
 import com.taobao.yugong.BaseDbIT;
 import com.taobao.yugong.common.db.DataSourceFactory;
 import com.taobao.yugong.common.db.meta.Table;
@@ -44,7 +43,7 @@ public class SqlServerFullRecordExtractorIT extends BaseDbIT {
     DataSourceFactory dataSourceFactory = new DataSourceFactory();
     dataSourceFactory.start();
     DataSource dataSource = dataSourceFactory.getDataSource(getSqlServerConfig());
-    Table tableMeta = TableMetaGenerator.getTableMeta(DbType.SqlServer, dataSource, "HJ_VIP",
+    Table tableMeta = TableMetaGenerator.getTableMeta(DbType.SQL_SERVER, dataSource, "HJ_VIP",
         "ShopProduct");
     ProgressTracer progressTracer = new ProgressTracer(RunMode.CHECK, 1);
     context.setTableMeta(tableMeta);

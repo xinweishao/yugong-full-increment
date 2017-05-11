@@ -3,17 +3,8 @@ package com.taobao.yugong;
 import com.taobao.yugong.common.model.DataSourceConfig;
 import com.taobao.yugong.common.model.DbType;
 
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.PropertiesConfiguration;
 import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
 
-import sun.misc.Resource;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.Properties;
 
@@ -59,7 +50,7 @@ public class BaseDbIT {
     config.setPassword(properties.getProperty("sqlserver.password"));
     config.setUrl(properties.getProperty("sqlserver.url"));
     config.setEncode(properties.getProperty("sqlserver.encode"));
-    config.setType(DbType.SqlServer);
+    config.setType(DbType.SQL_SERVER);
 
     return config;
   }

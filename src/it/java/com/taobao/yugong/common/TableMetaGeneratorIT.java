@@ -37,7 +37,7 @@ public class TableMetaGeneratorIT extends BaseDbIT {
     String mlogName = TableMetaGenerator.getMLogTableName(oracle, schemaName, tableName);
     System.out.println(mlogName);
 
-    Table mtable = TableMetaGenerator.getTableMeta(DbType.SqlServer, oracle, schemaName, mlogName);
+    Table mtable = TableMetaGenerator.getTableMeta(DbType.SQL_SERVER, oracle, schemaName, mlogName);
     System.out.println(mtable);
 
     Map<String, String> mindex = TableMetaGenerator.getTableIndex(DbType.ORACLE, oracle, 
@@ -71,10 +71,10 @@ public class TableMetaGeneratorIT extends BaseDbIT {
     String schemaName = "HJ_VIP";
     String tableName = "Activities";
     DataSource sqlserver = dataSourceFactory.getDataSource(getSqlServerConfig());
-    Table table = TableMetaGenerator.getTableMeta(DbType.SqlServer, sqlserver, schemaName, tableName);
+    Table table = TableMetaGenerator.getTableMeta(DbType.SQL_SERVER, sqlserver, schemaName, tableName);
     Assert.assertEquals(tableName, table.getName());
 
-    Map<String, String> index = TableMetaGenerator.getTableIndex(DbType.SqlServer, sqlserver, 
+    Map<String, String> index = TableMetaGenerator.getTableIndex(DbType.SQL_SERVER, sqlserver, 
         schemaName, tableName);
     Assert.assertTrue(index.size() > 0);
     dataSourceFactory.stop();

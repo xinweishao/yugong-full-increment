@@ -53,7 +53,7 @@ public class TableMetaGenerator {
       ResultSet rs = null;
       if (dbType == DbType.MYSQL || dbType == DbType.ORACLE || dbType == DbType.DRDS) {
         rs = metaData.getTables(schemaNameIdentifier, schemaNameIdentifier, tableNameIdentifier, new String[]{"TABLE"});
-      } else if (dbType == DbType.SqlServer) {
+      } else if (dbType == DbType.SQL_SERVER) {
         rs = metaData.getTables(schemaNameIdentifier, null, tableNameIdentifier, new String[]{"TABLE"});
       } else {
         throw new YuGongException("unknown db type");
@@ -80,7 +80,7 @@ public class TableMetaGenerator {
       // 查询所有字段
       if (dbType == DbType.MYSQL || dbType == DbType.ORACLE || dbType == DbType.DRDS) {
         rs = metaData.getColumns(schemaNameIdentifier, schemaNameIdentifier, tableNameIdentifier, null);
-      } else if (dbType == DbType.SqlServer) {
+      } else if (dbType == DbType.SQL_SERVER) {
         rs = metaData.getColumns(schemaNameIdentifier, null, tableNameIdentifier, null);
       } else {
         throw new YuGongException("unknown db type");
@@ -106,7 +106,7 @@ public class TableMetaGenerator {
       List<String> primaryKeys = new ArrayList<>();
       if (dbType == DbType.MYSQL || dbType == DbType.ORACLE || dbType == DbType.DRDS) {
         rs = metaData.getPrimaryKeys(schemaNameIdentifier, schemaNameIdentifier, tableNameIdentifier);
-      } else if (dbType == DbType.SqlServer) {
+      } else if (dbType == DbType.SQL_SERVER) {
         rs = metaData.getPrimaryKeys(schemaNameIdentifier, null, tableNameIdentifier);
       } else {
         throw new YuGongException("unknown db type");
@@ -128,7 +128,7 @@ public class TableMetaGenerator {
         String lastIndexName = null;
         if (dbType == DbType.MYSQL || dbType == DbType.ORACLE || dbType == DbType.DRDS) {
           rs = metaData.getIndexInfo(schemaNameIdentifier, schemaNameIdentifier, tableNameIdentifier, true, true);
-        } else if (dbType == DbType.SqlServer) {
+        } else if (dbType == DbType.SQL_SERVER) {
           rs = metaData.getIndexInfo(schemaNameIdentifier, null, tableNameIdentifier, true, true);
         } else {
           throw new YuGongException("unknown db type");
@@ -248,7 +248,7 @@ public class TableMetaGenerator {
       ResultSet rs;
       if (dbType == DbType.MYSQL || dbType == DbType.ORACLE || dbType == DbType.DRDS) {
         rs = metaData.getIndexInfo(schemaNameIdentifier, schemaNameIdentifier, tableNameIdentifier, false, true);
-      } else if (dbType == DbType.SqlServer) {
+      } else if (dbType == DbType.SQL_SERVER) {
         rs = metaData.getIndexInfo(schemaNameIdentifier, null, tableNameIdentifier, false, true);
       } else {
         throw new YuGongException("unknown db type");

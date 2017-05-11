@@ -11,7 +11,6 @@ import com.taobao.yugong.common.model.YuGongContext;
 import com.taobao.yugong.common.model.record.Record;
 import com.taobao.yugong.common.stats.ProgressTracer;
 import com.taobao.yugong.extractor.sqlserver.SqlServerFullRecordExtractor;
-import com.taobao.yugong.translator.ColumnTranslator;
 import com.taobao.yugong.translator.NameDataTranslator;
 import com.taobao.yugong.translator.NameTableMetaTranslator;
 
@@ -46,7 +45,7 @@ public class CheckRecordApplierIT extends BaseDbIT {
 //    final String sourceTable = "ShopMultiProduct";
 //    final String sourceTable = "ShopServiceProduct";
     String targetSchema = "hj_product";
-    Table tableMeta = TableMetaGenerator.getTableMeta(DbType.SqlServer, dataSource, sourceSchema,
+    Table tableMeta = TableMetaGenerator.getTableMeta(DbType.SQL_SERVER, dataSource, sourceSchema,
         sourceTable);
     ProgressTracer progressTracer = new ProgressTracer(RunMode.CHECK, 1);
     context.setTableMeta(tableMeta);
