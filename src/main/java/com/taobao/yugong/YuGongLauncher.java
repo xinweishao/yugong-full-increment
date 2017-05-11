@@ -11,6 +11,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
 
+/**
+ * Old Version Launcher, use server mode start
+ * Use YuGongApp instead.
+ */
+@Deprecated
 public class YuGongLauncher {
 
   private static final String CLASSPATH_URL_PREFIX = "classpath:";
