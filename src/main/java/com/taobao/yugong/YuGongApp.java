@@ -3,7 +3,9 @@ package com.taobao.yugong;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.converters.FileConverter;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.taobao.yugong.common.version.VersionInfo;
+import com.taobao.yugong.conf.YugongConfiguration;
 import com.taobao.yugong.controller.YuGongController;
 
 import lombok.extern.slf4j.Slf4j;
@@ -13,15 +15,21 @@ import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.lang.exception.ExceptionUtils;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * Single jar app
  */
 @Slf4j
 public class YuGongApp {
-
+  
   @Parameter(names = {"-c", "--config"}, converter = FileConverter.class, required = true)
   private File configFile;
+
+  @Parameter(names = {"-y", "--yaml"}, converter = FileConverter.class, required = true)
+  private File configYamlFile;
+  
+  private static YAMLMapper yamlMapper = new YAMLMapper();
 
   public static void main(String[] args) {
     YuGongApp yuGongApp = new YuGongApp();
@@ -31,19 +39,29 @@ public class YuGongApp {
     try {
       config.load(yuGongApp.configFile);
     } catch (ConfigurationException e) {
-      e.printStackTrace();
+      log.error("Configuration load error: {}", yuGongApp.configFile.getPath());
+      System.exit(0);
     }
+    YugongConfiguration yugongConfiguration;
     try {
-      run(config);
+      yugongConfiguration = yamlMapper.readValue(yuGongApp.configYamlFile,
+          YugongConfiguration.class);
+    } catch (IOException e) {
+      log.error("YAML configuration load error: {}", yuGongApp.configYamlFile.getPath());
+      return;
+    }
+
+    try {
+      run(config, yugongConfiguration);
     } catch (Throwable e) {
       log.error("## Something goes wrong when starting up the YuGong:\n{}",
           ExceptionUtils.getFullStackTrace(e));
-      System.exit(0);
     }
   }
 
-  private static void run(PropertiesConfiguration config) throws InterruptedException {
-    final YuGongController controller = new YuGongController(config);
+  private static void run(PropertiesConfiguration config,
+      YugongConfiguration yugongConfiguration) throws InterruptedException {
+    final YuGongController controller = new YuGongController(config, yugongConfiguration);
     log.info("## start the YuGong.");
     controller.start();
     log.info("## the YuGong is running now ......");

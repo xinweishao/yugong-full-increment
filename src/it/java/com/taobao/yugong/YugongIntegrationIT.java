@@ -7,6 +7,5 @@ package com.taobao.yugong;
 public class YugongIntegrationIT {
 
   public static void main(String[] args) throws Throwable {
-    YuGongLauncher.main(args);
   }
 }

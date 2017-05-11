@@ -1,0 +1,60 @@
+database:
+  source: todo
+  target: todo
+
+table: 
+  a: todo
+  b: todo
+
+extractor:
+  a: todo
+  b: todo
+
+appiler:
+  a: todo
+  b: todo
+
+translators:
+  table:
+    '*':
+      - class: com.taobao.yugong.translator.NameTableMetaTranslator
+        properties:
+          column_case_format_from: UPPER_CAMEL
+          column_case_format_to: LOWER_UNDERSCORE
+          table_case_format_from: UPPER_CAMEL
+          table_case_format_to: LOWER_UNDERSCORE
+    ShopProduct:
+      - class: com.taobao.yugong.translator.NameTableMetaTranslator
+        properties:
+          column_case_format_from: UPPER_CAMEL
+          column_case_format_to: LOWER_UNDERSCORE
+          table_case_format_from: UPPER_CAMEL
+          table_case_format_to: LOWER_UNDERSCORE
+    ProductProperty: []
+  record:
+    '*':
+      - class: com.taobao.yugong.translator.NameDataTranslator
+        properties:
+          column_case_format_from: UPPER_CAMEL
+          column_case_format_to: LOWER_UNDERSCORE
+          table_case_format_from: UPPER_CAMEL
+          table_case_format_to: LOWER_UNDERSCORE
+    ShopProduct:
+      - class: YugongExampleSimpleDataTranslator
+        properties:
+          include:
+            - a
+            - b
+          exclude:
+            - c
+            - d
+          alias:
+            hello: world
+            foo: bar
+      - class: com.taobao.yugong.translator.NameDataTranslator
+        properties:
+          column_case_format_from: UPPER_CAMEL
+          column_case_format_to: LOWER_UNDERSCORE
+          table_case_format_from: UPPER_CAMEL
+          table_case_format_to: LOWER_UNDERSCORE
+

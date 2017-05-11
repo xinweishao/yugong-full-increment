@@ -28,6 +28,7 @@ import com.taobao.yugong.common.utils.LikeUtil;
 import com.taobao.yugong.common.utils.YuGongUtils;
 import com.taobao.yugong.common.utils.compile.JdkCompiler;
 import com.taobao.yugong.common.utils.thread.NamedThreadFactory;
+import com.taobao.yugong.conf.YugongConfiguration;
 import com.taobao.yugong.exception.YuGongException;
 import com.taobao.yugong.extractor.AbstractRecordExtractor;
 import com.taobao.yugong.extractor.RecordExtractor;
@@ -74,8 +75,9 @@ public class YuGongController extends AbstractYuGongLifeCycle {
   private DataSourceFactory dataSourceFactory = new DataSourceFactory();
   private JdkCompiler compiler = new JdkCompiler();
   private Configuration config;
+  private YugongConfiguration yugongConfiguration;
 
-  private RunMode runMode;
+  private RunMode runMode; // 下运行模式
   private YuGongContext globalContext;
   private DbType sourceDbType = DbType.ORACLE;
   private DbType targetDbType = DbType.MYSQL;
@@ -99,10 +101,12 @@ public class YuGongController extends AbstractYuGongLifeCycle {
   private int retryTimes;
   private int retryInterval;
 
-  public YuGongController(Configuration config) {
+  public YuGongController(Configuration config, YugongConfiguration yugongConfiguration) {
     this.config = config;
-
-    // 设置下运行模式
+    this.yugongConfiguration = yugongConfiguration;
+  }
+  
+  public void init() {
     String mode = config.getString("yugong.table.mode");
     if (StringUtils.isEmpty(mode)) {
       throw new YuGongException("yugong.table.mode should not be empty");
@@ -119,7 +123,6 @@ public class YuGongController extends AbstractYuGongLifeCycle {
     applierDump = config.getBoolean("yugong.applier.dump", true);
     statBufferSize = config.getInt("yugong.stat.buffer.size", 16384);
     statPrintInterval = config.getInt("yugong.stat.print.interval", 5);
-    // 是否并行执行concurrent
     concurrent = config.getBoolean("yugong.table.concurrent.enable", false);
     alarmReceiver = config.getString("yugong.alarm.receiver", "");
     retryTimes = config.getInt("yugong.table.retry.times", 3);
@@ -129,6 +132,7 @@ public class YuGongController extends AbstractYuGongLifeCycle {
   @Override
   public void start() {
     MDC.remove(YuGongConstants.MDC_TABLE_SHIT_KEY);
+    this.init();
     super.start();
     if (!dataSourceFactory.isStart()) {
       dataSourceFactory.start();
