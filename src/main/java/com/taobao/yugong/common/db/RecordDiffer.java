@@ -57,7 +57,8 @@ public class RecordDiffer {
       message = diffMessage(record1.getSchemaName(),
           record1.getTableName(),
           record1.getPrimaryKeys(),
-          "column size is great than target column size");
+          "column size " + record1.getColumns().size() + " is great than target column size"
+              + record2.getColumns().size());
       diffLogger.info(message);
       return message;
     }

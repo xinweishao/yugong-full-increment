@@ -37,5 +37,14 @@ public class ColumnFixDataTranslator extends AbstractDataTranslator {
   public Map<String, Set<String>> getColumnAlias() {
     return this.translator.getColumnAlias();
   }
+
+  public void setExcludeColumns(Collection<String> excludeAlias) {
+    this.translator.setExcludeColumns(excludeAlias);
+  }
+
+  public Collection<String> getExcludeColumns() {
+    return this.translator.getExcludeColumns();
+  }
+  
 }
 

@@ -195,7 +195,8 @@ public class YuGongController extends AbstractYuGongLifeCycle {
       instance.getTranslators().addAll(tableHolder.translators);
       instance.getTranslators().addAll(choseTranslator(tableHolder));
       instance.getTranslators().addAll(buildTranslatorsViaYaml(tableHolder));
-//      instance.getTableMetaTranslators().addAll(buildTableMetaTranslatorsViaYaml(tableHolder)); // XXX
+      // TODO delete ?
+      // instance.getTableMetaTranslators().addAll(buildTableMetaTranslatorsViaYaml(tableHolder));
       StatAggregation statAggregation = new StatAggregation(statBufferSize, statPrintInterval);
       instance.setExtractor(extractor);
       instance.setApplier(applier);
@@ -313,8 +314,8 @@ public class YuGongController extends AbstractYuGongLifeCycle {
       } else {
         if (!forceFull && (!isOnlyPkIsNumber(tableHolder.table) || isTableExtracOnce || !StringUtils
             .isEmpty(extractSql))) {
-          throw new YuGongException("FullRecordExtractor Condition Error, table: "
-              + tableHolder.table);
+          throw new YuGongException("FullRecordExtractor Condition Error, no PK, table: "
+              + tableHolder.table.getName());
         }
         if (sourceDbType == DbType.ORACLE) {
           OracleFullRecordExtractor recordExtractor = new OracleFullRecordExtractor(context);
@@ -502,7 +503,8 @@ public class YuGongController extends AbstractYuGongLifeCycle {
       String mode = config.getString("yugong.run.positioner", "FILE");
       if (StringUtils.equalsIgnoreCase("FILE", mode)) {
         FileMixedRecordPositioner positioner = new FileMixedRecordPositioner();
-        positioner.setDataDir(new File("../conf/positioner")); // 使用了../相对目录，启动脚本会确保user.dir为bin目录
+        // 使用了../相对目录，启动脚本会确保user.dir为bin目录 TODO use abs path
+        positioner.setDataDir(new File("conf/positioner"));
         positioner.setDataFileName(
             tableHolder.table.getSchema() + "_" + tableHolder.table.getName() + ".dat");
         return positioner;

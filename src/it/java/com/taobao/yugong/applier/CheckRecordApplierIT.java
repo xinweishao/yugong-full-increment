@@ -31,6 +31,7 @@ public class CheckRecordApplierIT extends BaseDbIT {
     DataSource dataSource = dataSourceFactory.getDataSource(getSqlServerConfig());
     final String sourceSchema = "HJ_VIP";
     final String sourceTable = "ShopProduct";
+    //    final String sourceTable = "CategoryProperty";
 //    final String sourceTable = "FrontCategory";
     //    final String sourceTable = "FrontCategoryMapping";
     //    final String sourceTable = "ProductCategory";

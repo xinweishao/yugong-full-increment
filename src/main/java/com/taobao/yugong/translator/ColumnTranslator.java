@@ -21,6 +21,7 @@ public class ColumnTranslator implements RecordTranslator {
 
   @Setter
   protected Collection<String> includeColumns = new HashSet<>();
+  @Getter
   @Setter
   protected Collection<String> excludeColumns = new HashSet<>();
   @Setter
