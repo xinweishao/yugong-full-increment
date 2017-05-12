@@ -45,6 +45,7 @@ import com.taobao.yugong.positioner.FileMixedRecordPositioner;
 import com.taobao.yugong.positioner.MemoryRecordPositioner;
 import com.taobao.yugong.positioner.RecordPositioner;
 import com.taobao.yugong.translator.DataTranslator;
+import com.taobao.yugong.translator.TableMetaTranslator;
 import com.taobao.yugong.translator.core.TranslatorRegister;
 
 import org.apache.commons.configuration.Configuration;
@@ -194,6 +195,7 @@ public class YuGongController extends AbstractYuGongLifeCycle {
       instance.getTranslators().addAll(tableHolder.translators);
       instance.getTranslators().addAll(choseTranslator(tableHolder));
       instance.getTranslators().addAll(buildTranslatorsViaYaml(tableHolder));
+//      instance.getTableMetaTranslators().addAll(buildTableMetaTranslatorsViaYaml(tableHolder)); // XXX
       StatAggregation statAggregation = new StatAggregation(statBufferSize, statPrintInterval);
       instance.setExtractor(extractor);
       instance.setApplier(applier);
@@ -427,6 +429,25 @@ public class YuGongController extends AbstractYuGongLifeCycle {
     } catch (Exception e) {
       throw new YuGongException(e);
     }
+    return translators;
+  }
+
+  private List<TableMetaTranslator> buildTableMetaTranslatorsViaYaml(TableHolder tableHolder) {
+    List<TableMetaTranslator> translators = Lists.newArrayList();
+    List<TranslatorConf> translatorsConfs = yugongConfiguration.getTranslators().getRecord()
+        .get(tableHolder.table.getName());
+    if (translatorsConfs == null) {
+      translatorsConfs = yugongConfiguration.getTranslators().getRecord().get(DEFAULT_TRANSLATOR);
+    }
+    if (translatorsConfs == null) {
+      return Lists.newArrayList();
+    }
+    translatorsConfs.forEach(translatorConf -> {
+      TableMetaTranslator translator = TranslatorRegister.newTableMetaTranslator(translatorConf);
+      if (translator != null) {
+        translators.add(translator);
+      }
+    });
     return translators;
   }
   

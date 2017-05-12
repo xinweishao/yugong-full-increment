@@ -26,6 +26,7 @@ import com.taobao.yugong.extractor.RecordExtractor;
 import com.taobao.yugong.positioner.RecordPositioner;
 import com.taobao.yugong.translator.BackTableDataTranslator;
 import com.taobao.yugong.translator.DataTranslator;
+import com.taobao.yugong.translator.TableMetaTranslator;
 import com.taobao.yugong.translator.core.EncodeDataTranslator;
 import com.taobao.yugong.translator.core.OracleIncreamentDataTranslator;
 
@@ -67,6 +68,9 @@ public class YuGongInstance extends AbstractYuGongLifeCycle {
   @Getter
   @Setter
   private List<DataTranslator> translators = Lists.newArrayList();
+  @Getter
+  @Setter
+  private List<TableMetaTranslator> tableMetaTranslators = Lists.newArrayList(); // XXX
   @Getter
   @Setter
   private RecordPositioner positioner;

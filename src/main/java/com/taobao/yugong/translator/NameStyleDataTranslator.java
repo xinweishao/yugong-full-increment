@@ -4,25 +4,21 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.CaseFormat;
+import com.google.common.base.Strings;
 import com.taobao.yugong.common.model.record.Record;
 
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
+@Data
 public class NameStyleDataTranslator extends AbstractDataTranslator {
 
-  @Getter
-  @Setter
+  private String schemaTo;
   private CaseFormat columnCaseFormatFrom;
-  @Getter
-  @Setter
   private CaseFormat columnCaseFormatTo;
-  @Getter
-  @Setter
   private CaseFormat tableCaseFormatFrom;
-  @Getter
-  @Setter
   private CaseFormat tableCaseFormatTo;
 
   public NameStyleDataTranslator() {
@@ -53,13 +49,12 @@ public class NameStyleDataTranslator extends AbstractDataTranslator {
   @Override
   public boolean translator(Record record) {
     record.setTableName(tableCaseConvert(record.getTableName()));
-    if (columnCaseFormatFrom != null && columnCaseFormatTo != null) {
-      record.getColumns().forEach(x -> {
-        x.getColumn().setName(columnCaseConvert(x.getColumn().getName()));
-      });
-      record.getPrimaryKeys().forEach(x -> {
-        x.getColumn().setName(columnCaseConvert(x.getColumn().getName()));
-      });
+    record.getColumns().forEach(x ->
+        x.getColumn().setName(columnCaseConvert(x.getColumn().getName())));
+    record.getPrimaryKeys().forEach(x ->
+        x.getColumn().setName(columnCaseConvert(x.getColumn().getName())));
+    if (!Strings.isNullOrEmpty(this.schemaTo)) {
+      record.setSchemaName(this.schemaTo);
     }
     return super.translator(record);
   }

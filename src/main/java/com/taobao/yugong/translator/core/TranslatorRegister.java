@@ -5,6 +5,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.google.common.collect.ImmutableMap;
 import com.taobao.yugong.conf.TranslatorConf;
 import com.taobao.yugong.exception.YuGongException;
+import com.taobao.yugong.translator.ColumnFixDataTranslator;
 import com.taobao.yugong.translator.DataTranslator;
 import com.taobao.yugong.translator.NameStyleDataTranslator;
 import com.taobao.yugong.translator.NameTableMetaTranslator;
@@ -26,6 +27,7 @@ public class TranslatorRegister {
 
   private static Map<String, Class<?>> dataTranslatorRegister = ImmutableMap.<String, Class<?>>builder()
       .put(NameStyleDataTranslator.class.getCanonicalName(), NameStyleDataTranslator.class)
+      .put(ColumnFixDataTranslator.class.getCanonicalName(), ColumnFixDataTranslator.class)
       .build();
 
 
@@ -33,7 +35,7 @@ public class TranslatorRegister {
     Class<TableMetaTranslator> clazz = (Class<TableMetaTranslator>) tableMetaTranslatorRegister
         .get(conf.getClazz());
     if (clazz == null) {
-      return null;
+      throw new YuGongException("Cannot read value of Translator: {}", conf.getClazz());
     }
     TableMetaTranslator translator = null;
     String confYaml;
@@ -55,7 +57,7 @@ public class TranslatorRegister {
     Class<DataTranslator> clazz = (Class<DataTranslator>) dataTranslatorRegister
         .get(conf.getClazz());
     if (clazz == null) {
-      return null;
+      throw new YuGongException("Cannot read value of Translator: {}", conf.getClazz());
     }
     DataTranslator translator = null;
     String confYaml;

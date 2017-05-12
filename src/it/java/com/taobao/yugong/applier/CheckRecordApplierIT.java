@@ -54,7 +54,7 @@ public class CheckRecordApplierIT extends BaseDbIT {
 
     SqlServerFullRecordExtractor extractor = new SqlServerFullRecordExtractor(context);
     extractor.setTracer(progressTracer);
-    extractor.initContinueExtractor();
+//    extractor.initContinueExtractor();
     extractor.start();
 
     List<Record> records = extractor.extract();
@@ -68,9 +68,9 @@ public class CheckRecordApplierIT extends BaseDbIT {
     NameStyleDataTranslator translator = new NameStyleDataTranslator() { // TODO configurable
       @Override
       public boolean translator(Record record) {
-        if (record.getSchemaName().equals(sourceSchema)) {
-          record.setSchemaName(targetSchema);
-        }
+//        if (record.getSchemaName().equals(sourceSchema)) {
+//          record.setSchemaName(targetSchema);
+//        }
         if (record.getTableName().equals("ProductOperationLog")) {
           record.getColumnByName("Editdate").getColumn().setName("EditDate");
         }

@@ -2,11 +2,14 @@ package com.taobao.yugong;
 
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.google.common.base.CaseFormat;
+import com.google.common.collect.Lists;
 import com.taobao.yugong.conf.YugongConfiguration;
 import com.taobao.yugong.controller.YuGongController;
+import com.taobao.yugong.translator.ColumnFixDataTranslator;
 import com.taobao.yugong.translator.NameTableMetaTranslator;
 
 import org.apache.commons.configuration.PropertiesConfiguration;
+import org.hamcrest.core.IsInstanceOf;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -48,5 +51,19 @@ public class YuGongControllerIT {
     NameTableMetaTranslator translator = mapper.readValue(rawYaml, NameTableMetaTranslator.class);
     Assert.assertEquals(CaseFormat.UPPER_CAMEL, translator.getColumnCaseFormatFrom());
     Assert.assertEquals(CaseFormat.LOWER_UNDERSCORE, translator.getTableCaseFormatTo());
+  }
+
+  @Test
+  public void getObjectViaYaml2() throws ClassNotFoundException, IOException {
+    String rawYaml = "column_alias:\n"
+        + "  BussinessID:\n"
+        + "    - business_id";
+    YAMLMapper mapper = new YAMLMapper();
+    ColumnFixDataTranslator translator = mapper.readValue(rawYaml, ColumnFixDataTranslator.class);
+    Assert.assertThat(translator, new IsInstanceOf(ColumnFixDataTranslator.class));
+    Assert.assertEquals(1, translator.getColumnAlias().size());
+    Assert.assertEquals("business_id", Lists.newArrayList(translator.getColumnAlias().get
+        ("BussinessID")).get(0));
+//    Assert.assertEquals(CaseFormat.LOWER_UNDERSCORE, translator.getTableCaseFormatTo());
   }
 }

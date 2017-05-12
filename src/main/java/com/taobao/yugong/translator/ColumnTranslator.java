@@ -3,6 +3,9 @@ package com.taobao.yugong.translator;
 import com.taobao.yugong.common.db.meta.ColumnValue;
 import com.taobao.yugong.common.model.record.Record;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import org.apache.commons.lang.StringUtils;
 
 import java.util.Arrays;
@@ -16,10 +19,16 @@ import java.util.Set;
 
 public class ColumnTranslator implements RecordTranslator {
 
+  @Setter
   protected Collection<String> includeColumns = new HashSet<>();
+  @Setter
   protected Collection<String> excludeColumns = new HashSet<>();
+  @Setter
   protected Collection<String> checked = new HashSet<>();
+  @Setter
   protected Collection<String> notChecked = new HashSet<>();
+  @Setter
+  @Getter
   protected Map<String, Set<String>> columnAlias = new HashMap<>();
 
 

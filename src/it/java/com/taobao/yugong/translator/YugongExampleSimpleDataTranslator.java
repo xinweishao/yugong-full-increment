@@ -5,7 +5,9 @@ package com.taobao.yugong.translator;
  *
  * @author agapple 2016年6月7日 上午12:40:45
  * @since 1.0.3
+ * use {@link ColumnFixDataTranslator}
  */
+@Deprecated
 public class YugongExampleSimpleDataTranslator extends AbstractDataTranslator {
 
   public YugongExampleSimpleDataTranslator() {
