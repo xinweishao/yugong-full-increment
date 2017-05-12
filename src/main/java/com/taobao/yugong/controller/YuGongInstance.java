@@ -66,7 +66,7 @@ public class YuGongInstance extends AbstractYuGongLifeCycle {
   private List<DataTranslator> defaultTranslators = Lists.newArrayList();
   @Getter
   @Setter
-  private List<DataTranslator> translators;
+  private List<DataTranslator> translators = Lists.newArrayList();
   @Getter
   @Setter
   private RecordPositioner positioner;

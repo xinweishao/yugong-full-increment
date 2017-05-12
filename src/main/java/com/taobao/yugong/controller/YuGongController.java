@@ -45,6 +45,7 @@ import com.taobao.yugong.positioner.FileMixedRecordPositioner;
 import com.taobao.yugong.positioner.MemoryRecordPositioner;
 import com.taobao.yugong.positioner.RecordPositioner;
 import com.taobao.yugong.translator.DataTranslator;
+import com.taobao.yugong.translator.core.TranslatorRegister;
 
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.io.IOUtils;
@@ -74,6 +75,7 @@ import javax.sql.DataSource;
  */
 public class YuGongController extends AbstractYuGongLifeCycle {
 
+  public static final String DEFAULT_TRANSLATOR = "*";
   private DataSourceFactory dataSourceFactory = new DataSourceFactory();
   private JdkCompiler compiler = new JdkCompiler();
   private Configuration config;
@@ -191,6 +193,7 @@ public class YuGongController extends AbstractYuGongLifeCycle {
       // 可能在装载DRDS时,已经加载了一次translator处理
       instance.getTranslators().addAll(tableHolder.translators);
       instance.getTranslators().addAll(choseTranslator(tableHolder));
+      instance.getTranslators().addAll(buildTranslatorsViaYaml(tableHolder));
       StatAggregation statAggregation = new StatAggregation(statBufferSize, statPrintInterval);
       instance.setExtractor(extractor);
       instance.setApplier(applier);
@@ -432,26 +435,15 @@ public class YuGongController extends AbstractYuGongLifeCycle {
     List<TranslatorConf> translatorsConfs = yugongConfiguration.getTranslators().getRecord()
         .get(tableHolder.table.getName());
     if (translatorsConfs == null) {
-      return translators;
+      translatorsConfs = yugongConfiguration.getTranslators().getRecord().get(DEFAULT_TRANSLATOR);
+    }
+    if (translatorsConfs == null) {
+      return Lists.newArrayList();
     }
     translatorsConfs.forEach(translatorConf -> {
-      Class<?> clazz;
-      try {
-        clazz = Class.forName(translatorConf.getClazz());
-      } catch (ClassNotFoundException e) {
-        logger.error("Cannot find translator {} for {}", tableHolder.table.getName(), 
-            translatorConf.getClazz());
-        return;
-      }
-      try {
-        Object o = clazz.newInstance();
-        for (Map.Entry<String, Object> property: translatorConf.getProperties().entrySet()) {
-          // XXX
-        }
-      } catch (InstantiationException | IllegalAccessException e) {
-        logger.error("Cannot find translator {} for {}", tableHolder.table.getName(),
-            translatorConf.getClazz());
-        return;
+      DataTranslator dataTranslator = TranslatorRegister.newDataTranslator(translatorConf);
+      if (dataTranslator != null) {
+        translators.add(dataTranslator);
       }
     });
     return translators;
@@ -580,7 +572,9 @@ public class YuGongController extends AbstractYuGongLifeCycle {
           // 构建一下拆分条件
           DataTranslator translator = buildExtKeys(table, null, targetDbType);
           TableHolder holder = new TableHolder(table);
-          holder.translators = ImmutableList.of(translator); // XXX
+          if (translator != null) {
+            holder.translators.add(translator);
+          }
           if (!tables.contains(holder)) {
             tables.add(holder);
           }
