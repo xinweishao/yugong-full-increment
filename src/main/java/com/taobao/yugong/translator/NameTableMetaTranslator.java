@@ -10,6 +10,10 @@ import com.taobao.yugong.translator.core.TranslatorRegister;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * contains in {@link NameStyleDataTranslator}
+ */
+@Deprecated
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class NameTableMetaTranslator implements TableMetaTranslator {
 
