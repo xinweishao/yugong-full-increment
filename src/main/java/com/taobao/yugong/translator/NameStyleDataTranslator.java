@@ -1,14 +1,16 @@
 package com.taobao.yugong.translator;
 
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.CaseFormat;
-import com.taobao.yugong.common.db.meta.ColumnValue;
 import com.taobao.yugong.common.model.record.Record;
 
 import lombok.Getter;
 import lombok.Setter;
 
-public class NameDataTranslator extends AbstractDataTranslator {
+@JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
+public class NameStyleDataTranslator extends AbstractDataTranslator {
 
   @Getter
   @Setter
@@ -23,11 +25,11 @@ public class NameDataTranslator extends AbstractDataTranslator {
   @Setter
   private CaseFormat tableCaseFormatTo;
 
-  public NameDataTranslator() {
+  public NameStyleDataTranslator() {
     ColumnTranslator translator = new ColumnTranslator();
     super.setTranslator(translator);
   }
-  
+
   @VisibleForTesting
   protected String tableCaseConvert(String input) {
     if (tableCaseFormatFrom == null || tableCaseFormatTo == null) {
@@ -55,7 +57,7 @@ public class NameDataTranslator extends AbstractDataTranslator {
       record.getColumns().forEach(x -> {
         x.getColumn().setName(columnCaseConvert(x.getColumn().getName()));
       });
-      record.getPrimaryKeys().forEach( x -> {
+      record.getPrimaryKeys().forEach(x -> {
         x.getColumn().setName(columnCaseConvert(x.getColumn().getName()));
       });
     }

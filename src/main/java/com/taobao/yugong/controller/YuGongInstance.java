@@ -29,7 +29,6 @@ import com.taobao.yugong.translator.DataTranslator;
 import com.taobao.yugong.translator.core.EncodeDataTranslator;
 import com.taobao.yugong.translator.core.OracleIncreamentDataTranslator;
 
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -64,7 +63,10 @@ public class YuGongInstance extends AbstractYuGongLifeCycle {
   private RecordApplier applier;
   @Getter
   @Setter
-  private DataTranslator translator;
+  private List<DataTranslator> defaultTranslators = Lists.newArrayList();
+  @Getter
+  @Setter
+  private List<DataTranslator> translators;
   @Getter
   @Setter
   private RecordPositioner positioner;
@@ -86,10 +88,6 @@ public class YuGongInstance extends AbstractYuGongLifeCycle {
   @Getter
   @Setter
   private DbType targetDbType;
-
-  @Getter
-  @Setter
-  private List<DataTranslator> coreTranslators = Lists.newArrayList();
   @Getter
   @Setter
   private Thread worker = null;
@@ -120,8 +118,6 @@ public class YuGongInstance extends AbstractYuGongLifeCycle {
   @Getter
   @Setter
   private int noUpdateTimes = 0;
-
-  // translator
   @Getter
   @Setter
   private boolean concurrent = true;
@@ -159,9 +155,10 @@ public class YuGongInstance extends AbstractYuGongLifeCycle {
       }
 
       // 后续可改进为按类型识别添加
-      coreTranslators.add(new OracleIncreamentDataTranslator());
+      defaultTranslators.add(new OracleIncreamentDataTranslator());
       if (targetDbType.isOracle()) {
-        coreTranslators.add(new EncodeDataTranslator(context.getSourceEncoding(), context.getTargetEncoding())); // oracle源库已经正确将编码转为'UTF-8'了
+        defaultTranslators.add(new EncodeDataTranslator(context.getSourceEncoding(),
+            context.getTargetEncoding())); // oracle源库已经正确将编码转为'UTF-8'了
       }
 
       if (!positioner.isStart()) {
@@ -180,7 +177,6 @@ public class YuGongInstance extends AbstractYuGongLifeCycle {
       }
 
       worker = new Thread(new Runnable() {
-
         public void run() {
           try {
             if (context.getRunMode() != RunMode.INC) {
@@ -255,14 +251,14 @@ public class YuGongInstance extends AbstractYuGongLifeCycle {
                   extractorDump);
 
               // 是否有系统的translator处理
-              if (YuGongUtils.isNotEmpty(coreTranslators)) {
-                for (DataTranslator translator : coreTranslators) {
-                  records = processTranslator(translator, records);
-                }
+              for (DataTranslator translator : defaultTranslators) {
+                records = processTranslator(translator, records);
               }
 
               // 转换数据
-              records = processTranslator(translator, records);
+              for (DataTranslator translator : translators) {
+                records = processTranslator(translator, records);
+              }
 
               // 载入数据
               Throwable applierException = null;
@@ -330,20 +326,18 @@ public class YuGongInstance extends AbstractYuGongLifeCycle {
           if (records.isEmpty()) {
             return records;
           }
-
-          if (translator != null) {
-            if (translator instanceof BackTableDataTranslator) {
-              ExecutorTemplate template = null;
-              if (concurrent) {
-                template = new ExecutorTemplate(executor);
-              }
-              records = ((BackTableDataTranslator) translator).translator(context.getSourceDs(),
-                  context.getTargetDs(),
-                  records,
-                  template);
-            } else {
-              records = translator.translator(records);
+          if (translator == null) {
+            return records;
+          }
+          if (translator instanceof BackTableDataTranslator) {
+            ExecutorTemplate template = null;
+            if (concurrent) {
+              template = new ExecutorTemplate(executor);
             }
+            records = ((BackTableDataTranslator) translator).translator(context.getSourceDs(),
+                context.getTargetDs(), records, template);
+          } else {
+            records = translator.translator(records);
           }
 
           return records;
@@ -383,7 +377,7 @@ public class YuGongInstance extends AbstractYuGongLifeCycle {
 
       logger.info("table[{}] start successful. extractor:{} , applier:{}, translator:{}", new Object[]{
           context.getTableMeta().getFullName(), extractor.getClass().getName(), applier.getClass().getName(),
-          translator != null ? translator.getClass().getName() : "NULL"});
+          translators != null ? translators: "NULL"});
     } catch (InterruptedException e) {
       progressTracer.update(context.getTableMeta().getFullName(), ProgressStatus.FAILED);
       exception = new YuGongException(e);

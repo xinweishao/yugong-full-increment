@@ -1,12 +1,16 @@
 package com.taobao.yugong.translator;
 
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.CaseFormat;
 import com.taobao.yugong.common.db.meta.Table;
+import com.taobao.yugong.translator.core.TranslatorRegister;
 
 import lombok.Getter;
 import lombok.Setter;
 
+@JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class NameTableMetaTranslator implements TableMetaTranslator {
 
   @Getter

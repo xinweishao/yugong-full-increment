@@ -11,7 +11,7 @@ import com.taobao.yugong.common.model.YuGongContext;
 import com.taobao.yugong.common.model.record.Record;
 import com.taobao.yugong.common.stats.ProgressTracer;
 import com.taobao.yugong.extractor.sqlserver.SqlServerFullRecordExtractor;
-import com.taobao.yugong.translator.NameDataTranslator;
+import com.taobao.yugong.translator.NameStyleDataTranslator;
 import com.taobao.yugong.translator.NameTableMetaTranslator;
 
 import org.junit.Assert;
@@ -65,7 +65,7 @@ public class CheckRecordApplierIT extends BaseDbIT {
     applierContext.setOnceCrawNum(200);
     CheckRecordApplier applier = new CheckRecordApplier(applierContext);
 
-    NameDataTranslator translator = new NameDataTranslator() { // TODO configurable
+    NameStyleDataTranslator translator = new NameStyleDataTranslator() { // TODO configurable
       @Override
       public boolean translator(Record record) {
         if (record.getSchemaName().equals(sourceSchema)) {

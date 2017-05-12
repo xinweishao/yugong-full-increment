@@ -143,4 +143,6 @@ public class ColumnTranslator implements RecordTranslator {
     }
     return record;
   }
+
+
 }

@@ -11,7 +11,7 @@ import java.util.Map;
 
 @JsonNaming(value = PropertyNamingStrategy.SnakeCaseStrategy.class)
 @Data
-public class Translator {
+public class TranslatorConf {
   @JsonProperty("class")
   String clazz;
   Map<String, Object> properties;

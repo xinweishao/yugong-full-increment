@@ -5,10 +5,10 @@ import com.google.common.base.CaseFormat;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class NameDataTranslatorTest {
+public class NameStyleDataTranslatorTest {
   @Test
   public void tableCaseConvert() throws Exception {
-    NameDataTranslator translator = new NameDataTranslator();
+    NameStyleDataTranslator translator = new NameStyleDataTranslator();
     translator.setTableCaseFormatFrom(CaseFormat.UPPER_CAMEL);
     translator.setTableCaseFormatTo(CaseFormat.LOWER_UNDERSCORE);
     translator.setColumnCaseFormatFrom(CaseFormat.UPPER_CAMEL);

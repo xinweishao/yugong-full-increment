@@ -1,5 +1,6 @@
 package com.taobao.yugong.controller;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.taobao.yugong.applier.AllRecordApplier;
 import com.taobao.yugong.applier.CheckRecordApplier;
@@ -28,6 +29,7 @@ import com.taobao.yugong.common.utils.LikeUtil;
 import com.taobao.yugong.common.utils.YuGongUtils;
 import com.taobao.yugong.common.utils.compile.JdkCompiler;
 import com.taobao.yugong.common.utils.thread.NamedThreadFactory;
+import com.taobao.yugong.conf.TranslatorConf;
 import com.taobao.yugong.conf.YugongConfiguration;
 import com.taobao.yugong.exception.YuGongException;
 import com.taobao.yugong.extractor.AbstractRecordExtractor;
@@ -46,7 +48,6 @@ import com.taobao.yugong.translator.DataTranslator;
 
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.MDC;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -56,6 +57,7 @@ import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Executors;
@@ -81,6 +83,7 @@ public class YuGongController extends AbstractYuGongLifeCycle {
   private YuGongContext globalContext;
   private DbType sourceDbType = DbType.ORACLE;
   private DbType targetDbType = DbType.MYSQL;
+  @Deprecated
   private File translatorDir;
   private AlarmService alarmService;
 
@@ -184,16 +187,13 @@ public class YuGongController extends AbstractYuGongLifeCycle {
       RecordPositioner positioner = choosePositioner(tableHolder);
       RecordExtractor extractor = chooseExtractor(tableHolder, context, runMode, positioner);
       RecordApplier applier = chooseApplier(tableHolder, context, runMode);
-      // 可能在装载DRDS时,已经加载了一次translator处理
-      DataTranslator translator = tableHolder.translator;
-      if (translator == null) {
-        translator = choseTranslator(tableHolder);
-      }
       YuGongInstance instance = new YuGongInstance(context);
+      // 可能在装载DRDS时,已经加载了一次translator处理
+      instance.getTranslators().addAll(tableHolder.translators);
+      instance.getTranslators().addAll(choseTranslator(tableHolder));
       StatAggregation statAggregation = new StatAggregation(statBufferSize, statPrintInterval);
       instance.setExtractor(extractor);
       instance.setApplier(applier);
-      instance.setTranslator(translator);
       instance.setPositioner(positioner);
       instance.setTableController(tableController);
       instance.setAlarmService(alarmService);
@@ -414,12 +414,47 @@ public class YuGongController extends AbstractYuGongLifeCycle {
     }
   }
 
-  private DataTranslator choseTranslator(TableHolder tableHolder) {
+  private List<DataTranslator> choseTranslator(TableHolder tableHolder) {
+    List<DataTranslator> translators = Lists.newArrayList();
     try {
-      return buildTranslator(tableHolder.table.getName());
+      DataTranslator dataTranslator = buildTranslator(tableHolder.table.getName());
+      if (dataTranslator != null) {
+        translators.add(dataTranslator);
+      }
     } catch (Exception e) {
       throw new YuGongException(e);
     }
+    return translators;
+  }
+  
+  private List<DataTranslator> buildTranslatorsViaYaml(TableHolder tableHolder) {
+    List<DataTranslator> translators = Lists.newArrayList();
+    List<TranslatorConf> translatorsConfs = yugongConfiguration.getTranslators().getRecord()
+        .get(tableHolder.table.getName());
+    if (translatorsConfs == null) {
+      return translators;
+    }
+    translatorsConfs.forEach(translatorConf -> {
+      Class<?> clazz;
+      try {
+        clazz = Class.forName(translatorConf.getClazz());
+      } catch (ClassNotFoundException e) {
+        logger.error("Cannot find translator {} for {}", tableHolder.table.getName(), 
+            translatorConf.getClazz());
+        return;
+      }
+      try {
+        Object o = clazz.newInstance();
+        for (Map.Entry<String, Object> property: translatorConf.getProperties().entrySet()) {
+          // XXX
+        }
+      } catch (InstantiationException | IllegalAccessException e) {
+        logger.error("Cannot find translator {} for {}", tableHolder.table.getName(),
+            translatorConf.getClazz());
+        return;
+      }
+    });
+    return translators;
   }
 
   /**
@@ -540,12 +575,12 @@ public class YuGongController extends AbstractYuGongLifeCycle {
       for (Table table : metas) {
         if (!isBlackTable(table.getName(), tableBlackList)
             && !isBlackTable(table.getFullName(), tableBlackList)) {
-          table = TableMetaGenerator.getTableMeta(sourceDbType, globalContext.getSourceDs(),
-              table.getSchema(), table.getName());
+          table = TableMetaGenerator.getTableMeta(
+              sourceDbType, globalContext.getSourceDs(), table.getSchema(), table.getName());
           // 构建一下拆分条件
           DataTranslator translator = buildExtKeys(table, null, targetDbType);
           TableHolder holder = new TableHolder(table);
-          holder.translator = translator;
+          holder.translators = ImmutableList.of(translator); // XXX
           if (!tables.contains(holder)) {
             tables.add(holder);
           }
@@ -586,7 +621,9 @@ public class YuGongController extends AbstractYuGongLifeCycle {
               DataTranslator translator = buildExtKeys(table, (String) obj, targetDbType);
               TableHolder holder = new TableHolder(table);
               holder.ignoreSchema = ignoreSchema;
-              holder.translator = translator;
+              if (translator != null) {
+                holder.translators.add(translator);
+              }
               if (!tables.contains(holder)) {
                 tables.add(holder);
               }
@@ -786,7 +823,7 @@ public class YuGongController extends AbstractYuGongLifeCycle {
 
     Table table;
     boolean ignoreSchema = false;
-    DataTranslator translator = null;
+    List<DataTranslator> translators = Lists.newArrayList(); // ugly
 
     @Override
     public int hashCode() {
