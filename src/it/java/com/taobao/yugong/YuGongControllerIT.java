@@ -26,7 +26,7 @@ public class YuGongControllerIT {
     
     YAMLMapper yamlMapper = new YAMLMapper();
     YugongConfiguration configuration = yamlMapper.readValue(
-        new File("src/main/resources/yugong.yml"), YugongConfiguration.class);
+        new File("src/main/resources/yugong.yaml"), YugongConfiguration.class);
 
     YuGongController controller = new YuGongController(config, configuration);
     controller.start();
