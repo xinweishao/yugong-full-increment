@@ -58,8 +58,8 @@ temp
 dist
 package-info.java
 .DS_Store
-src/main/resources/*.properties
 src/it/resources/it.properties
 logs
 conf
 /*.yaml
+/*.properties
