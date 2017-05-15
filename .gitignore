@@ -58,7 +58,7 @@ temp
 dist
 package-info.java
 .DS_Store
-src/main/resources/yugong.properties
+src/main/resources/*.properties
 src/it/resources/it.properties
 logs
 conf
