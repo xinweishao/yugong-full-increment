@@ -124,7 +124,7 @@
         <java_target_version>1.8</java_target_version>
         <file_encoding>UTF-8</file_encoding>
         <metrics.version>3.2.2</metrics.version>
-        <mainClass>com.taobao.yugong.YuGongLauncher</mainClass>
+        <mainClass>com.taobao.yugong.YugongApp</mainClass>
     </properties>
 
     <dependencies>

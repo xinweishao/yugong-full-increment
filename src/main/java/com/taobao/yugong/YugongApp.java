@@ -21,7 +21,7 @@ import java.io.IOException;
  * Single jar app
  */
 @Slf4j
-public class YuGongApp {
+public class YugongApp {
   
   @Parameter(names = {"-c", "--config"}, converter = FileConverter.class, required = true)
   private File configFile;
@@ -32,22 +32,22 @@ public class YuGongApp {
   private static YAMLMapper yamlMapper = new YAMLMapper();
 
   public static void main(String[] args) {
-    YuGongApp yuGongApp = new YuGongApp();
+    YugongApp yugongApp = new YugongApp();
 
-    JCommander.newBuilder().addObject(yuGongApp).build().parse(args);
+    JCommander.newBuilder().addObject(yugongApp).build().parse(args);
     PropertiesConfiguration config = new PropertiesConfiguration();
     try {
-      config.load(yuGongApp.configFile);
+      config.load(yugongApp.configFile);
     } catch (ConfigurationException e) {
-      log.error("Configuration load error: {}", yuGongApp.configFile.getPath());
+      log.error("Configuration load error: {}", yugongApp.configFile.getPath());
       System.exit(0);
     }
     YugongConfiguration yugongConfiguration;
     try {
-      yugongConfiguration = yamlMapper.readValue(yuGongApp.configYamlFile,
+      yugongConfiguration = yamlMapper.readValue(yugongApp.configYamlFile,
           YugongConfiguration.class);
     } catch (IOException e) {
-      log.error("YAML configuration load error: {}", yuGongApp.configYamlFile.getPath());
+      log.error("YAML configuration load error: {}", yugongApp.configYamlFile.getPath());
       return;
     }
 

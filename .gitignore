@@ -62,4 +62,4 @@ src/main/resources/yugong.properties
 src/it/resources/it.properties
 logs
 conf
-src/main/resources/yugong.yaml
+yugong.yaml

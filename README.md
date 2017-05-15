@@ -78,3 +78,10 @@ See the page for yugong performance :
 3.  新浪微博： agapple0002
 4.  报告issue：[issues](https://github.com/alibaba/yugong/issues)
 
+
+## Usage
+
+```
+mvn clean package
+java -jar target/yugong-shaded.jar -c src/main/resources/yugong.properties -y yugong.yaml
+```
