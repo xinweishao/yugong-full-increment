@@ -533,7 +533,7 @@ public class YuGongController extends AbstractYuGongLifeCycle {
     context.setSourceDs(initDataSource("source"));
     logger.info("check source database is ok");
 
-    // if (sourceDbType.isOracle() && runMode.isAll()) {
+    // if (targetDbType.isOracle() && runMode.isAll()) {
     // preCheckMlogGrant(context.getSourceDs());
     // }
 

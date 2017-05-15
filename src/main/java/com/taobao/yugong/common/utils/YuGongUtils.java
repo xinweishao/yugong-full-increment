@@ -66,6 +66,8 @@ public class YuGongUtils {
         } else {
           return DbType.MYSQL;
         }
+      } else if (StringUtils.equalsIgnoreCase(databaseName, "Microsoft SQL Server")) {
+        return DbType.SQL_SERVER;
       } else {
         throw new YuGongException("unknow database type " + databaseName);
       }

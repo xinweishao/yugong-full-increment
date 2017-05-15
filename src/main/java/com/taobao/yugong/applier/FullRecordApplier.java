@@ -1,12 +1,12 @@
 package com.taobao.yugong.applier;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MigrateMap;
 import com.taobao.yugong.common.db.meta.ColumnValue;
 import com.taobao.yugong.common.db.meta.Table;
 import com.taobao.yugong.common.db.meta.TableMetaGenerator;
 import com.taobao.yugong.common.db.sql.SqlTemplates;
+import com.taobao.yugong.common.db.sql.TypeMapping;
 import com.taobao.yugong.common.model.DbType;
 import com.taobao.yugong.common.model.YuGongContext;
 import com.taobao.yugong.common.model.record.Record;
@@ -15,11 +15,9 @@ import com.taobao.yugong.exception.YuGongException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -40,7 +38,8 @@ public class FullRecordApplier extends AbstractRecordApplier {
   protected static final Logger logger = LoggerFactory.getLogger(FullRecordApplier.class);
   protected Map<List<String>, TableSqlUnit> applierSqlCache;
   protected YuGongContext context;
-  protected DbType dbType;
+  protected DbType sourceDbType;
+  protected DbType targetDbType;
   protected boolean useMerge = false;
 
   public FullRecordApplier(YuGongContext context) {
@@ -49,7 +48,8 @@ public class FullRecordApplier extends AbstractRecordApplier {
 
   public void start() {
     super.start();
-    dbType = YuGongUtils.judgeDbType(context.getTargetDs());
+    sourceDbType = YuGongUtils.judgeDbType(context.getSourceDs());
+    targetDbType = YuGongUtils.judgeDbType(context.getTargetDs());
     applierSqlCache = MigrateMap.makeMap();
   }
 
@@ -70,12 +70,8 @@ public class FullRecordApplier extends AbstractRecordApplier {
   }
 
   protected void doApply(List<Record> records) {
-    Map<List<String>, List<Record>> buckets = MigrateMap.makeComputingMap(new Function<List<String>, List<Record>>() {
-
-      public List<Record> apply(List<String> names) {
-        return Lists.newArrayList();
-      }
-    });
+    Map<List<String>, List<Record>> buckets = MigrateMap.makeComputingMap(
+        names -> Lists.newArrayList());
 
     // 根据目标库的不同，划分为多个bucket
     for (Record record : records) {
@@ -96,32 +92,32 @@ public class FullRecordApplier extends AbstractRecordApplier {
   /**
    * batch处理支持
    */
-  protected void applierByBatch(JdbcTemplate jdbcTemplate, final List<Record> batchRecords, TableSqlUnit sqlUnit) {
+  protected void applierByBatch(JdbcTemplate jdbcTemplate, final List<Record> batchRecords,
+      TableSqlUnit sqlUnit) {
     boolean redoOneByOne = false;
     try {
       final Map<String, Integer> indexs = sqlUnit.applierIndexs;
-      jdbcTemplate.execute(sqlUnit.applierSql, new PreparedStatementCallback() {
-
-        public Object doInPreparedStatement(PreparedStatement ps) throws SQLException, DataAccessException {
-          for (Record record : batchRecords) {
-            // 先加字段，后加主键
-            List<ColumnValue> cvs = record.getColumns();
-            for (ColumnValue cv : cvs) {
-              ps.setObject(getIndex(indexs, cv), cv.getValue(), cv.getColumn().getType());
-            }
-
-            // 添加主键
-            List<ColumnValue> pks = record.getPrimaryKeys();
-            for (ColumnValue pk : pks) {
-              ps.setObject(getIndex(indexs, pk), pk.getValue(), pk.getColumn().getType());
-            }
-
-            ps.addBatch();
+      jdbcTemplate.execute(sqlUnit.applierSql, (PreparedStatementCallback) ps -> {
+        for (Record record : batchRecords) {
+          // 先加字段，后加主键
+          List<ColumnValue> cvs = record.getColumns();
+          for (ColumnValue cv : cvs) {
+            int type = TypeMapping.map(sourceDbType, targetDbType, cv.getColumn().getType());
+            ps.setObject(getIndex(indexs, cv), cv.getValue(), type);
           }
 
-          ps.executeBatch();
-          return null;
+          // 添加主键
+          List<ColumnValue> pks = record.getPrimaryKeys();
+          for (ColumnValue pk : pks) {
+            int type = TypeMapping.map(sourceDbType, targetDbType, pk.getColumn().getType());
+            ps.setObject(getIndex(indexs, pk), pk.getValue(), type);
+          }
+
+          ps.addBatch();
         }
+
+        ps.executeBatch();
+        return null;
       });
     } catch (Exception e) {
       // catch the biggest exception,no matter how, rollback it;
@@ -140,44 +136,46 @@ public class FullRecordApplier extends AbstractRecordApplier {
   /**
    * 一条条记录串行处理
    */
-  protected void applyOneByOne(JdbcTemplate jdbcTemplate, final List<Record> records, TableSqlUnit sqlUnit) {
+  protected void applyOneByOne(JdbcTemplate jdbcTemplate, final List<Record> records,
+      TableSqlUnit sqlUnit) {
     final Map<String, Integer> indexs = sqlUnit.applierIndexs;
-    jdbcTemplate.execute(sqlUnit.applierSql, new PreparedStatementCallback() {
+    jdbcTemplate.execute(sqlUnit.applierSql, (PreparedStatementCallback) ps -> {
+      for (Record record : records) {
+        List<ColumnValue> pks = record.getPrimaryKeys();
+        // 先加字段，后加主键
+        List<ColumnValue> cvs = record.getColumns();
+        for (ColumnValue cv : cvs) {
+          int type = TypeMapping.map(sourceDbType, targetDbType, cv.getColumn().getType());
+          ps.setObject(getIndex(indexs, cv), cv.getValue(), type);
+        }
 
-      public Object doInPreparedStatement(PreparedStatement ps) throws SQLException, DataAccessException {
-        for (Record record : records) {
-          List<ColumnValue> pks = record.getPrimaryKeys();
-          // 先加字段，后加主键
-          List<ColumnValue> cvs = record.getColumns();
-          for (ColumnValue cv : cvs) {
-            ps.setObject(getIndex(indexs, cv), cv.getValue(), cv.getColumn().getType());
-          }
+        // 添加主键
+        for (ColumnValue pk : pks) {
+          int type = TypeMapping.map(sourceDbType, targetDbType, pk.getColumn().getType());
+          ps.setObject(getIndex(indexs, pk), pk.getValue(), type);
+        }
 
-          // 添加主键
-          for (ColumnValue pk : pks) {
-            ps.setObject(getIndex(indexs, pk), pk.getValue(), pk.getColumn().getType());
-          }
-
-          try {
-            ps.execute();
-          } catch (SQLException e) {
-            if (context.isSkipApplierException()) {
-              logger.error("skiped record data : " + record.toString(), e);
+        try {
+          ps.execute();
+        } catch (SQLException e) {
+          if (context.isSkipApplierException()) {
+            logger.error("skiped record data : " + record.toString(), e);
+          } else {
+            if (e.getMessage().contains("Duplicate entry")
+                || e.getMessage().startsWith("ORA-00001: 违反唯一约束条件")) {
+              logger.error("skiped record data ,maybe transfer before,just continue:"
+                  + record.toString());
+            } else if (e.getMessage().contains("Invalid JSON text")) {
+              logger.error("skiped record data ,maybe JSON data error,just continue:"
+                  + record.toString());
             } else {
-              if (e.getMessage().contains("Duplicate entry")
-                  || e.getMessage().startsWith("ORA-00001: 违反唯一约束条件")) {
-                logger.error("skiped record data ,maybe transfer before,just continue:"
-                    + record.toString());
-              } else {
-                throw new SQLException("failed Record Data : " + record.toString(), e);
-              }
+              throw new SQLException("failed Record Data : " + record.toString(), e);
             }
           }
         }
-
-        return null;
       }
 
+      return null;
     });
 
   }
@@ -194,33 +192,33 @@ public class FullRecordApplier extends AbstractRecordApplier {
         if (sqlUnit == null) { // double-check
           sqlUnit = new TableSqlUnit();
           String applierSql = null;
-          Table meta = TableMetaGenerator.getTableMeta(dbType, context.getTargetDs(),
+          Table meta = TableMetaGenerator.getTableMeta(targetDbType, context.getTargetDs(),
               context.isIgnoreSchema() ? null : names.get(0),
               names.get(1));
 
           String[] primaryKeys = getPrimaryNames(record);
           String[] columns = getColumnNames(record);
           if (useMerge) {
-            if (dbType == DbType.MYSQL) {
+            if (targetDbType == DbType.MYSQL) {
               applierSql = SqlTemplates.MYSQL.getMergeSql(meta.getSchema(),
                   meta.getName(),
                   primaryKeys,
                   columns,
                   true);
-            } else if (dbType == DbType.DRDS) {
+            } else if (targetDbType == DbType.DRDS) {
               applierSql = SqlTemplates.MYSQL.getMergeSql(meta.getSchema(),
                   meta.getName(),
                   primaryKeys,
                   columns,
                   false);
-            } else if (dbType == DbType.ORACLE) {
+            } else if (targetDbType == DbType.ORACLE) {
               applierSql = SqlTemplates.ORACLE.getMergeSql(meta.getSchema(),
                   meta.getName(),
                   primaryKeys,
                   columns);
             }
           } else {
-            if (dbType == DbType.MYSQL) {
+            if (targetDbType == DbType.MYSQL) {
               // 如果mysql，全主键时使用insert ignore
               applierSql = SqlTemplates.MYSQL.getInsertNomalSql(meta.getSchema(),
                   meta.getName(),
@@ -235,7 +233,7 @@ public class FullRecordApplier extends AbstractRecordApplier {
           }
 
           int index = 1;
-          Map<String, Integer> indexs = new HashMap<String, Integer>();
+          Map<String, Integer> indexs = new HashMap<>();
           for (String column : columns) {
             indexs.put(column, index);
             index++;
