@@ -159,14 +159,14 @@ public class FullRecordApplier extends AbstractRecordApplier {
           ps.execute();
         } catch (SQLException e) {
           if (context.isSkipApplierException()) {
-            logger.error("skiped record data : " + record.toString(), e);
+            logger.warn("skiped record data : " + record.toString(), e);
           } else {
             if (e.getMessage().contains("Duplicate entry")
                 || e.getMessage().startsWith("ORA-00001: 违反唯一约束条件")) {
-              logger.error("skiped record data ,maybe transfer before,just continue:"
+              logger.warn("skiped record data ,maybe transfer before,just continue:"
                   + record.toString());
             } else if (e.getMessage().contains("Invalid JSON text")) {
-              logger.error("skiped record data ,maybe JSON data error,just continue:"
+              logger.warn("skiped record data ,maybe JSON data error,just continue:"
                   + record.toString());
             } else {
               throw new SQLException("failed Record Data : " + record.toString(), e);

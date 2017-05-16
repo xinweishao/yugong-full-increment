@@ -1,6 +1,5 @@
 package com.taobao.yugong.applier;
 
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -201,9 +200,9 @@ public class CheckRecordApplier extends AbstractRecordApplier {
     TableSqlUnit sqlUnit = getSqlUnit(sampleRecord);
     String selectSql = sqlUnit.applierSql;
     final Map<String, Integer> indexs = sqlUnit.applierIndexs;
-//    final List<ColumnMeta> primaryKeys = getPrimaryMetas(sampleRecord);
+    //    final List<ColumnMeta> primaryKeys = getPrimaryMetas(sampleRecord);
     final List<ColumnMeta> primaryKeys = table.getPrimaryKeys();
-//    final List<ColumnMeta> columns = getColumnMetas(records.get(0));
+    //    final List<ColumnMeta> columns = getColumnMetas(records.get(0));
     final List<ColumnMeta> columns = table.getColumns();
     Object results = jdbcTemplate.execute(selectSql, (PreparedStatementCallback) ps -> {
       List<Record> result = Lists.newArrayList();

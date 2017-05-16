@@ -35,16 +35,9 @@ public class DataSourceFactory extends AbstractYuGongLifeCycle implements YuGong
 
   public void start() {
     super.start();
-    dataSources = MigrateMap.makeComputingMap(new Function<DataSourceConfig, DataSource>() {
-
-      public DataSource apply(DataSourceConfig config) {
-        return createDataSource(config.getUrl(),
-            config.getUsername(),
-            config.getPassword(),
-            config.getType(),
-            config.getProperties());
-      }
-    });
+    dataSources = MigrateMap.makeComputingMap(
+        config -> createDataSource(config.getUrl(), config.getUsername(), config.getPassword(),
+            config.getType(), config.getProperties()));
 
   }
 
@@ -63,13 +56,16 @@ public class DataSourceFactory extends AbstractYuGongLifeCycle implements YuGong
     return dataSources.get(config);
   }
 
-  public DataSource getDataSource(String url, String userName, String password, DbType dbType, Properties props) {
+  public DataSource getDataSource(String url, String userName, String password, DbType dbType,
+      Properties props) {
     return dataSources.get(new DataSourceConfig(url, userName, password, dbType, props));
   }
 
-  private DataSource createDataSource(String url, String userName, String password, DbType dbType, Properties props) {
+  private DataSource createDataSource(String url, String userName, String password, DbType dbType,
+      Properties props) {
     try {
-      int maxActive = Integer.valueOf(props.getProperty("maxActive", String.valueOf(this.maxActive)));
+      int maxActive = Integer.valueOf(props.getProperty("maxActive",
+          String.valueOf(this.maxActive)));
       if (maxActive < 0) {
         maxActive = 200;
       }
@@ -84,6 +80,7 @@ public class DataSourceFactory extends AbstractYuGongLifeCycle implements YuGong
       dataSource.setMaxActive(maxActive);
       dataSource.setMaxWait(maxWait);
       dataSource.setDriverClassName(dbType.getDriver());
+      dataSource.setTestOnBorrow(true);
       // 动态的参数
       if (props != null && props.size() > 0) {
         for (Map.Entry<Object, Object> entry : props.entrySet()) {
@@ -101,6 +98,7 @@ public class DataSourceFactory extends AbstractYuGongLifeCycle implements YuGong
         dataSource.addConnectionProperty("rewriteBatchedStatements", "true");
         dataSource.addConnectionProperty("allowMultiQueries", "true");
         dataSource.addConnectionProperty("readOnlyPropagatesToServer", "false");
+        dataSource.addConnectionProperty("useSSL", "false");
         dataSource.setValidationQuery("select 1");
         dataSource.setExceptionSorter("com.alibaba.druid.pool.vendor.MySqlExceptionSorter");
         dataSource.setValidConnectionCheckerClassName("com.alibaba.druid.pool.vendor.MySqlValidConnectionChecker");
