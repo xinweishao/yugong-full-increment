@@ -504,7 +504,7 @@ public class YuGongController extends AbstractYuGongLifeCycle {
       if (StringUtils.equalsIgnoreCase("FILE", mode)) {
         FileMixedRecordPositioner positioner = new FileMixedRecordPositioner();
         // 使用了../相对目录，启动脚本会确保user.dir为bin目录 TODO use abs path
-        positioner.setDataDir(new File("conf/positioner"));
+        positioner.setDataDir(new File("positioner_data"));
         positioner.setDataFileName(
             tableHolder.table.getSchema() + "_" + tableHolder.table.getName() + ".dat");
         return positioner;
