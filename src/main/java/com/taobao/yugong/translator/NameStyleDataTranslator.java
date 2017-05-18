@@ -16,6 +16,7 @@ import lombok.Setter;
 public class NameStyleDataTranslator extends AbstractDataTranslator {
 
   private String schemaTo;
+  private String tableTo;
   private CaseFormat columnCaseFormatFrom;
   private CaseFormat columnCaseFormatTo;
   private CaseFormat tableCaseFormatFrom;
@@ -48,7 +49,11 @@ public class NameStyleDataTranslator extends AbstractDataTranslator {
 
   @Override
   public boolean translator(Record record) {
-    record.setTableName(tableCaseConvert(record.getTableName()));
+    if (!Strings.isNullOrEmpty(this.getTableTo())) {
+      record.setTableName(this.getTableTo());
+    } else {
+      record.setTableName(tableCaseConvert(record.getTableName()));
+    }
     record.getColumns().forEach(x ->
         x.getColumn().setName(columnCaseConvert(x.getColumn().getName())));
     record.getPrimaryKeys().forEach(x ->
