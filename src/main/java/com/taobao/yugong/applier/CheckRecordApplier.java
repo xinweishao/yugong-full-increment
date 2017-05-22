@@ -335,8 +335,13 @@ public class CheckRecordApplier extends AbstractRecordApplier {
               meta.getName(),
               primaryKeys,
               columns);
+        } else if (dbType == DbType.SQL_SERVER) {
+          applierSql = SqlTemplates.SQL_SERVER.getSelectSql(meta.getSchema(),
+              meta.getName(),
+              primaryKeys,
+              columns);
         } else {
-          // FIXME throw exception
+          throw new YuGongException("unsupport " + dbType);
         }
 
         int index = 1;

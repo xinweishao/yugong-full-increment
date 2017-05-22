@@ -216,6 +216,8 @@ public class FullRecordApplier extends AbstractRecordApplier {
                   meta.getName(),
                   primaryKeys,
                   columns);
+            } else {
+              throw new YuGongException("unsupport " + targetDbType);
             }
           } else {
             if (targetDbType == DbType.MYSQL) {
@@ -229,11 +231,13 @@ public class FullRecordApplier extends AbstractRecordApplier {
                     meta.getName(),
                     primaryKeys,
                     columns);
-            } else {
+            } else if (targetDbType == DbType.ORACLE) {
               applierSql = SqlTemplates.ORACLE.getInsertSql(meta.getSchema(),
                   meta.getName(),
                   primaryKeys,
                   columns);
+            } else {
+              throw new YuGongException("unsupport " + targetDbType);
             }
           }
 
