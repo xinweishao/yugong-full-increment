@@ -224,6 +224,11 @@ public class FullRecordApplier extends AbstractRecordApplier {
                   meta.getName(),
                   primaryKeys,
                   columns);
+            } else if (targetDbType == DbType.SQL_SERVER) {
+                applierSql = SqlTemplates.SQL_SERVER.getInsertSql(meta.getSchema(),
+                    meta.getName(),
+                    primaryKeys,
+                    columns);
             } else {
               applierSql = SqlTemplates.ORACLE.getInsertSql(meta.getSchema(),
                   meta.getName(),

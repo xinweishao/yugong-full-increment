@@ -1,5 +1,6 @@
 package com.taobao.yugong.translator;
 
+import com.google.common.collect.Maps;
 import com.taobao.yugong.common.db.meta.ColumnValue;
 import com.taobao.yugong.common.model.record.Record;
 
@@ -31,6 +32,9 @@ public class ColumnTranslator implements RecordTranslator {
   @Setter
   @Getter
   protected Map<String, Set<String>> columnAlias = new HashMap<>();
+  @Setter
+  @Getter
+  protected Map<String, String> columnReplace = Maps.newHashMap();
 
 
   /**
@@ -133,24 +137,34 @@ public class ColumnTranslator implements RecordTranslator {
       }
     }
 
-    if (columnAlias != null && !columnAlias.isEmpty()) {
-      for (Map.Entry<String, Set<String>> entry : columnAlias.entrySet()) {
-        String srcColumn = entry.getKey();
-        Set<String> targetColumns = entry.getValue();
+    for (Map.Entry<String, Set<String>> entry : columnAlias.entrySet()) {
+      String srcColumn = entry.getKey();
+      Set<String> targetColumns = entry.getValue();
 
-        ColumnValue column = record.getColumnByName(srcColumn);
-        if (column != null && targetColumns.size() >= 1) {
-          Iterator<String> iter = targetColumns.iterator();
-          String columnName = iter.next();
-          column.getColumn().setName(columnName);
-          if (iter.hasNext()) {
-            ColumnValue newColumn = column.clone();
-            newColumn.getColumn().setName(iter.next());
-            record.addColumn(newColumn);
-          }
+      ColumnValue column = record.getColumnByName(srcColumn);
+      if (column != null && targetColumns.size() >= 1) {
+        Iterator<String> iter = targetColumns.iterator();
+        String columnName = iter.next();
+        column.getColumn().setName(columnName);
+        if (iter.hasNext()) {
+          ColumnValue newColumn = column.clone();
+          newColumn.getColumn().setName(iter.next());
+          record.addColumn(newColumn);
         }
       }
     }
+
+    for (Map.Entry<String, String> entry : columnReplace.entrySet()) {
+      for (ColumnValue column : record.getColumns()) {
+        column.getColumn().setName(column.getColumn().getName()
+            .replace(entry.getKey(), entry.getValue()));
+      }
+      for (ColumnValue column : record.getPrimaryKeys()) {
+        column.getColumn().setName(column.getColumn().getName()
+            .replace(entry.getKey(), entry.getValue()));
+      }
+    }
+    
     return record;
   }
 
