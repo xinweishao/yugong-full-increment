@@ -9,6 +9,7 @@ import com.taobao.yugong.common.db.meta.ColumnValue;
 import com.taobao.yugong.common.db.meta.Table;
 import com.taobao.yugong.common.db.meta.TableMetaGenerator;
 import com.taobao.yugong.common.db.sql.SqlTemplates;
+import com.taobao.yugong.common.model.DbType;
 import com.taobao.yugong.common.model.ExtractStatus;
 import com.taobao.yugong.common.model.ProgressStatus;
 import com.taobao.yugong.common.model.YuGongContext;
@@ -86,7 +87,7 @@ public class OracleMaterializedIncRecordExtractor extends AbstractOracleRecordEx
       throw new YuGongException("not found mlog table for [" + schemaName + "." + tableName + "]");
     }
     // 获取mlog表结构
-    mlogMeta = TableMetaGenerator.getTableMeta(context.getSourceDs(),
+    mlogMeta = TableMetaGenerator.getTableMeta(DbType.ORACLE, context.getSourceDs(),
         context.getTableMeta().getSchema(),
         mlogTableName);
 

@@ -5,7 +5,7 @@ import com.taobao.yugong.common.alarm.MailAlarmService;
 
 import org.junit.Test;
 
-public class AlarmTest {
+public class AlarmIT {
 
   @Test
   public void testEmail() {
