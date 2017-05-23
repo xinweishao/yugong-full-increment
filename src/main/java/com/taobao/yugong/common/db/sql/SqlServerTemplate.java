@@ -82,33 +82,7 @@ public class SqlServerTemplate extends SqlTemplate {
         Lists.newArrayList(colNames).stream()
             .map(x -> String.format("%s = source.%s", x, x)).collect(Collectors.toList())
     ));
-    return StrSubstitutor.replace(sqlTemplate, params);
-
-//    StringBuilder sql = new StringBuilder();
-//    sql.append("insert into ").append(makeFullName(schemaName, tableName)).append("(");
-//
-//    for (int i = 0; i < size; i++) {
-//      sql.append(getColumnName(allColumns[i])).append(splitCommea(size, i));
-//    }
-//
-//    sql.append(") values (");
-//    for (int i = 0; i < size; i++) {
-//      sql.append("?").append(splitCommea(size, i));
-//    }
-//    sql.append(") on duplicate key update ");
-//
-//    // mysql merge sql匹配了uniqe / primary key时都会执行update，所以需要更新pk信息
-//      // merge sql不更新主键信息, 规避drds情况下的分区键变更
-//      for (int i = 0; i < colNames.length; i++) {
-//        sql.append(getColumnName(colNames[i]))
-//            .append("=values(")
-//            .append(getColumnName(colNames[i]))
-//            .append(")");
-//        sql.append(splitCommea(colNames.length, i));
-//      }
-//
-//    // intern优化，避免出现大量相同的字符串
-//    return sql.toString().intern();
+    return StrSubstitutor.replace(sqlTemplate, params).intern();
   }
   
 }
