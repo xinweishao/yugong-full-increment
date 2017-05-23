@@ -41,4 +41,5 @@ public class SqlServerTemplate extends SqlTemplate {
     sql.append(" ) ");
     return sql.toString().intern();
   }
+  
 }
