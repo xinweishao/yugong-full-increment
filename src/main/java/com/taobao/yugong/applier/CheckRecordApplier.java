@@ -77,6 +77,10 @@ public class CheckRecordApplier extends AbstractRecordApplier {
     doApply(records);
   }
 
+  /**
+   * 根据 record 的信息查询 Target DB 的 Record，然后进行 diff
+   * 无法 Diff Target DB 里面多余的 Record
+   */
   protected List<String> doApply(List<Record> records) {
     Map<List<String>, List<Record>> buckets = MigrateMap.makeComputingMap(names -> Lists.newArrayList());
     List<String> diffResults = Lists.newArrayList();
@@ -128,6 +132,8 @@ public class CheckRecordApplier extends AbstractRecordApplier {
           YuGongUtils.getColumnNameArray(primaryKeys),
           YuGongUtils.getColumnNameArray(columns),
           batchRecords.size());
+    } else {
+      throw new YuGongException("unsupport " + dbType);
     }
 
     Object results = jdbcTemplate.execute(selectSql, (PreparedStatementCallback) ps -> {
