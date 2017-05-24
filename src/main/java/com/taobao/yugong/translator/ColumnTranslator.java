@@ -1,14 +1,20 @@
 package com.taobao.yugong.translator;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Maps;
+import com.taobao.yugong.common.db.meta.ColumnMeta;
 import com.taobao.yugong.common.db.meta.ColumnValue;
 import com.taobao.yugong.common.model.record.Record;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 import org.apache.commons.lang.StringUtils;
 
+import java.io.IOException;
+import java.sql.SQLType;
+import java.sql.Types;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -18,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@Slf4j
 public class ColumnTranslator implements RecordTranslator {
 
   @Setter
@@ -35,6 +42,17 @@ public class ColumnTranslator implements RecordTranslator {
   @Setter
   @Getter
   protected Map<String, String> columnReplace = Maps.newHashMap();
+  @Setter
+  @Getter
+  protected Map<String, Map<String, Object>> newColumns = Maps.newHashMap();
+  @Setter
+  @Getter
+  protected Map<String, List<String>> jsonExtract = Maps.newHashMap();
+  @Setter
+  @Getter
+  protected Map<String, List<String>> jsonCompress = Maps.newHashMap();
+  
+  private static ObjectMapper objectMapper = new ObjectMapper();
 
 
   /**
@@ -163,6 +181,57 @@ public class ColumnTranslator implements RecordTranslator {
         column.getColumn().setName(column.getColumn().getName()
             .replace(entry.getKey(), entry.getValue()));
       }
+    }
+
+    for (Map.Entry<String, Map<String, Object>> entry : newColumns.entrySet()) {
+      ColumnValue columnValue = new ColumnValue();
+      columnValue.setColumn(new ColumnMeta(entry.getKey(), (Integer) entry.getValue().get("type")));
+      columnValue.setValue(entry.getValue().get("value"));
+      record.getColumns().add(columnValue);
+    }
+
+    for (Map.Entry<String, List<String>> entry : jsonCompress.entrySet()) {
+      Map<String, Object> jsonMap = Maps.newHashMap();
+      for (String column : entry.getValue()) {
+        jsonMap.put(column, record.getColumnByName(column).getValue());
+        record.removeColumnByName(column);
+      }
+      String json;
+      try {
+        json = objectMapper.writeValueAsString(jsonMap);
+      } catch (IOException e) {
+        log.warn("JSON Write error", e);
+        continue;
+      }
+        ColumnValue columnValue = new ColumnValue();
+        // ugly judge
+        columnValue.setColumn(new ColumnMeta(entry.getKey(), Types.VARCHAR));
+        columnValue.setValue(json);
+        record.getColumns().add(columnValue);
+    }
+
+    for (Map.Entry<String, List<String>> entry : jsonExtract.entrySet()) {
+      ColumnValue column = record.getColumnByName(entry.getKey());
+      if (column == null) {
+        continue;
+      }
+      String jsonValue = (String) column.getValue();
+      Map<String, Object> map;
+      try {
+        map = objectMapper.readValue(jsonValue, Map.class);
+      } catch (IOException e) {
+        log.warn("JSON Read error", e);
+        continue;
+      }
+      for (Map.Entry<String, Object> columnMap: map.entrySet()) {
+        ColumnValue columnValue = new ColumnValue();
+        // ugly judge
+        columnValue.setColumn(new ColumnMeta(columnMap.getKey(),
+            columnMap instanceof Number ? Types.INTEGER : Types.VARCHAR));
+        columnValue.setValue(columnMap.getValue());
+        record.getColumns().add(columnValue);
+      }
+      record.removeColumnByName(entry.getKey());
     }
     
     return record;

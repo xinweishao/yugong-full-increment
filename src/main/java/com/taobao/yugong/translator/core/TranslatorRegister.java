@@ -70,6 +70,7 @@ public class TranslatorRegister {
       translator = MAPPER.readValue(confYaml, clazz);
     } catch (IOException e) {
       log.error("Cannot read value of Translator: {}", conf.getClazz());
+      throw new YuGongException(e);
     }
 
     return translator;
