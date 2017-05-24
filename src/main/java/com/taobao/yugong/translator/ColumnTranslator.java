@@ -1,5 +1,6 @@
 package com.taobao.yugong.translator;
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
 import com.google.common.annotations.VisibleForTesting;
@@ -62,6 +63,7 @@ public class ColumnTranslator implements RecordTranslator {
 
   static {
     objectMapper.setDateFormat(new ISO8601DateFormat());
+    objectMapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_CONTROL_CHARS, true);
   }
 
 
@@ -146,7 +148,7 @@ public class ColumnTranslator implements RecordTranslator {
         map = objectMapper.readValue(jsonValue, Map.class);
       } catch (IOException e) {
         log.warn("JSON Read error", e);
-        continue;
+        map = Maps.newHashMap();
       }
       for (Map.Entry<String, Object> columnMap : map.entrySet()) {
         ColumnValue columnValue = new ColumnValue();

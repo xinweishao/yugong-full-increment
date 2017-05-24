@@ -26,7 +26,7 @@ import javax.sql.DataSource;
 public class DataSourceFactory extends AbstractYuGongLifeCycle implements YuGongLifeCycle {
 
   private static final Logger logger = LoggerFactory.getLogger(DataSourceFactory.class);
-  private int maxWait = 5 * 1000;
+  private int maxWait = 10 * 1000;
   private int minIdle = 0;
   private int initialSize = 0;
   private int maxActive = 32;
