@@ -15,18 +15,10 @@ import java.util.Set;
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class ColumnFixDataTranslator extends AbstractDataTranslator {
   
-//  private Collection<String> includeColumns = new HashSet<>();
-//  private Collection<String> excludeColumns = new HashSet<>();
-//  private Collection<String> checked = new HashSet<>();
-//  private Collection<String> notChecked = new HashSet<>();
   private final ColumnTranslator translator;
 
   public ColumnFixDataTranslator() {
     translator = new ColumnTranslator();
-//    translator.setIncludeColumns(includeColumns);
-//    translator.setExcludeColumns(excludeColumns);
-//    translator.setChecked(checked);
-//    translator.setNotChecked(notChecked);
     super.setTranslator(translator);
   }
   
@@ -36,6 +28,14 @@ public class ColumnFixDataTranslator extends AbstractDataTranslator {
 
   public Map<String, Set<String>> getColumnAlias() {
     return this.translator.getColumnAlias();
+  }
+
+  public void setColumnReplace(Map<String, String> columnReplace) {
+    this.translator.setColumnReplace(columnReplace);
+  }
+
+  public Map<String, String> getColumnReplace() {
+    return this.translator.getColumnReplace();
   }
 
   public void setExcludeColumns(Collection<String> excludeAlias) {

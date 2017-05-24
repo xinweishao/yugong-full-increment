@@ -185,7 +185,7 @@ public class IncrementRecordApplier extends AbstractRecordApplier {
           } else {
             if (YuGongUtils.isEmpty(meta.getColumns()) && dbType == DbType.MYSQL) {
               // 如果mysql，全主键时使用insert ignore
-              applierSql = SqlTemplates.MYSQL.getInsertSql(meta.getSchema(),
+              applierSql = SqlTemplates.MYSQL.getInsertIgnoreSql(meta.getSchema(),
                   meta.getName(),
                   primaryKeys,
                   columns);

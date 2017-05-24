@@ -19,6 +19,11 @@ public class MysqlFullRecordExtractor extends AbstractFullRecordExtractor {
 
   public MysqlFullRecordExtractor(YuGongContext context) {
     this.context = context;
+  }
+
+  @Override
+  public void init() {
+    super.init();
     String primaryKey = context.getTableMeta().getPrimaryKeys().get(0).getName();
     String schemaName = context.getTableMeta().getSchema();
     String tableName = context.getTableMeta().getName();

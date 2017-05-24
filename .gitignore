@@ -63,3 +63,4 @@ logs
 conf
 /*.yaml
 /*.properties
+positioner_data

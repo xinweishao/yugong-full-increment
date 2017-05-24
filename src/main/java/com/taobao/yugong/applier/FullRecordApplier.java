@@ -40,7 +40,7 @@ public class FullRecordApplier extends AbstractRecordApplier {
   protected YuGongContext context;
   protected DbType sourceDbType;
   protected DbType targetDbType;
-  protected boolean useMerge = false;
+  protected boolean useMerge = true;
 
   public FullRecordApplier(YuGongContext context) {
     this.context = context;
@@ -216,6 +216,11 @@ public class FullRecordApplier extends AbstractRecordApplier {
                   meta.getName(),
                   primaryKeys,
                   columns);
+            } else if (targetDbType == DbType.SQL_SERVER) {
+              applierSql = SqlTemplates.SQL_SERVER.getMergeSql(meta.getSchema(),
+                  meta.getName(), primaryKeys, columns);
+            } else {
+              throw new YuGongException("unsupport " + targetDbType);
             }
           } else {
             if (targetDbType == DbType.MYSQL) {
@@ -224,11 +229,18 @@ public class FullRecordApplier extends AbstractRecordApplier {
                   meta.getName(),
                   primaryKeys,
                   columns);
-            } else {
+            } else if (targetDbType == DbType.SQL_SERVER) {
+                applierSql = SqlTemplates.SQL_SERVER.getInsertSql(meta.getSchema(),
+                    meta.getName(),
+                    primaryKeys,
+                    columns);
+            } else if (targetDbType == DbType.ORACLE) {
               applierSql = SqlTemplates.ORACLE.getInsertSql(meta.getSchema(),
                   meta.getName(),
                   primaryKeys,
                   columns);
+            } else {
+              throw new YuGongException("unsupport " + targetDbType);
             }
           }
 

@@ -34,6 +34,7 @@ import com.taobao.yugong.conf.YugongConfiguration;
 import com.taobao.yugong.exception.YuGongException;
 import com.taobao.yugong.extractor.AbstractRecordExtractor;
 import com.taobao.yugong.extractor.RecordExtractor;
+import com.taobao.yugong.extractor.mysql.MysqlFullRecordExtractor;
 import com.taobao.yugong.extractor.oracle.AbstractOracleRecordExtractor;
 import com.taobao.yugong.extractor.oracle.OracleAllRecordExtractor;
 import com.taobao.yugong.extractor.oracle.OracleFullRecordExtractor;
@@ -76,6 +77,8 @@ import javax.sql.DataSource;
  */
 public class YuGongController extends AbstractYuGongLifeCycle {
 
+  public static final String BEFORE_TRANSLATOR = "|BEFORE|";
+  public static final String AFTER_TRANSLATOR = "|AFTER|";
   public static final String DEFAULT_TRANSLATOR = "*";
   private DataSourceFactory dataSourceFactory = new DataSourceFactory();
   private JdkCompiler compiler = new JdkCompiler();
@@ -327,6 +330,11 @@ public class YuGongController extends AbstractYuGongLifeCycle {
           recordExtractor.setExtractSql(extractSql);
           recordExtractor.setTracer(progressTracer);
           return recordExtractor;
+        } else if (sourceDbType == DbType.MYSQL) {
+          MysqlFullRecordExtractor recordExtractor = new MysqlFullRecordExtractor(context);
+          recordExtractor.setExtractSql(extractSql);
+          recordExtractor.setTracer(progressTracer);
+          return recordExtractor;
         } else {
           throw new YuGongException("unsupport " + sourceDbType);
         }
@@ -438,10 +446,17 @@ public class YuGongController extends AbstractYuGongLifeCycle {
     List<TranslatorConf> translatorsConfs = yugongConfiguration.getTranslators().getRecord()
         .get(tableHolder.table.getName());
     if (translatorsConfs == null) {
-      translatorsConfs = yugongConfiguration.getTranslators().getRecord().get(DEFAULT_TRANSLATOR);
+      translatorsConfs = Lists.newArrayList();
     }
-    if (translatorsConfs == null) {
-      return Lists.newArrayList();
+    List<TranslatorConf> beforeTranslator = yugongConfiguration.getTranslators()
+        .getRecord().get(BEFORE_TRANSLATOR);
+    if (beforeTranslator != null) {
+      translatorsConfs.addAll(0, beforeTranslator);
+    }
+    List<TranslatorConf> afterTranslator = yugongConfiguration.getTranslators()
+        .getRecord().get(AFTER_TRANSLATOR);
+    if (afterTranslator != null) {
+      translatorsConfs.addAll(afterTranslator);
     }
     translatorsConfs.forEach(translatorConf -> {
       TableMetaTranslator translator = TranslatorRegister.newTableMetaTranslator(translatorConf);
@@ -457,10 +472,17 @@ public class YuGongController extends AbstractYuGongLifeCycle {
     List<TranslatorConf> translatorsConfs = yugongConfiguration.getTranslators().getRecord()
         .get(tableHolder.table.getName());
     if (translatorsConfs == null) {
-      translatorsConfs = yugongConfiguration.getTranslators().getRecord().get(DEFAULT_TRANSLATOR);
+      translatorsConfs = Lists.newArrayList();
     }
-    if (translatorsConfs == null) {
-      return Lists.newArrayList();
+    List<TranslatorConf> beforeTranslator = yugongConfiguration.getTranslators()
+        .getRecord().get(BEFORE_TRANSLATOR);
+    if (beforeTranslator != null) {
+      translatorsConfs.addAll(0, beforeTranslator);
+    }
+    List<TranslatorConf> afterTranslator = yugongConfiguration.getTranslators()
+        .getRecord().get(AFTER_TRANSLATOR);
+    if (afterTranslator != null) {
+      translatorsConfs.addAll(afterTranslator);
     }
     translatorsConfs.forEach(translatorConf -> {
       DataTranslator dataTranslator = TranslatorRegister.newDataTranslator(translatorConf);
