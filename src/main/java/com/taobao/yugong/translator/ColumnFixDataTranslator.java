@@ -65,5 +65,14 @@ public class ColumnFixDataTranslator extends AbstractDataTranslator {
   public Map<String, List<String>> getJsonCompress() {
     return this.translator.getJsonCompress();
   }
+
+  public void setJsonExtractParam(Map<String, Object> jsonExtractParam) {
+    this.translator.setJsonExtractParam(jsonExtractParam);
+  }
+
+  public Map<String, Object> getJsonExtractParam() {
+    return this.translator.getJsonExtractParam();
+  }
+
 }
 

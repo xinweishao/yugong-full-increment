@@ -1,5 +1,6 @@
 package com.taobao.yugong.common.utils;
 
+import com.google.common.base.CaseFormat;
 import com.taobao.yugong.common.db.meta.ColumnMeta;
 import com.taobao.yugong.common.db.meta.ColumnValue;
 import com.taobao.yugong.common.model.DbType;
@@ -233,5 +234,18 @@ public class YuGongUtils {
     }
 
     return new ColumnValue(columnMeta, value);
+  }
+  
+  public static CaseFormat ofCaseFormat(String input) {
+    if (input.equals(CaseFormat.LOWER_CAMEL.toString())) {
+      return CaseFormat.LOWER_CAMEL;
+    } else if (input.equals(CaseFormat.LOWER_UNDERSCORE.toString())) {
+      return CaseFormat.LOWER_UNDERSCORE;
+    } else if (input.equals(CaseFormat.UPPER_CAMEL.toString())) {
+      return CaseFormat.UPPER_CAMEL;
+    } else if (input.equals(CaseFormat.UPPER_UNDERSCORE.toString())) {
+      return CaseFormat.UPPER_UNDERSCORE;
+    }
+    throw new YuGongException(String.format("not supported %s", input));
   }
 }
