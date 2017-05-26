@@ -1,5 +1,6 @@
 package com.taobao.yugong.common.db;
 
+import com.google.common.base.Joiner;
 import com.taobao.yugong.common.audit.RecordDumper;
 import com.taobao.yugong.common.db.meta.ColumnValue;
 import com.taobao.yugong.common.model.record.Record;
@@ -17,6 +18,8 @@ import java.math.BigDecimal;
 import java.text.MessageFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 记录对比
@@ -54,11 +57,15 @@ public class RecordDiffer {
     }
 
     if (record1.getColumns().size() > record2.getColumns().size()) {
+      Set<String> columnNames = record1.getColumns().stream()
+          .map(x -> x.getColumn().getName()).collect(Collectors.toSet());
+      columnNames.removeAll(record2.getColumns().stream()
+              .map(x -> x.getColumn().getName()).collect(Collectors.toSet()));
       message = diffMessage(record1.getSchemaName(),
           record1.getTableName(),
           record1.getPrimaryKeys(),
           "column size " + record1.getColumns().size() + " is great than target column size"
-              + record2.getColumns().size());
+              + record2.getColumns().size() + ", more: " + Joiner.on(", ").join(columnNames));
       diffLogger.info(message);
       return message;
     }

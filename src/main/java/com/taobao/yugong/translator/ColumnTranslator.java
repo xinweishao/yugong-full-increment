@@ -1,14 +1,23 @@
 package com.taobao.yugong.translator;
 
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
+import com.taobao.yugong.common.db.meta.ColumnMeta;
 import com.taobao.yugong.common.db.meta.ColumnValue;
 import com.taobao.yugong.common.model.record.Record;
+import com.taobao.yugong.common.utils.YuGongUtils;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 import org.apache.commons.lang.StringUtils;
 
+import java.io.IOException;
+import java.sql.Types;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -18,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@Slf4j
 public class ColumnTranslator implements RecordTranslator {
 
   @Setter
@@ -35,6 +45,26 @@ public class ColumnTranslator implements RecordTranslator {
   @Setter
   @Getter
   protected Map<String, String> columnReplace = Maps.newHashMap();
+  @Setter
+  @Getter
+  protected Map<String, Map<String, Object>> newColumns = Maps.newHashMap();
+  @Setter
+  @Getter
+  protected Map<String, List<String>> jsonExtract = Maps.newHashMap();
+  @Setter
+  @Getter
+  protected Map<String, Object> jsonExtractParam = Maps.newHashMap();
+  @Setter
+  @Getter
+  protected Map<String, List<String>> jsonCompress = Maps.newHashMap();
+
+  @VisibleForTesting
+  protected static ObjectMapper objectMapper = new ObjectMapper();
+
+  static {
+    objectMapper.setDateFormat(new ISO8601DateFormat());
+    objectMapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_CONTROL_CHARS, true);
+  }
 
 
   /**
@@ -86,6 +116,67 @@ public class ColumnTranslator implements RecordTranslator {
   }
 
   public Record translator(Record record) {
+
+    for (Map.Entry<String, List<String>> entry : jsonCompress.entrySet()) {
+      Map<String, Object> jsonMap = Maps.newHashMap();
+      for (String column : entry.getValue()) {
+        jsonMap.put(column, record.getColumnByName(column).getValue());
+        record.removeColumnByName(column);
+      }
+      String json;
+      try {
+        json = objectMapper.writeValueAsString(jsonMap);
+      } catch (IOException e) {
+        log.warn("JSON Write error", e);
+        continue;
+      }
+      ColumnValue columnValue = new ColumnValue();
+      // ugly judge
+      columnValue.setColumn(new ColumnMeta(entry.getKey(), Types.VARCHAR));
+      columnValue.setValue(json);
+      record.getColumns().add(columnValue);
+    }
+
+    for (Map.Entry<String, List<String>> entry : jsonExtract.entrySet()) {
+      ColumnValue column = record.getColumnByName(entry.getKey());
+      if (column == null) {
+        continue;
+      }
+      String jsonValue = (String) column.getValue();
+      Map<String, Object> map;
+      try {
+        map = objectMapper.readValue(jsonValue, Map.class);
+      } catch (IOException e) {
+        log.warn("JSON Read error", e);
+        map = Maps.newHashMap();
+      }
+      for (Map.Entry<String, Object> columnMap : map.entrySet()) {
+        ColumnValue columnValue = new ColumnValue();
+        // ugly judge
+        String name = columnMap.getKey();
+        if (jsonExtractParam.get("case_format_from") != null
+            && jsonExtractParam.get("case_format_to") != null) {
+          name = YuGongUtils.ofCaseFormat((String) jsonExtractParam.get("case_format_from"))
+              .to(YuGongUtils.ofCaseFormat((String) jsonExtractParam.get("case_format_to")), name);
+          Map<String, String> replaceMap = (Map<String, String>) this.jsonExtractParam
+              .getOrDefault("replace", Maps.newHashMap());
+          for (Map.Entry<String, String> replaceEntry : replaceMap.entrySet()) {
+            name = name.replace(replaceEntry.getKey(), replaceEntry.getValue());
+          }
+          Map<String, String> aliasMap = (Map<String, String>) this.jsonExtractParam
+              .getOrDefault("alias", Maps.newHashMap());
+          if (aliasMap.containsKey(name)) {
+            name = aliasMap.get(name);
+          }
+        }
+        columnValue.setColumn(new ColumnMeta(name,
+            columnMap instanceof Number ? Types.INTEGER : Types.VARCHAR));
+        columnValue.setValue(columnMap.getValue());
+        record.getColumns().add(columnValue);
+      }
+      record.removeColumnByName(entry.getKey());
+    }
+
     if (excludeColumns != null && !excludeColumns.isEmpty()) {
       // 处理列排除
       for (String excludeColumn : excludeColumns) {
@@ -164,7 +255,15 @@ public class ColumnTranslator implements RecordTranslator {
             .replace(entry.getKey(), entry.getValue()));
       }
     }
-    
+
+    for (Map.Entry<String, Map<String, Object>> entry : newColumns.entrySet()) {
+      ColumnValue columnValue = new ColumnValue();
+      columnValue.setColumn(new ColumnMeta(entry.getKey(), (Integer) entry.getValue().get("type")));
+      columnValue.setValue(entry.getValue().get("value"));
+      record.getColumns().add(columnValue);
+    }
+
+
     return record;
   }
 
