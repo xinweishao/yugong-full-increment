@@ -180,7 +180,7 @@ public class ColumnTranslator implements RecordTranslator {
     if (excludeColumns != null && !excludeColumns.isEmpty()) {
       // 处理列排除
       for (String excludeColumn : excludeColumns) {
-        record.removeColumnByName(excludeColumn);
+        record.removeColumnByName(excludeColumn, true);
       }
     }
 
