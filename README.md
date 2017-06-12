@@ -81,6 +81,7 @@ See the page for yugong performance :
 
 ## Usage
 
+HJ 使用的 yugong 已经改为 fat jar 模式运行，摒弃了官方的打包流程。
 将生成的 fat jar `yugong-shaded.jar` 拷贝到服务器，即可运行。
 
 
