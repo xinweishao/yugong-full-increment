@@ -81,9 +81,22 @@ See the page for yugong performance :
 
 ## Usage
 
+将生成的 fat jar `yugong-shaded.jar` 拷贝到服务器，即可运行。
+
+
+运行参数：
+
+*   -c：使用的 yugong properties，配置数据库信息和作业信息
+*   -y：使用的 YAML 配置文件，做 Translator 定制化
+
+
 ```
 mvn clean package
 cp target/yugong-shaded.jar .
+
 JAVA_OPTIONS=("-Xms2048m" "-Xmx3072m" "-Xmn1024m" "-XX:SurvivorRatio=2" "-XX:PermSize=96m" "-XX:MaxPermSize=256m" "-Xss256k" "-XX:-UseAdaptiveSizePolicy" "-XX:MaxTenuringThreshold=15" "-XX:+DisableExplicitGC" "-XX:+UseConcMarkSweepGC" "-XX:+CMSParallelRemarkEnabled" "-XX:+UseCMSCompactAtFullCollection" "-XX:+UseFastAccessorMethods" "-XX:+UseCMSInitiatingOccupancyOnly" "-XX:+HeapDumpOnOutOfMemoryError")
+java 
 java -server $JAVA_OPTIONS -jar yugong-shaded.jar -c sync-mssql-mysql.properties -y mssql-mysql.yaml
 ```
+
+每次操作会记录进度，用来断点续接。想重新开始跑应用，需要删除当前目录下的 `logs` / `positioner_data`。
