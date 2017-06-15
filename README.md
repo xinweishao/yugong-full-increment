@@ -96,7 +96,6 @@ mvn clean package
 cp target/yugong-shaded.jar .
 
 JAVA_OPTIONS=("-Xms2048m" "-Xmx3072m" "-Xmn1024m" "-XX:SurvivorRatio=2" "-XX:PermSize=96m" "-XX:MaxPermSize=256m" "-Xss256k" "-XX:-UseAdaptiveSizePolicy" "-XX:MaxTenuringThreshold=15" "-XX:+DisableExplicitGC" "-XX:+UseConcMarkSweepGC" "-XX:+CMSParallelRemarkEnabled" "-XX:+UseCMSCompactAtFullCollection" "-XX:+UseFastAccessorMethods" "-XX:+UseCMSInitiatingOccupancyOnly" "-XX:+HeapDumpOnOutOfMemoryError")
-java 
 java -server $JAVA_OPTIONS -jar yugong-shaded.jar -c sync-mssql-mysql.properties -y mssql-mysql.yaml
 ```
 
