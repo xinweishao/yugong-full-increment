@@ -90,11 +90,16 @@ HJ 使用的 yugong 已经改为 fat jar 模式运行，摒弃了官方的打包
 *   -c：使用的 yugong properties，配置数据库信息和作业信息
 *   -y：使用的 YAML 配置文件，做 Translator 定制化
 
+编译 yugong jar 包（不想编译的同学，直接点击 https://gitlab.yeshj.com/hjarch-practice/yugong/tags/yugong-1.1.0 里面有 jar 包下载）:
 
 ```
 mvn clean package
 cp target/yugong-shaded.jar .
+```
 
+运行：
+
+```
 JAVA_OPTIONS=("-Xms2048m" "-Xmx3072m" "-Xmn1024m" "-XX:SurvivorRatio=2" "-XX:PermSize=96m" "-XX:MaxPermSize=256m" "-Xss256k" "-XX:-UseAdaptiveSizePolicy" "-XX:MaxTenuringThreshold=15" "-XX:+DisableExplicitGC" "-XX:+UseConcMarkSweepGC" "-XX:+CMSParallelRemarkEnabled" "-XX:+UseCMSCompactAtFullCollection" "-XX:+UseFastAccessorMethods" "-XX:+UseCMSInitiatingOccupancyOnly" "-XX:+HeapDumpOnOutOfMemoryError")
 java -server $JAVA_OPTIONS -jar yugong-shaded.jar -c sync-mssql-mysql.properties -y mssql-mysql.yaml
 ```
