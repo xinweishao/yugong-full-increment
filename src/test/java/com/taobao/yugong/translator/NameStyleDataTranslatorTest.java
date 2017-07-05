@@ -21,4 +21,14 @@ public class NameStyleDataTranslatorTest {
   public void columnCaseConvert() throws Exception {
   }
 
+  @Test
+  public void tableCaseConvertSMS() throws Exception {
+    NameStyleDataTranslator translator = new NameStyleDataTranslator();
+    translator.setTableCaseFormatFrom(CaseFormat.UPPER_CAMEL);
+    translator.setTableCaseFormatTo(CaseFormat.LOWER_UNDERSCORE);
+    translator.setColumnCaseFormatFrom(CaseFormat.UPPER_CAMEL);
+    translator.setColumnCaseFormatTo(CaseFormat.LOWER_UNDERSCORE);
+    Assert.assertEquals("s_m_s_level", translator.columnCaseConvert("SMSLevel"));
+  }
+
 }
