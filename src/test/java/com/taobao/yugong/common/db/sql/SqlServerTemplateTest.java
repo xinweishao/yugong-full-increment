@@ -3,8 +3,6 @@ package com.taobao.yugong.common.db.sql;
 import org.junit.Assert;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
-
 public class SqlServerTemplateTest {
   @Test
   public void getInsertSql() throws Exception {
@@ -21,7 +19,7 @@ public class SqlServerTemplateTest {
     SqlServerTemplate template = new SqlServerTemplate();
     String[] primaryKeys =  {"pk1"};
     String[] columns =  {"c1", "c2", "c3"};
-    String sql = template.getMergeSql("sss", "ttt", primaryKeys, columns);
+    String sql = template.getMergeSql("sss", "ttt", primaryKeys, columns, true);
     Assert.assertEquals("SET IDENTITY_INSERT ttt ON;\n" 
         + "MERGE ttt AS target\n"
         + "USING (values (?, ?, ?, ?)) AS source (c1, c2, c3, pk1)\n"
@@ -37,7 +35,7 @@ public class SqlServerTemplateTest {
     SqlServerTemplate template = new SqlServerTemplate();
     String[] primaryKeys =  {"pk1", "pk2"};
     String[] columns =  {"c1", "c2", "c3"};
-    String sql = template.getMergeSql("sss", "ttt", primaryKeys, columns);
+    String sql = template.getMergeSql("sss", "ttt", primaryKeys, columns, true);
     Assert.assertEquals("SET IDENTITY_INSERT ttt ON;\n" 
         + "MERGE ttt AS target\n"
         + "USING (values (?, ?, ?, ?, ?)) AS source (c1, c2, c3, pk1, pk2)\n"

@@ -218,7 +218,7 @@ public class FullRecordApplier extends AbstractRecordApplier {
                   columns);
             } else if (targetDbType == DbType.SQL_SERVER) {
               applierSql = SqlTemplates.SQL_SERVER.getMergeSql(meta.getSchema(),
-                  meta.getName(), primaryKeys, columns);
+                  meta.getName(), primaryKeys, columns, !record.isEnableCompositeIndexes());
             } else {
               throw new YuGongException("unsupport " + targetDbType);
             }
@@ -247,7 +247,7 @@ public class FullRecordApplier extends AbstractRecordApplier {
           int index = 1;
           Map<String, Integer> indexs = new HashMap<>();
           for (String column : columns) {
-            indexs.put(column, index);
+             indexs.put(column, index);
             index++;
           }
 

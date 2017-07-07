@@ -3,13 +3,10 @@ package com.taobao.yugong.common.db.sql;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-
 import org.apache.commons.lang3.text.StrSubstitutor;
 
-import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.List;
-import java.util.function.IntUnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -54,9 +51,16 @@ public class SqlServerTemplate extends SqlTemplate {
   }
 
   public String getMergeSql(String schemaName, String tableName, String[] pkNames,
-      String[] colNames) {
+      String[] colNames, boolean identityInsertMode) {
     HashMap<String, String> params = Maps.newHashMap();
-    String sqlTemplate = "SET IDENTITY_INSERT ${tableName} ON;\n"
+
+    String identityInsert = "";
+
+    if(identityInsertMode){
+      identityInsert = "SET IDENTITY_INSERT ${tableName} ON;\n";
+    }
+
+    String sqlTemplate = identityInsert
         + "MERGE ${tableName} AS target\n"
         + "USING (values (${questions})) AS source (${allColumns})\n"
         + "ON ${conditionPrimaryEqualString}\n"
@@ -70,10 +74,13 @@ public class SqlServerTemplate extends SqlTemplate {
     params.put("questions", Joiner.on(", ").join(IntStream.range(0, size).boxed()
         .map(x -> "?").collect(Collectors.toList())));
     params.put("allColumns", Joiner.on(", ").join(allColumns));
+
     params.put("conditionPrimaryEqualString", Joiner.on(" AND ").join(
         Lists.newArrayList(pkNames).stream()
             .map(x -> String.format("target.%s = source.%s", x, x)).collect(Collectors.toList())
     ));
+
+
     params.put("allColumnsWithSource", Joiner.on(", ").join(
         Lists.newArrayList(allColumns).stream()
             .map(x -> String.format("source.%s", x)).collect(Collectors.toList())

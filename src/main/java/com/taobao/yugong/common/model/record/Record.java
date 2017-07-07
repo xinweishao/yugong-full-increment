@@ -22,6 +22,8 @@ public class Record {
   private List<ColumnValue> primaryKeys = Lists.newArrayList();
   private List<ColumnValue> columns = Lists.newArrayList();
 
+  private boolean enableCompositeIndexes;
+
   public Record() {
 
   }
@@ -31,6 +33,25 @@ public class Record {
     this.tableName = tableName;
     this.primaryKeys = primaryKeys;
     this.columns = columns;
+  }
+
+
+  /**
+   * Sets new enableCompositeIndexes.
+   *
+   * @param enableCompositeIndexes New value of enableCompositeIndexes.
+   */
+  public void setEnableCompositeIndexes(boolean enableCompositeIndexes) {
+    this.enableCompositeIndexes = enableCompositeIndexes;
+  }
+
+  /**
+   * Gets enableCompositeIndexes.
+   *
+   * @return Value of enableCompositeIndexes.
+   */
+  public boolean isEnableCompositeIndexes() {
+    return enableCompositeIndexes;
   }
 
   public List<ColumnValue> getPrimaryKeys() {

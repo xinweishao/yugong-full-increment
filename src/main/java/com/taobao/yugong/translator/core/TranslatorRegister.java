@@ -5,11 +5,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.google.common.collect.ImmutableMap;
 import com.taobao.yugong.conf.TranslatorConf;
 import com.taobao.yugong.exception.YuGongException;
-import com.taobao.yugong.translator.ColumnFixDataTranslator;
-import com.taobao.yugong.translator.DataTranslator;
-import com.taobao.yugong.translator.NameStyleDataTranslator;
-import com.taobao.yugong.translator.NameTableMetaTranslator;
-import com.taobao.yugong.translator.TableMetaTranslator;
+import com.taobao.yugong.translator.*;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -27,6 +23,7 @@ public class TranslatorRegister {
 
   private static Map<String, Class<?>> dataTranslatorRegister = ImmutableMap.<String, Class<?>>builder()
       .put(NameStyleDataTranslator.class.getCanonicalName(), NameStyleDataTranslator.class)
+      .put(CompositeIndexesDataTranslator.class.getCanonicalName(), CompositeIndexesDataTranslator.class)
       .put(ColumnFixDataTranslator.class.getCanonicalName(), ColumnFixDataTranslator.class)
       .build();
 
