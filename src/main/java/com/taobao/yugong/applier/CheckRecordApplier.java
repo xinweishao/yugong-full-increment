@@ -342,6 +342,13 @@ public class CheckRecordApplier extends AbstractRecordApplier {
               primaryKeys,
               columns);
         } else if (dbType == DbType.SQL_SERVER) {
+          //处理复合索引情况
+          if(record.isEnableCompositeIndexes()){
+            primaryKeys.clear();
+            primaryKeys.addAll(record.getCheckCompositeKeys());
+            columns.removeAll(primaryKeys);
+          }
+
           applierSql = SqlTemplates.SQL_SERVER.getSelectSql(meta.getSchema(),
               meta.getName(),
               primaryKeys,
