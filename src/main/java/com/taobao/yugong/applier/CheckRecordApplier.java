@@ -23,11 +23,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 
 import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -210,6 +206,22 @@ public class CheckRecordApplier extends AbstractRecordApplier {
     final List<ColumnMeta> primaryKeys = table.getPrimaryKeys();
     //    final List<ColumnMeta> columns = getColumnMetas(records.get(0));
     final List<ColumnMeta> columns = table.getColumns();
+
+    //处理联合索引情况
+    if(sampleRecord.isEnableCompositeIndexes()){
+      logger.info(">> 处理联合索引，正在重新分配主键和列");
+      primaryKeys.clear();
+      sampleRecord.getCheckCompositeKeys().forEach(key -> {
+        Optional<ColumnMeta> columnMetaOptional = columns.stream().filter(c -> c.getName().equals(key)).findFirst();
+        if(columnMetaOptional.isPresent()) {
+          primaryKeys.add(columns.remove(columns.indexOf(columnMetaOptional.get())));
+        } else {
+          throw new RuntimeException(">> 无法匹配到合适的的索引，请检查<CompositeIndexesDataTranslator>的配置");
+        }
+      });
+    }
+
+
     Object results = jdbcTemplate.execute(selectSql, (PreparedStatementCallback) ps -> {
       List<Record> result = Lists.newArrayList();
       for (Record record : records) {
@@ -289,6 +301,7 @@ public class CheckRecordApplier extends AbstractRecordApplier {
 
     // 以records1为准
     for (Record record : records1) {
+
       List<String> primaryKeys1 = Lists.newArrayList();
 
       for (ColumnValue pk : record.getPrimaryKeys()) {
@@ -303,6 +316,7 @@ public class CheckRecordApplier extends AbstractRecordApplier {
 
     // 比对record2多余的数据
     for (Record record2 : recordMap2.values()) {
+      //record2不为null的话，必抛NPE，:(
       String diff = RecordDiffer.diff(null, record2);
       if (!Strings.isNullOrEmpty(diff)) {
         diffResults.add(diff);
