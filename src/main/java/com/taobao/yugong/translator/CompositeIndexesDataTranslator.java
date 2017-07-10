@@ -31,9 +31,8 @@ import com.taobao.yugong.common.db.meta.ColumnValue;
 import com.taobao.yugong.common.model.record.Record;
 import lombok.Data;
 
-import java.util.LinkedHashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 处理复合索引的Translator
@@ -45,7 +44,7 @@ import java.util.Map;
 @Data
 public class CompositeIndexesDataTranslator extends AbstractDataTranslator {
 
-    private Map<String, String> compositeIndexes = new LinkedHashMap<>();
+    private List<String> compositeIndexes = new ArrayList<>();
 
     public CompositeIndexesDataTranslator() {
         ColumnTranslator translator = new ColumnTranslator();
@@ -62,12 +61,12 @@ public class CompositeIndexesDataTranslator extends AbstractDataTranslator {
             List<ColumnValue> primaryKeys = record.getPrimaryKeys();
             primaryKeys.clear();
             //重设索引键
-            compositeIndexes.entrySet().stream().forEach(e -> {
-                ColumnValue columnValue = record.getColumnByName(e.getKey());
+            compositeIndexes.stream().forEach(k -> {
+                ColumnValue columnValue = record.getColumnByName(k);
                 primaryKeys.add(columnValue);
                 record.getColumns().remove(columnValue);
                 //for check mode only
-                record.addCheckCompositeKey(e.getValue());
+                record.addCheckCompositeKey(k);
             });
         }
 

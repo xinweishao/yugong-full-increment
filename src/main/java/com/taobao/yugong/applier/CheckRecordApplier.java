@@ -210,6 +210,12 @@ public class CheckRecordApplier extends AbstractRecordApplier {
     //处理联合索引情况
     if(sampleRecord.isEnableCompositeIndexes()){
       logger.info(">> 处理联合索引，正在重新分配主键和列");
+
+      //如有主键则合并到列中，因为目标主键可能也不被指定
+      if(!primaryKeys.isEmpty()){
+        columns.addAll(primaryKeys);
+      }
+
       primaryKeys.clear();
       sampleRecord.getCheckCompositeKeys().forEach(key -> {
         Optional<ColumnMeta> columnMetaOptional = columns.stream().filter(c -> c.getName().equals(key)).findFirst();
