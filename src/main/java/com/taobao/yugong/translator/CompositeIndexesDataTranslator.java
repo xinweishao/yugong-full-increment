@@ -38,6 +38,17 @@ import java.util.List;
  * 处理复合索引的Translator
  * @author caobin
  * @version 1.0 2017.07.07
+ * <p>
+ *
+ *     - class: com.taobao.yugong.translator.CompositeIndexesDataTranslator
+ *       properties:
+ *       # # sqlserver field
+ *       composite_indexes:
+ *       - OrderID
+ *       - ProductID
+ *       - MultiProductID
+ *
+ * </p>
  */
 
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
