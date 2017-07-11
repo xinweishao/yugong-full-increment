@@ -32,6 +32,9 @@ import java.math.MathContext;
 import java.math.RoundingMode;
 import java.sql.*;
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Fill MySQL Data
@@ -108,9 +111,24 @@ public class DataGenerator {
 
 
     public static void main(String[] args) throws Exception {
-        fillShopOrderDetail(10);
+        //fillShopOrderDetail(50000);
 
-        //fillShopOrderDetailMulti(10);
+        ExecutorService executorService = Executors.newFixedThreadPool(6);
+
+        for(int i = 0; i < 8; i++){
+            executorService.execute(() -> {
+                try {
+                    fillShopOrderDetailMulti(5000);
+                } catch (Exception e) {
+                    Throwables.propagate(e);
+                }
+            });
+        }
+
+        executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+        executorService.shutdown();
+
+
     }
 
 }

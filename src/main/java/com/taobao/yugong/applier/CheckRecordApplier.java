@@ -202,10 +202,10 @@ public class CheckRecordApplier extends AbstractRecordApplier {
     TableSqlUnit sqlUnit = getSqlUnit(sampleRecord);
     String selectSql = sqlUnit.applierSql;
     final Map<String, Integer> indexs = sqlUnit.applierIndexs;
-    //    final List<ColumnMeta> primaryKeys = getPrimaryMetas(sampleRecord);
-    final List<ColumnMeta> primaryKeys = table.getPrimaryKeys();
-    //    final List<ColumnMeta> columns = getColumnMetas(records.get(0));
-    final List<ColumnMeta> columns = table.getColumns();
+        final List<ColumnMeta> primaryKeys = getPrimaryMetas(sampleRecord);
+    //final List<ColumnMeta> primaryKeys = table.getPrimaryKeys();
+        final List<ColumnMeta> columns = getColumnMetas(records.get(0));
+    //final List<ColumnMeta> columns = table.getColumns();
 
     //处理联合索引情况
     if(sampleRecord.isEnableCompositeIndexes()){
@@ -214,14 +214,18 @@ public class CheckRecordApplier extends AbstractRecordApplier {
       //如有主键则合并到列中，因为目标主键可能也不被指定
       if(!primaryKeys.isEmpty()){
         columns.addAll(primaryKeys);
+        //logger.info(">> columns: {}, add pks: {}", new Object[]{columns, primaryKeys});
+        primaryKeys.clear();
+        //logger.info(">> columns: {}", new Object[]{columns});
       }
 
-      primaryKeys.clear();
+
       sampleRecord.getCheckCompositeKeys().forEach(key -> {
         Optional<ColumnMeta> columnMetaOptional = columns.stream().filter(c -> c.getName().equals(key)).findFirst();
         if(columnMetaOptional.isPresent()) {
           primaryKeys.add(columns.remove(columns.indexOf(columnMetaOptional.get())));
         } else {
+          logger.error(">> [{}]无法匹配到合适的的索引, columns: {}", new Object[]{key, columns});
           throw new RuntimeException(">> 无法匹配到合适的的索引，请检查<CompositeIndexesDataTranslator>的配置");
         }
       });
