@@ -32,6 +32,7 @@ import java.math.MathContext;
 import java.math.RoundingMode;
 import java.sql.*;
 import java.util.Random;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -61,7 +62,7 @@ public class DataGenerator {
     }
 
 
-    public static void fillShopOrderDetail(int records) throws Exception{
+    private static void fillShopOrderDetail(int records) throws Exception{
         while (records -- > 0){
             Connection conn = getConnection();
             PreparedStatement pstmt = null;
@@ -87,7 +88,10 @@ public class DataGenerator {
         }
     }
 
-    public static void fillShopOrderDetailMulti(int records) throws Exception{
+
+
+
+    private static void fillShopOrderDetailMulti(int records) throws Exception{
         while (records -- > 0){
             Connection conn = getConnection();
             PreparedStatement pstmt = null;
@@ -109,26 +113,62 @@ public class DataGenerator {
         }
     }
 
+    public static void fillData(Tables tables, int recordsPerThread, int threads) throws Exception{
+        CyclicBarrier cyclicBarrier = new CyclicBarrier(threads);
+        ExecutorService executorService = Executors.newFixedThreadPool(threads);
 
-    public static void main(String[] args) throws Exception {
-        //fillShopOrderDetail(50000);
-
-        ExecutorService executorService = Executors.newFixedThreadPool(6);
-
-        for(int i = 0; i < 8; i++){
-            executorService.execute(() -> {
-                try {
-                    fillShopOrderDetailMulti(5000);
-                } catch (Exception e) {
-                    Throwables.propagate(e);
-                }
-            });
+        for(int i = 0; i < threads; i++){
+            executorService.execute(new DataFiller(tables, cyclicBarrier, recordsPerThread));
         }
 
-        executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
         executorService.shutdown();
+        executorService.awaitTermination(1, TimeUnit.HOURS);
+    }
 
 
+    static class DataFiller implements Runnable {
+
+        private Tables tables;
+
+        private CyclicBarrier cyclicBarrier;
+
+        private int records;
+
+        public DataFiller(Tables tables, CyclicBarrier cyclicBarrier, int records){
+            this.tables = tables;
+            this.cyclicBarrier = cyclicBarrier;
+            this.records = records;
+        }
+
+        @Override
+        public void run() {
+            try {
+                switch(tables){
+                    case ShopOrderDetail:
+                        fillShopOrderDetail(records);
+                        break;
+                    case ShopOrderDetailMulti:
+                        fillShopOrderDetailMulti(records);
+                        break;
+                    default:
+                }
+                cyclicBarrier.await();
+            } catch (Exception e){
+                Throwables.propagate(e);
+            }
+
+        }
+    }
+
+    enum Tables {
+        ShopOrderDetailMulti,
+
+        ShopOrderDetail
+    }
+
+    public static void main(String[] args) throws Exception {
+       fillData(Tables.ShopOrderDetail, 2, 4);
+       fillData(Tables.ShopOrderDetailMulti, 2, 4);
     }
 
 }
