@@ -32,6 +32,7 @@ public abstract class AbstractRecordApplier extends AbstractYuGongLifeCycle
 
     public String applierSql;
     public Map<String, Integer> applierIndexs;
+    public Map<String, Integer> applierPkIndexs;
   }
 
   protected Integer getIndex(final Map<String, Integer> indexs, ColumnValue cv) {

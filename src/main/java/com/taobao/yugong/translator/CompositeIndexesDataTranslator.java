@@ -42,7 +42,7 @@ import java.util.List;
  *
  *     - class: com.taobao.yugong.translator.CompositeIndexesDataTranslator
  *       properties:
- *       # # sqlserver field
+ *       # # targe field
  *       composite_indexes:
  *       - OrderID
  *       - ProductID
@@ -66,10 +66,13 @@ public class CompositeIndexesDataTranslator extends AbstractDataTranslator {
     public boolean translator(Record record) {
 
         if(!compositeIndexes.isEmpty()){
+            //System.out.println(">>>" + record);
             //标记Record为联合索引处理
             record.setEnableCompositeIndexes(true);
-            //清空原有主键
             List<ColumnValue> primaryKeys = record.getPrimaryKeys();
+            //将主键作为普通列处理
+            record.getColumns().addAll(primaryKeys);
+            //清空原有主键
             primaryKeys.clear();
             //重设索引键
             compositeIndexes.stream().forEach(k -> {

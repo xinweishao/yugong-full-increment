@@ -12,12 +12,13 @@ import com.taobao.yugong.common.model.YuGongContext;
 import com.taobao.yugong.common.model.record.Record;
 import com.taobao.yugong.common.utils.YuGongUtils;
 import com.taobao.yugong.exception.YuGongException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -141,42 +142,123 @@ public class FullRecordApplier extends AbstractRecordApplier {
     final Map<String, Integer> indexs = sqlUnit.applierIndexs;
     jdbcTemplate.execute(sqlUnit.applierSql, (PreparedStatementCallback) ps -> {
       for (Record record : records) {
-        List<ColumnValue> pks = record.getPrimaryKeys();
-        // 先加字段，后加主键
-        List<ColumnValue> cvs = record.getColumns();
-        for (ColumnValue cv : cvs) {
-          int type = TypeMapping.map(sourceDbType, targetDbType, cv.getColumn().getType());
-          ps.setObject(getIndex(indexs, cv), cv.getValue(), type);
-        }
 
-        // 添加主键
-        for (ColumnValue pk : pks) {
-          int type = TypeMapping.map(sourceDbType, targetDbType, pk.getColumn().getType());
-          ps.setObject(getIndex(indexs, pk), pk.getValue(), type);
-        }
+        if(targetDbType.isMysql() && record.isEnableCompositeIndexes()){
 
-        try {
-          ps.execute();
-        } catch (SQLException e) {
-          if (context.isSkipApplierException()) {
-            logger.warn("skiped record data : " + record.toString(), e);
-          } else {
-            if (e.getMessage().contains("Duplicate entry")
-                || e.getMessage().startsWith("ORA-00001: 违反唯一约束条件")) {
-              logger.warn("skiped record data ,maybe transfer before,just continue:"
-                  + record.toString());
-            } else if (e.getMessage().contains("Invalid JSON text")) {
-              logger.warn("skiped record data ,maybe JSON data error,just continue:"
-                  + record.toString());
-            } else {
-              throw new SQLException("failed Record Data : " + record.toString(), e);
+          List<ColumnValue> pks = record.getPrimaryKeys();
+
+          // 添加主键
+          for (ColumnValue pk : pks) {
+            int type = TypeMapping.map(sourceDbType, targetDbType, pk.getColumn().getType());
+            ps.setObject(getIndex(sqlUnit.applierPkIndexs, pk), pk.getValue(), type);
+          }
+
+          ResultSet resultSet = ps.executeQuery();
+          if(resultSet.next()){
+            int count = resultSet.getInt(1);
+            String[] primaryKeys = getPrimaryNames(record);
+            String[] columns = getColumnNames(record);
+
+            if(count == 0){//insert
+              jdbcTemplate.execute(SqlTemplates.MYSQL.getInsertSql(record.getSchemaName(),
+                      record.getTableName(),
+                      primaryKeys,
+                      columns), (PreparedStatementCallback) psc -> {
+
+                // 先加字段，后加主键
+                List<ColumnValue> cvs = record.getColumns();
+                for (ColumnValue cv : cvs) {
+                  int type = TypeMapping.map(sourceDbType, targetDbType, cv.getColumn().getType());
+                  psc.setObject(getIndex(indexs, cv), cv.getValue(), type);
+                }
+
+                // 添加主键
+                for (ColumnValue pk : pks) {
+                  int type = TypeMapping.map(sourceDbType, targetDbType, pk.getColumn().getType());
+                  psc.setObject(getIndex(indexs, pk), pk.getValue(), type);
+                }
+
+                psExec(psc, record);
+                return null;
+              });
+            }else{//update
+              jdbcTemplate.execute(SqlTemplates.MYSQL.getUpdateSql(record.getSchemaName(),
+                      record.getTableName(),
+                      primaryKeys,
+                      columns), (PreparedStatementCallback) psc -> {
+
+                // 先加字段，后加主键
+                List<ColumnValue> cvs = record.getColumns();
+                for (ColumnValue cv : cvs) {
+                  int type = TypeMapping.map(sourceDbType, targetDbType, cv.getColumn().getType());
+                  psc.setObject(getIndex(indexs, cv), cv.getValue(), type);
+                }
+
+                // 添加主键
+                for (ColumnValue pk : pks) {
+                  int type = TypeMapping.map(sourceDbType, targetDbType, pk.getColumn().getType());
+                  psc.setObject(getIndex(indexs, pk), pk.getValue(), type);
+                }
+
+                int colSize = indexs.size();
+
+                for (ColumnValue pk : pks) {
+                  int type = TypeMapping.map(sourceDbType, targetDbType, pk.getColumn().getType());
+                  psc.setObject(getIndex(sqlUnit.applierPkIndexs, pk) + colSize, pk.getValue(), type);
+                }
+
+                psExec(psc, record);
+                return null;
+              });
             }
           }
+
+        }else{
+
+          List<ColumnValue> pks = record.getPrimaryKeys();
+          // 先加字段，后加主键
+          List<ColumnValue> cvs = record.getColumns();
+          for (ColumnValue cv : cvs) {
+            int type = TypeMapping.map(sourceDbType, targetDbType, cv.getColumn().getType());
+            ps.setObject(getIndex(indexs, cv), cv.getValue(), type);
+          }
+
+          // 添加主键
+          for (ColumnValue pk : pks) {
+            int type = TypeMapping.map(sourceDbType, targetDbType, pk.getColumn().getType());
+            ps.setObject(getIndex(indexs, pk), pk.getValue(), type);
+          }
+
+          psExec(ps, record);
+
         }
+
       }
 
       return null;
     });
+
+  }
+
+  private void psExec(PreparedStatement ps, Record record) throws SQLException {
+    try {
+      ps.execute();
+    } catch (SQLException e) {
+      if (context.isSkipApplierException()) {
+        logger.warn("skiped record data : " + record.toString(), e);
+      } else {
+        if (e.getMessage().contains("Duplicate entry")
+                || e.getMessage().startsWith("ORA-00001: 违反唯一约束条件")) {
+          logger.warn("skiped record data ,maybe transfer before,just continue:"
+                  + record.toString());
+        } else if (e.getMessage().contains("Invalid JSON text")) {
+          logger.warn("skiped record data ,maybe JSON data error,just continue:"
+                  + record.toString());
+        } else {
+          throw new SQLException("failed Record Data : " + record.toString(), e);
+        }
+      }
+    }
 
   }
 
@@ -200,11 +282,19 @@ public class FullRecordApplier extends AbstractRecordApplier {
           String[] columns = getColumnNames(record);
           if (useMerge) {
             if (targetDbType == DbType.MYSQL) {
-              applierSql = SqlTemplates.MYSQL.getMergeSql(meta.getSchema(),
-                  meta.getName(),
-                  primaryKeys,
-                  columns,
-                  true);
+
+              if (record.isEnableCompositeIndexes()){
+                //由于可能没有主键或唯一键，故根据select的返回值进行upsert
+                applierSql = SqlTemplates.MYSQL.getSelectSql(meta.getSchema(),
+                        meta.getName(),
+                        primaryKeys);
+              } else {
+                applierSql = SqlTemplates.MYSQL.getMergeSql(meta.getSchema(),
+                        meta.getName(),
+                        primaryKeys,
+                        columns,
+                        true);
+              }
             } else if (targetDbType == DbType.DRDS) {
               applierSql = SqlTemplates.MYSQL.getMergeSql(meta.getSchema(),
                   meta.getName(),
@@ -245,6 +335,8 @@ public class FullRecordApplier extends AbstractRecordApplier {
           }
 
           int index = 1;
+          int pkIndex = 1;
+          Map<String, Integer> pkIndexs = new HashMap<>();
           Map<String, Integer> indexs = new HashMap<>();
           for (String column : columns) {
              indexs.put(column, index);
@@ -253,13 +345,16 @@ public class FullRecordApplier extends AbstractRecordApplier {
 
           for (String column : primaryKeys) {
             indexs.put(column, index);
+            pkIndexs.put(column, pkIndex);
             index++;
+            pkIndex++;
           }
           // 检查下是否少了列
           checkIndexColumns(meta, indexs);
 
           sqlUnit.applierSql = applierSql;
           sqlUnit.applierIndexs = indexs;
+          sqlUnit.applierPkIndexs = pkIndexs;
           applierSqlCache.put(names, sqlUnit);
         }
       }

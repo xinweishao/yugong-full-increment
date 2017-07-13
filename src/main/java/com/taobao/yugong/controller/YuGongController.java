@@ -1,15 +1,7 @@
 package com.taobao.yugong.controller;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.taobao.yugong.applier.AllRecordApplier;
-import com.taobao.yugong.applier.CheckRecordApplier;
-import com.taobao.yugong.applier.FullRecordApplier;
-import com.taobao.yugong.applier.IncrementRecordApplier;
-import com.taobao.yugong.applier.MultiThreadCheckRecordApplier;
-import com.taobao.yugong.applier.MultiThreadFullRecordApplier;
-import com.taobao.yugong.applier.MultiThreadIncrementRecordApplier;
-import com.taobao.yugong.applier.RecordApplier;
+import com.taobao.yugong.applier.*;
 import com.taobao.yugong.common.YuGongConstants;
 import com.taobao.yugong.common.alarm.AlarmService;
 import com.taobao.yugong.common.alarm.LogAlarmService;
@@ -35,12 +27,7 @@ import com.taobao.yugong.exception.YuGongException;
 import com.taobao.yugong.extractor.AbstractRecordExtractor;
 import com.taobao.yugong.extractor.RecordExtractor;
 import com.taobao.yugong.extractor.mysql.MysqlFullRecordExtractor;
-import com.taobao.yugong.extractor.oracle.AbstractOracleRecordExtractor;
-import com.taobao.yugong.extractor.oracle.OracleAllRecordExtractor;
-import com.taobao.yugong.extractor.oracle.OracleFullRecordExtractor;
-import com.taobao.yugong.extractor.oracle.OracleMaterializedIncRecordExtractor;
-import com.taobao.yugong.extractor.oracle.OracleOnceFullRecordExtractor;
-import com.taobao.yugong.extractor.oracle.OracleRecRecordExtractor;
+import com.taobao.yugong.extractor.oracle.*;
 import com.taobao.yugong.extractor.sqlserver.SqlServerFullRecordExtractor;
 import com.taobao.yugong.positioner.FileMixedRecordPositioner;
 import com.taobao.yugong.positioner.MemoryRecordPositioner;
@@ -48,27 +35,18 @@ import com.taobao.yugong.positioner.RecordPositioner;
 import com.taobao.yugong.translator.DataTranslator;
 import com.taobao.yugong.translator.TableMetaTranslator;
 import com.taobao.yugong.translator.core.TranslatorRegister;
-
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.MDC;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import javax.sql.DataSource;
 import java.io.File;
 import java.io.FileInputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-
-import javax.sql.DataSource;
+import java.util.*;
+import java.util.concurrent.*;
 
 /**
  * 整个迁移流程调度控制
@@ -109,6 +87,8 @@ public class YuGongController extends AbstractYuGongLifeCycle {
   private String alarmReceiver;
   private int retryTimes;
   private int retryInterval;
+  //忽略源表pk检查的表
+  private String[] ignorePkInspection;
 
   public YuGongController(Configuration config, YugongConfiguration yugongConfiguration) {
     this.config = config;
@@ -136,6 +116,9 @@ public class YuGongController extends AbstractYuGongLifeCycle {
     alarmReceiver = config.getString("yugong.alarm.receiver", "");
     retryTimes = config.getInt("yugong.table.retry.times", 3);
     retryInterval = config.getInt("yugong.table.retry.interval", 1000);
+    //ignorePkInspection
+    ignorePkInspection = config.getStringArray("yugong.table.ignorePkInspection");
+
   }
 
   @Override
@@ -189,6 +172,15 @@ public class YuGongController extends AbstractYuGongLifeCycle {
     }
     for (TableHolder tableHolder : tableMetas) {
       YuGongContext context = buildContext(globalContext, tableHolder.table, tableHolder.ignoreSchema);
+      //add ignorePkInspection
+      context.setIgnorePkInspection(ignorePkInspection);
+      Map<String, String[]> specifiedPks = new HashMap<>();
+      Arrays.stream(ignorePkInspection).forEach(t -> {
+        String tb = "yugong.table.ignorePkInspection.".concat(t);
+        specifiedPks.put(t, config.getStringArray(tb));
+      });
+      context.setSpecifiedPks(specifiedPks);
+
 
       RecordPositioner positioner = choosePositioner(tableHolder);
       RecordExtractor extractor = chooseExtractor(tableHolder, context, runMode, positioner);
@@ -315,11 +307,16 @@ public class YuGongController extends AbstractYuGongLifeCycle {
           throw new YuGongException("OnceFullRecordExtractor, unsupport " + sourceDbType);
         }
       } else {
-        if (!forceFull && (!isOnlyPkIsNumber(tableHolder.table) || isTableExtracOnce || !StringUtils
-            .isEmpty(extractSql))) {
-          throw new YuGongException("FullRecordExtractor Condition Error, no PK, table: "
-              + tableHolder.table.getName());
+        //排除主键检测的表
+        String[] ignorePkInspection = context.getIgnorePkInspection();
+        if (!(ignorePkInspection.length > 0 && ArrayUtils.contains(ignorePkInspection, tableHolder.table.getName()))) {
+          if (!forceFull && (!isOnlyPkIsNumber(tableHolder.table) || isTableExtracOnce || !StringUtils
+                  .isEmpty(extractSql))) {
+            throw new YuGongException("FullRecordExtractor Condition Error, no PK, table: "
+                    + tableHolder.table.getName());
+          }
         }
+
         if (sourceDbType == DbType.ORACLE) {
           OracleFullRecordExtractor recordExtractor = new OracleFullRecordExtractor(context);
           recordExtractor.setExtractSql(extractSql);

@@ -356,6 +356,14 @@ public class CheckRecordApplier extends AbstractRecordApplier {
         List<String> primaryKeys = meta.getPrimaryKeys().stream().map(ColumnMeta::getName)
             .collect(Collectors.toList());
         if (dbType == DbType.MYSQL) {
+
+          //处理复合索引情况
+          if(record.isEnableCompositeIndexes()){
+            primaryKeys.clear();
+            primaryKeys.addAll(record.getCheckCompositeKeys());
+            columns.removeAll(primaryKeys);
+          }
+
           applierSql = SqlTemplates.MYSQL.getSelectSql(meta.getSchema(),
               meta.getName(),
               primaryKeys,

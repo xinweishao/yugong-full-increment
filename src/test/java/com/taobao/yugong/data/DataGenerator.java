@@ -113,6 +113,7 @@ public class DataGenerator {
         }
     }
 
+
     public static void fillData(Tables tables, int recordsPerThread, int threads) throws Exception{
         CyclicBarrier cyclicBarrier = new CyclicBarrier(threads);
         ExecutorService executorService = Executors.newFixedThreadPool(threads);

@@ -2,10 +2,11 @@ package com.taobao.yugong.common.model;
 
 import com.taobao.yugong.common.db.meta.Table;
 import com.taobao.yugong.common.model.position.Position;
-
 import lombok.Data;
 
 import javax.sql.DataSource;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * yugong数据处理上下文
@@ -30,6 +31,8 @@ public class YuGongContext {
   private boolean skipApplierException = false;  // 是否允许跳过applier异常
   private String sourceEncoding = "UTF-8";
   private String targetEncoding = "UTF-8";
+  private String[] ignorePkInspection;  //忽略源表pk检查的表，多表用英文逗号分隔
+  private Map<String, String[]> specifiedPks = new HashMap<>(); //每张表指定的主键或联合主键
 
   public YuGongContext cloneGlobalContext() {
     YuGongContext context = new YuGongContext();
@@ -43,6 +46,8 @@ public class YuGongContext {
     context.setTpsLimit(tpsLimit);
     context.setIgnoreSchema(ignoreSchema);
     context.setSkipApplierException(skipApplierException);
+    context.setIgnorePkInspection(ignorePkInspection);
+    context.setSpecifiedPks(specifiedPks);
     return context;
   }
 
