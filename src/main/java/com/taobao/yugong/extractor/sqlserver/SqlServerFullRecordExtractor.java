@@ -16,17 +16,17 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class SqlServerFullRecordExtractor extends AbstractFullRecordExtractor {
 
-  public static final String CONVERT_VARCHAR = "CONVERT(varchar(256), {0})";
+  public static final String CONVERT_PHYSLOC_TO_BIGINT = "CONVERT(BIGINT, {0})";
+
+  private static final String PHYSLOC = "%%physloc%%";
 
   private static final String MIN_PK_FORMAT = "select min({0}) from {1}.dbo.{2}";
-
-  private static final String MIN_COMPOSITE_INDEXS_FORMAT = "select min(CONVERT(BIGINT, hashbytes(''MD5'', {0}))) from {1}.dbo.{2}";
 
   private static final String DEFALT_EXTRACT_SQL_FORMAT =
       "select TOP (?) {0} from {1}.dbo.{2} where {3} > ? order by {3} asc;";
 
   public static final String DEFAULT_EXTRACT_COMPOSITE_INDEXS_SQL_FORMAT =
-          "select TOP (?) {0}, _hashed_pk=CONVERT(BIGINT, hashbytes(''MD5'', {3})) from {1}.dbo.{2}  where CONVERT(BIGINT, hashbytes(''MD5'', {3})) > ? order by _hashed_pk asc";
+          "select TOP (?) {0}, _physloc_pk=CONVERT(BIGINT, " + PHYSLOC + ") from {1}.dbo.{2}  where CONVERT(BIGINT, " + PHYSLOC + ") > ? order by _physloc_pk asc";
 
   private static Map<String, Integer> PARAMETER_INDEX_MAP = ImmutableMap.of("id", 2, "limit", 1);
 
@@ -45,14 +45,15 @@ public class SqlServerFullRecordExtractor extends AbstractFullRecordExtractor {
       String tableName = context.getTableMeta().getName();
 
       this.getMinPkSql = MessageFormat.format(
-              MIN_COMPOSITE_INDEXS_FORMAT,
-              mergeHashingColumns(context.getSpecifiedPks().get(tableName)),
+              MIN_PK_FORMAT,
+              getConvertedPhysloc(),
               schemaName,
               tableName
       );
       this.parameterIndexMap = PARAMETER_INDEX_MAP;
 
       //TODO: 暂不支持extractSql的自定义
+      if (!Strings.isNullOrEmpty(extractSql))throw new IllegalArgumentException("指定主键的模式不支持extractSql的自定义");
 
       String colStr = SqlTemplates.COMMON.makeColumn(context.getTableMeta().getColumnsWithPrimary());
       this.extractSql = MessageFormat.format(
@@ -60,14 +61,14 @@ public class SqlServerFullRecordExtractor extends AbstractFullRecordExtractor {
               colStr,
               schemaName,
               tableName,
-              mergeHashingColumns(context.getSpecifiedPks().get(tableName))
+              getConvertedPhysloc()
       );
 
       //上下文主键替换
       List<ColumnMeta> pks = context.getTableMeta().getPrimaryKeys();
       context.getTableMeta().getColumns().addAll(pks);
       pks.clear();
-      pks.add(new ColumnMeta("_hashed_pk", Types.BIGINT));
+      pks.add(new ColumnMeta("_physloc_pk", Types.BIGINT));
 
     }else{
       String primaryKey = context.getTableMeta().getPrimaryKeys().get(0).getName();
@@ -87,19 +88,10 @@ public class SqlServerFullRecordExtractor extends AbstractFullRecordExtractor {
 
 
   /**
-   * 合并需要hash的字段
-   * @param columns
+   * 获取转换后的伪例
    * @return
    */
-  private String mergeHashingColumns(String[] columns){
-    //CONVERT(varchar(256), OrderID)+CONVERT(varchar(256), ProductID)
-    StringBuilder convertedCols = new StringBuilder();
-
-    for(String column : columns){
-      convertedCols
-              .append(MessageFormat.format(CONVERT_VARCHAR, column))
-              .append("+");
-    }
-    return convertedCols.toString().replaceAll("\\+$", "");
+  private String getConvertedPhysloc(){
+    return MessageFormat.format(CONVERT_PHYSLOC_TO_BIGINT, PHYSLOC);
   }
 }

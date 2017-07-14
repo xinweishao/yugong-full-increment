@@ -13,7 +13,7 @@ public class MysqlSqlTemplate extends SqlTemplate {
 
     public String getSelectSql(String schemaName, String tableName, String[] compositeColumns) {
         StringBuilder sql = new StringBuilder();
-        sql.append("select count(1) from ").append(makeFullName(schemaName, tableName)).append(" where ");
+        sql.append("select 1 from ").append(makeFullName(schemaName, tableName)).append(" where ");
         int size = compositeColumns.length;
         for (int i = 0; i < size; i++) {
             sql.append(getColumnName(compositeColumns[i])).append("=?").append(splitAnd(size, i));

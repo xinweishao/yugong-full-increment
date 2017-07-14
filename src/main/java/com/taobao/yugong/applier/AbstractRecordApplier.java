@@ -31,6 +31,12 @@ public abstract class AbstractRecordApplier extends AbstractYuGongLifeCycle
   public static class TableSqlUnit {
 
     public String applierSql;
+
+
+    //for mysql
+    public String applierInsertSql;
+    public String applierUpdateSql;
+
     public Map<String, Integer> applierIndexs;
     public Map<String, Integer> applierPkIndexs;
   }
