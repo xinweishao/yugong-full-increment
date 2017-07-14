@@ -20,15 +20,13 @@ public class SqlServerFullRecordExtractor extends AbstractFullRecordExtractor {
 
   private static final String MIN_PK_FORMAT = "select min({0}) from {1}.dbo.{2}";
 
-  //select min(pk) from (select pk=CONVERT(BIGINT, hashbytes('MD5', CONVERT(varchar(256), OrderId)+CONVERT(varchar(256), ProductId))) from ShopOrderDetail) ShopOrderDetail;
-  private static final String MIN_COMPOSITE_INDEXS_FORMAT = "select min(_hashed_pk) from (select _hashed_pk=CONVERT(BIGINT, hashbytes(''MD5'', {0})) from {1}.dbo.{2}) {2}";
+  private static final String MIN_COMPOSITE_INDEXS_FORMAT = "select min(CONVERT(BIGINT, hashbytes(''MD5'', {0}))) from {1}.dbo.{2}";
 
   private static final String DEFALT_EXTRACT_SQL_FORMAT =
       "select TOP (?) {0} from {1}.dbo.{2} where {3} > ? order by {3} asc;";
 
-  //select *, pk=CONVERT(BIGINT, hashbytes('MD5', CONVERT(varchar(256), OrderID)+CONVERT(varchar(256), ProductID))) from TEST_MSSQL.dbo.ShopOrderDetail order by pk
   public static final String DEFAULT_EXTRACT_COMPOSITE_INDEXS_SQL_FORMAT =
-          "select * from (select TOP (?) {0}, _hashed_pk=CONVERT(BIGINT, hashbytes(''MD5'', {3})) from {1}.dbo.{2}  order by _hashed_pk asc) {2} where _hashed_pk > ?";
+          "select TOP (?) {0}, _hashed_pk=CONVERT(BIGINT, hashbytes(''MD5'', {3})) from {1}.dbo.{2}  where CONVERT(BIGINT, hashbytes(''MD5'', {3})) > ? order by _hashed_pk asc";
 
   private static Map<String, Integer> PARAMETER_INDEX_MAP = ImmutableMap.of("id", 2, "limit", 1);
 

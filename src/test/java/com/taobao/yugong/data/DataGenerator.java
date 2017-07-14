@@ -168,8 +168,8 @@ public class DataGenerator {
     }
 
     public static void main(String[] args) throws Exception {
-       fillData(Tables.ShopOrderDetail, 2, 4);
-       fillData(Tables.ShopOrderDetailMulti, 2, 4);
+       fillData(Tables.ShopOrderDetail, 2000, 20);
+       fillData(Tables.ShopOrderDetailMulti, 2000, 20);
     }
 
 }
