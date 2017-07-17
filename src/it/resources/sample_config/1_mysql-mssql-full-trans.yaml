@@ -36,6 +36,10 @@ translators:
       #- class: com.taobao.yugong.translator.ColumnFixDataTranslator
       #  properties:
       #    column_replace:
+    normal_detail:
+      - class: com.taobao.yugong.translator.NameStyleDataTranslator
+        properties:
+          table_to: NormalDetail
     shop_order_detail:
       - class: com.taobao.yugong.translator.NameStyleDataTranslator
         properties:
