@@ -173,6 +173,9 @@ public class YuGongController extends AbstractYuGongLifeCycle {
     for (TableHolder tableHolder : tableMetas) {
       YuGongContext context = buildContext(globalContext, tableHolder.table, tableHolder.ignoreSchema);
       //add ignorePkInspection
+      if(ArrayUtils.isNotEmpty(ignorePkInspection) && YuGongUtils.judgeDbType(context.getSourceDs()) != DbType.SQL_SERVER){
+        throw new IllegalArgumentException("属性yugong.table.ignorePkInspection仅支持SQL Server");
+      }
       context.setIgnorePkInspection(ignorePkInspection);
       Map<String, String[]> specifiedPks = new HashMap<>();
       Arrays.stream(ignorePkInspection).forEach(t -> {
