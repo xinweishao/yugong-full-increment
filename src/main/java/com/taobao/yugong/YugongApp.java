@@ -4,21 +4,16 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.converters.FileConverter;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
-import com.google.common.base.Throwables;
 import com.taobao.yugong.common.version.VersionInfo;
 import com.taobao.yugong.conf.YugongConfiguration;
 import com.taobao.yugong.controller.YuGongController;
-
 import lombok.extern.slf4j.Slf4j;
-
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 
 /**
  * Single jar app
@@ -35,8 +30,6 @@ public class YugongApp {
   private static YAMLMapper yamlMapper = new YAMLMapper();
 
   public static void main(String[] args) {
-    cleanLogs();
-
     YugongApp yugongApp = new YugongApp();
 
     JCommander.newBuilder().addObject(yugongApp).build().parse(args);
@@ -64,19 +57,6 @@ public class YugongApp {
     }
   }
 
-  private static void cleanLogs(){
-    Arrays.stream(new String[]{"logs", "positioner_data"}).forEach(p -> {
-      try {
-        FileUtils.deleteDirectory(new File(p));
-      } catch (IOException e) {
-        log.error("Delete failed: {}", new Object[]{e.getMessage()});
-        Throwables.propagate(e);
-      }
-    });
-
-
-
-  }
 
   private static void run(PropertiesConfiguration config,
       YugongConfiguration yugongConfiguration) throws InterruptedException {
