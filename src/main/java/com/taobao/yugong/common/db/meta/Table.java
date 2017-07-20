@@ -2,9 +2,7 @@ package com.taobao.yugong.common.db.meta;
 
 import com.google.common.collect.Lists;
 import com.taobao.yugong.common.utils.YuGongToStringStyle;
-
 import lombok.Data;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.ToStringBuilder;
 
@@ -23,8 +21,10 @@ public class Table implements Serializable {
   private String type;
   private String schema;
   private String name;
+
   private List<ColumnMeta> primaryKeys = Lists.newArrayList();
   private List<ColumnMeta> columns = Lists.newArrayList();
+
   // 增量必带的扩展字段,比如DRDS模式下的拆分键
   private String extKey;
 

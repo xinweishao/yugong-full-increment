@@ -21,6 +21,10 @@ public class Record {
   private String tableName;
   private List<ColumnValue> primaryKeys = Lists.newArrayList();
   private List<ColumnValue> columns = Lists.newArrayList();
+  //for check mode only
+  private List<String> checkCompositeKeys = Lists.newArrayList();
+
+  private boolean enableCompositeIndexes;
 
   public Record() {
 
@@ -31,6 +35,46 @@ public class Record {
     this.tableName = tableName;
     this.primaryKeys = primaryKeys;
     this.columns = columns;
+  }
+
+  public void addCheckCompositeKey(String key) {
+    this.checkCompositeKeys.add(key);
+  }
+
+  /**
+   * Gets checkCompositeKeys.
+   *
+   * @return Value of checkCompositeKeys.
+   */
+  public List<String> getCheckCompositeKeys() {
+    return checkCompositeKeys;
+  }
+
+  /**
+   * Sets new checkCompositeKeys.
+   *
+   * @param checkCompositeKeys New value of checkCompositeKeys.
+   */
+  public void setCheckCompositeKeys(List<String> checkCompositeKeys) {
+    this.checkCompositeKeys = checkCompositeKeys;
+  }
+
+  /**
+   * Sets new enableCompositeIndexes.
+   *
+   * @param enableCompositeIndexes New value of enableCompositeIndexes.
+   */
+  public void setEnableCompositeIndexes(boolean enableCompositeIndexes) {
+    this.enableCompositeIndexes = enableCompositeIndexes;
+  }
+
+  /**
+   * Gets enableCompositeIndexes.
+   *
+   * @return Value of enableCompositeIndexes.
+   */
+  public boolean isEnableCompositeIndexes() {
+    return enableCompositeIndexes;
   }
 
   public List<ColumnValue> getPrimaryKeys() {
@@ -235,5 +279,7 @@ public class Record {
   public String toString() {
     return ToStringBuilder.reflectionToString(this, YuGongToStringStyle.DEFAULT_STYLE);
   }
+
+
 
 }

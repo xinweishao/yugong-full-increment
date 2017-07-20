@@ -23,11 +23,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 
 import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -206,10 +202,36 @@ public class CheckRecordApplier extends AbstractRecordApplier {
     TableSqlUnit sqlUnit = getSqlUnit(sampleRecord);
     String selectSql = sqlUnit.applierSql;
     final Map<String, Integer> indexs = sqlUnit.applierIndexs;
-    //    final List<ColumnMeta> primaryKeys = getPrimaryMetas(sampleRecord);
-    final List<ColumnMeta> primaryKeys = table.getPrimaryKeys();
-    //    final List<ColumnMeta> columns = getColumnMetas(records.get(0));
-    final List<ColumnMeta> columns = table.getColumns();
+        final List<ColumnMeta> primaryKeys = getPrimaryMetas(sampleRecord);
+    //final List<ColumnMeta> primaryKeys = table.getPrimaryKeys();
+        final List<ColumnMeta> columns = getColumnMetas(records.get(0));
+    //final List<ColumnMeta> columns = table.getColumns();
+
+    //处理联合索引情况
+    if(sampleRecord.isEnableCompositeIndexes()){
+      //logger.info(">> 处理联合索引，正在重新分配主键和列");
+
+      //如有主键则合并到列中，因为目标主键可能也不被指定
+      if(!primaryKeys.isEmpty()){
+        columns.addAll(primaryKeys);
+        //logger.info(">> columns: {}, add pks: {}", new Object[]{columns, primaryKeys});
+        primaryKeys.clear();
+        //logger.info(">> columns: {}", new Object[]{columns});
+      }
+
+
+      sampleRecord.getCheckCompositeKeys().forEach(key -> {
+        Optional<ColumnMeta> columnMetaOptional = columns.stream().filter(c -> c.getName().equals(key)).findFirst();
+        if(columnMetaOptional.isPresent()) {
+          primaryKeys.add(columns.remove(columns.indexOf(columnMetaOptional.get())));
+        } else {
+          logger.error(">> [{}]无法匹配到合适的的索引, columns: {}", new Object[]{key, columns});
+          throw new RuntimeException(">> 无法匹配到合适的的索引，请检查<CompositeIndexesDataTranslator>的配置");
+        }
+      });
+    }
+
+
     Object results = jdbcTemplate.execute(selectSql, (PreparedStatementCallback) ps -> {
       List<Record> result = Lists.newArrayList();
       for (Record record : records) {
@@ -289,6 +311,7 @@ public class CheckRecordApplier extends AbstractRecordApplier {
 
     // 以records1为准
     for (Record record : records1) {
+
       List<String> primaryKeys1 = Lists.newArrayList();
 
       for (ColumnValue pk : record.getPrimaryKeys()) {
@@ -303,6 +326,7 @@ public class CheckRecordApplier extends AbstractRecordApplier {
 
     // 比对record2多余的数据
     for (Record record2 : recordMap2.values()) {
+      //record2不为null的话，必抛NPE，:(
       String diff = RecordDiffer.diff(null, record2);
       if (!Strings.isNullOrEmpty(diff)) {
         diffResults.add(diff);
@@ -332,6 +356,14 @@ public class CheckRecordApplier extends AbstractRecordApplier {
         List<String> primaryKeys = meta.getPrimaryKeys().stream().map(ColumnMeta::getName)
             .collect(Collectors.toList());
         if (dbType == DbType.MYSQL) {
+
+          //处理复合索引情况
+          if(record.isEnableCompositeIndexes()){
+            primaryKeys.clear();
+            primaryKeys.addAll(record.getCheckCompositeKeys());
+            columns.removeAll(primaryKeys);
+          }
+
           applierSql = SqlTemplates.MYSQL.getSelectSql(meta.getSchema(),
               meta.getName(),
               primaryKeys,
@@ -342,6 +374,13 @@ public class CheckRecordApplier extends AbstractRecordApplier {
               primaryKeys,
               columns);
         } else if (dbType == DbType.SQL_SERVER) {
+          //处理复合索引情况
+          if(record.isEnableCompositeIndexes()){
+            primaryKeys.clear();
+            primaryKeys.addAll(record.getCheckCompositeKeys());
+            columns.removeAll(primaryKeys);
+          }
+
           applierSql = SqlTemplates.SQL_SERVER.getSelectSql(meta.getSchema(),
               meta.getName(),
               primaryKeys,

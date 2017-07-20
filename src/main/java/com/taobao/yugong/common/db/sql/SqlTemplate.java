@@ -245,6 +245,10 @@ public class SqlTemplate {
     return (i + 1 < size) ? " , " : "";
   }
 
+  protected String splitAnd(int size, int i){
+    return (i + 1 < size) ? " and " : "";
+  }
+
   protected String[] buildAllColumns(String[] pkNames, String[] colNames) {
     String[] allColumns = new String[pkNames.length + colNames.length];
     System.arraycopy(colNames, 0, allColumns, 0, colNames.length);

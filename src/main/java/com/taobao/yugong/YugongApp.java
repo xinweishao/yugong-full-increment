@@ -7,9 +7,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.taobao.yugong.common.version.VersionInfo;
 import com.taobao.yugong.conf.YugongConfiguration;
 import com.taobao.yugong.controller.YuGongController;
-
 import lombok.extern.slf4j.Slf4j;
-
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.lang.exception.ExceptionUtils;
@@ -58,6 +56,7 @@ public class YugongApp {
           ExceptionUtils.getFullStackTrace(e));
     }
   }
+
 
   private static void run(PropertiesConfiguration config,
       YugongConfiguration yugongConfiguration) throws InterruptedException {
