@@ -3,40 +3,43 @@
   <ID>JAVA</ID>
   <OriginalElement />
   <nodes>
-    <node x="645.5" y="790.0">com.taobao.yugong.applier.CheckRecordApplier</node>
-    <node x="0.0" y="869.0">com.taobao.yugong.applier.MultiThreadIncrementRecordApplier</node>
+    <node x="265.0" y="869.0">com.taobao.yugong.applier.MultiThreadIncrementRecordApplier</node>
+    <node x="36.5" y="790.0">com.taobao.yugong.applier.CheckRecordApplier</node>
     <node x="507.0" y="400.0">com.taobao.yugong.extractor.oracle.AbstractOracleRecordExtractor</node>
     <node x="386.0" y="1022.0">com.taobao.yugong.translator.NameTableMetaTranslator</node>
-    <node x="108.25" y="943.0">com.taobao.yugong.common.db.sql.SqlTemplate</node>
-    <node x="36.5" y="790.0">com.taobao.yugong.applier.IncrementRecordApplier</node>
+    <node x="109.75" y="943.0">com.taobao.yugong.common.db.sql.SqlTemplate</node>
     <node x="0.0" y="479.0">com.taobao.yugong.extractor.oracle.OracleOnceFullRecordExtractor</node>
-    <node x="0.0" y="1022.0">com.taobao.yugong.common.db.sql.MysqlSqlTemplate</node>
+    <node x="182.0" y="1022.0">com.taobao.yugong.common.db.sql.MysqlSqlTemplate</node>
+    <node x="301.5" y="790.0">com.taobao.yugong.applier.IncrementRecordApplier</node>
     <node x="260.0" y="479.0">com.taobao.yugong.extractor.oracle.OracleFullRecordExtractor</node>
     <node x="39.5" y="558.0">com.taobao.yugong.extractor.oracle.OracleOnceFullRecordExtractor.ContinueExtractor</node>
     <node x="640.0" y="1022.0">com.taobao.yugong.translator.ColumnTranslator</node>
-    <node x="492.7578125" y="247.0">com.taobao.yugong.translator.YugongExampleJoinDataTranslator</node>
-    <node x="1319.125" y="247.0">com.taobao.yugong.translator.MidBillOutDetailDataTranslator</node>
-    <node x="388.75" y="711.0">com.taobao.yugong.applier.AbstractRecordApplier</node>
+    <node x="1311.875" y="247.0">com.taobao.yugong.translator.YugongExampleJoinDataTranslator</node>
+    <node x="504.6796875" y="247.0">com.taobao.yugong.translator.MidBillOutDetailDataTranslator</node>
+    <node x="553.0" y="869.0">com.taobao.yugong.applier.MultiThreadFullRecordApplier</node>
     <node x="488.0" y="479.0">com.taobao.yugong.extractor.oracle.OracleMaterializedIncRecordExtractor</node>
-    <node x="288.0" y="869.0">com.taobao.yugong.applier.MultiThreadFullRecordApplier</node>
-    <node x="1015.0" y="479.0">com.taobao.yugong.extractor.oracle.OracleAllRecordExtractor</node>
+    <node x="786.0" y="479.0">com.taobao.yugong.extractor.oracle.OracleAllRecordExtractor</node>
+    <node x="439.5" y="711.0">com.taobao.yugong.applier.AbstractRecordApplier</node>
     <node x="10.5" y="168.0">com.taobao.yugong.translator.BillOutDataTranslator</node>
-    <node x="324.5" y="790.0">com.taobao.yugong.applier.FullRecordApplier</node>
+    <node x="589.5" y="790.0">com.taobao.yugong.applier.FullRecordApplier</node>
     <node x="1204.5" y="168.0">com.taobao.yugong.translator.BackTableDataTranslator</node>
-    <node x="650.25" y="0.0">com.taobao.yugong.translator.DataTranslator</node>
-    <node x="609.0" y="869.0">com.taobao.yugong.applier.MultiThreadCheckRecordApplier</node>
-    <node x="210.5" y="168.0">com.taobao.yugong.translator.YugongExampleSimpleDataTranslator</node>
+    <node x="616.25" y="0.0">com.taobao.yugong.translator.DataTranslator</node>
+    <node x="0.0" y="869.0">com.taobao.yugong.applier.MultiThreadCheckRecordApplier</node>
+    <node x="415.5" y="168.0">com.taobao.yugong.translator.YugongExampleSimpleDataTranslator</node>
+    <node x="1014.0" y="400.0">com.taobao.yugong.extractor.mysql.MysqlFullRecordExtractor</node>
+    <node x="764.5" y="790.0">com.taobao.yugong.applier.AbstractRecordApplier.TableSqlUnit</node>
     <node x="642.0" y="943.0">com.taobao.yugong.translator.RecordTranslator</node>
-    <node x="499.5" y="790.0">com.taobao.yugong.applier.AbstractRecordApplier.TableSqlUnit</node>
-    <node x="714.5" y="168.0">com.taobao.yugong.translator.core.OracleIncreamentDataTranslator</node>
-    <node x="980.5" y="168.0">com.taobao.yugong.translator.NameStyleDataTranslator</node>
-    <node x="415.25" y="632.0">com.taobao.yugong.applier.RecordApplier</node>
+    <node x="767.0" y="400.0">com.taobao.yugong.extractor.sqlserver.SqlServerFullRecordExtractor</node>
+    <node x="938.5" y="168.0">com.taobao.yugong.translator.core.OracleIncreamentDataTranslator</node>
+    <node x="714.5" y="168.0">com.taobao.yugong.translator.NameStyleDataTranslator</node>
     <node x="403.5" y="943.0">com.taobao.yugong.translator.TableMetaTranslator</node>
-    <node x="526.5" y="321.0">com.taobao.yugong.extractor.AbstractRecordExtractor</node>
-    <node x="509.5" y="168.0">com.taobao.yugong.translator.core.EncodeDataTranslator</node>
-    <node x="179.0" y="1022.0">com.taobao.yugong.common.db.sql.OracleSqlTemplate</node>
-    <node x="786.0" y="479.0">com.taobao.yugong.extractor.oracle.OracleRecRecordExtractor</node>
-    <node x="623.75" y="79.0">com.taobao.yugong.translator.AbstractDataTranslator</node>
+    <node x="466.0" y="632.0">com.taobao.yugong.applier.RecordApplier</node>
+    <node x="818.0" y="1022.0">com.taobao.yugong.translator.ColumnFixDataTranslator</node>
+    <node x="780.0" y="321.0">com.taobao.yugong.extractor.AbstractRecordExtractor</node>
+    <node x="210.5" y="168.0">com.taobao.yugong.translator.core.EncodeDataTranslator</node>
+    <node x="0.0" y="1022.0">com.taobao.yugong.common.db.sql.OracleSqlTemplate</node>
+    <node x="1008.0" y="479.0">com.taobao.yugong.extractor.oracle.OracleRecRecordExtractor</node>
+    <node x="589.75" y="79.0">com.taobao.yugong.translator.AbstractDataTranslator</node>
   </nodes>
   <notes />
   <edges>
@@ -44,15 +47,21 @@
       <point x="0.0" y="-14.5" />
       <point x="0.0" y="14.5" />
     </edge>
-    <edge source="com.taobao.yugong.extractor.oracle.AbstractOracleRecordExtractor" target="com.taobao.yugong.extractor.AbstractRecordExtractor">
-      <point x="0.0" y="-14.5" />
-      <point x="0.0" y="14.5" />
-    </edge>
     <edge source="com.taobao.yugong.translator.BillOutDataTranslator" target="com.taobao.yugong.translator.AbstractDataTranslator">
       <point x="45.0" y="-14.5" />
       <point x="145.5" y="128.0" />
-      <point x="639.75" y="128.0" />
+      <point x="605.75" y="128.0" />
       <point x="-80.0" y="14.5" />
+    </edge>
+    <edge source="com.taobao.yugong.extractor.oracle.AbstractOracleRecordExtractor" target="com.taobao.yugong.extractor.AbstractRecordExtractor">
+      <point x="0.0" y="-14.5" />
+      <point x="627.0" y="375.0" />
+      <point x="813.5" y="375.0" />
+      <point x="-67.0" y="14.5" />
+    </edge>
+    <edge source="com.taobao.yugong.extractor.sqlserver.SqlServerFullRecordExtractor" target="com.taobao.yugong.extractor.AbstractRecordExtractor">
+      <point x="0.0" y="-14.5" />
+      <point x="0.0" y="14.5" />
     </edge>
     <edge source="com.taobao.yugong.extractor.oracle.OracleOnceFullRecordExtractor" target="com.taobao.yugong.extractor.oracle.AbstractOracleRecordExtractor">
       <point x="0.0" y="-14.5" />
@@ -62,79 +71,89 @@
     </edge>
     <edge source="com.taobao.yugong.translator.YugongExampleSimpleDataTranslator" target="com.taobao.yugong.translator.AbstractDataTranslator">
       <point x="0.0" y="-14.5" />
-      <point x="350.0" y="138.0" />
-      <point x="671.75" y="138.0" />
-      <point x="-48.0" y="14.5" />
+      <point x="555.0" y="148.0" />
+      <point x="669.75" y="148.0" />
+      <point x="-16.0" y="14.5" />
     </edge>
     <edge source="com.taobao.yugong.translator.YugongExampleJoinDataTranslator" target="com.taobao.yugong.translator.BackTableDataTranslator">
-      <point x="66.25" y="-14.5" />
-      <point x="691.5078125" y="222.0" />
-      <point x="1255.0" y="222.0" />
-      <point x="-50.5" y="14.5" />
+      <point x="-66.25" y="-14.5" />
+      <point x="1378.125" y="222.0" />
+      <point x="1356.0" y="222.0" />
+      <point x="50.5" y="14.5" />
     </edge>
     <edge source="com.taobao.yugong.extractor.oracle.OracleOnceFullRecordExtractor.ContinueExtractor" target="com.taobao.yugong.extractor.oracle.OracleOnceFullRecordExtractor">
       <point x="0.0" y="-14.5" />
       <point x="0.0" y="14.5" />
     </edge>
     <edge source="com.taobao.yugong.translator.MidBillOutDetailDataTranslator" target="com.taobao.yugong.translator.DataTranslator">
-      <point x="59.0" y="-14.5" />
-      <point x="1496.125" y="222.0" />
-      <point x="1467.625" y="222.0" />
-      <point x="1467.625" y="49.0" />
-      <point x="775.35" y="49.0" />
-      <point x="55.60000000000002" y="14.5" />
+      <point x="-59.0" y="-14.5" />
+      <point x="563.6796875" y="222.0" />
+      <point x="0.0" y="222.0" />
+      <point x="0.0" y="49.0" />
+      <point x="630.15" y="49.0" />
+      <point x="-55.60000000000002" y="14.5" />
     </edge>
     <edge source="com.taobao.yugong.translator.BillOutDataTranslator" target="com.taobao.yugong.translator.DataTranslator">
       <point x="-45.0" y="-14.5" />
       <point x="55.5" y="59.0" />
-      <point x="691.95" y="59.0" />
+      <point x="657.95" y="59.0" />
       <point x="-27.799999999999955" y="14.5" />
     </edge>
     <edge source="com.taobao.yugong.applier.IncrementRecordApplier" target="com.taobao.yugong.applier.AbstractRecordApplier">
       <point x="0.0" y="-14.5" />
-      <point x="134.0" y="760.0" />
-      <point x="412.125" y="760.0" />
-      <point x="-70.125" y="14.5" />
+      <point x="399.0" y="770.0" />
+      <point x="509.625" y="770.0" />
+      <point x="-23.375" y="14.5" />
+    </edge>
+    <edge source="com.taobao.yugong.translator.ColumnFixDataTranslator" target="com.taobao.yugong.translator.AbstractDataTranslator">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="com.taobao.yugong.translator.NameStyleDataTranslator" target="com.taobao.yugong.translator.AbstractDataTranslator">
+      <point x="0.0" y="-14.5" />
+      <point x="816.5" y="148.0" />
+      <point x="701.75" y="148.0" />
+      <point x="16.0" y="14.5" />
     </edge>
     <edge source="com.taobao.yugong.applier.AbstractRecordApplier" target="com.taobao.yugong.applier.RecordApplier">
       <point x="0.0" y="-14.5" />
       <point x="0.0" y="14.5" />
     </edge>
-    <edge source="com.taobao.yugong.translator.NameStyleDataTranslator" target="com.taobao.yugong.translator.AbstractDataTranslator">
-      <point x="0.0" y="-14.5" />
-      <point x="1082.5" y="138.0" />
-      <point x="767.75" y="138.0" />
-      <point x="48.0" y="14.5" />
-    </edge>
     <edge source="com.taobao.yugong.translator.core.EncodeDataTranslator" target="com.taobao.yugong.translator.AbstractDataTranslator">
       <point x="0.0" y="-14.5" />
-      <point x="602.0" y="148.0" />
-      <point x="703.75" y="148.0" />
-      <point x="-16.0" y="14.5" />
+      <point x="303.0" y="138.0" />
+      <point x="637.75" y="138.0" />
+      <point x="-48.0" y="14.5" />
     </edge>
     <edge source="com.taobao.yugong.extractor.oracle.OracleAllRecordExtractor" target="com.taobao.yugong.extractor.oracle.AbstractOracleRecordExtractor">
       <point x="0.0" y="-14.5" />
-      <point x="1116.0" y="449.0" />
-      <point x="723.0" y="449.0" />
-      <point x="96.0" y="14.5" />
+      <point x="887.0" y="459.0" />
+      <point x="675.0" y="459.0" />
+      <point x="48.0" y="14.5" />
+    </edge>
+    <edge source="com.taobao.yugong.extractor.mysql.MysqlFullRecordExtractor" target="com.taobao.yugong.extractor.AbstractRecordExtractor">
+      <point x="0.0" y="-14.5" />
+      <point x="1116.5" y="375.0" />
+      <point x="947.5" y="375.0" />
+      <point x="67.0" y="14.5" />
     </edge>
     <edge source="com.taobao.yugong.translator.core.OracleIncreamentDataTranslator" target="com.taobao.yugong.translator.AbstractDataTranslator">
       <point x="0.0" y="-14.5" />
-      <point x="837.5" y="148.0" />
-      <point x="735.75" y="148.0" />
-      <point x="16.0" y="14.5" />
+      <point x="1061.5" y="138.0" />
+      <point x="733.75" y="138.0" />
+      <point x="48.0" y="14.5" />
     </edge>
     <edge source="com.taobao.yugong.common.db.sql.MysqlSqlTemplate" target="com.taobao.yugong.common.db.sql.SqlTemplate">
       <point x="0.0" y="-14.5" />
-      <point x="79.5" y="997.0" />
-      <point x="139.0" y="997.0" />
-      <point x="-30.75" y="14.5" />
+      <point x="261.5" y="997.0" />
+      <point x="202.0" y="997.0" />
+      <point x="30.75" y="14.5" />
     </edge>
     <edge source="com.taobao.yugong.applier.AbstractRecordApplier.TableSqlUnit" target="com.taobao.yugong.applier.AbstractRecordApplier">
       <point x="0.0" y="-14.5" />
-      <point x="562.5" y="770.0" />
-      <point x="505.625" y="770.0" />
-      <point x="23.375" y="14.5" />
+      <point x="827.5" y="760.0" />
+      <point x="603.125" y="760.0" />
+      <point x="70.125" y="14.5" />
     </edge>
     <edge source="com.taobao.yugong.applier.MultiThreadCheckRecordApplier" target="com.taobao.yugong.applier.CheckRecordApplier">
       <point x="0.0" y="-14.5" />
@@ -143,62 +162,62 @@
     <edge source="com.taobao.yugong.translator.BackTableDataTranslator" target="com.taobao.yugong.translator.AbstractDataTranslator">
       <point x="-50.5" y="-14.5" />
       <point x="1255.0" y="128.0" />
-      <point x="799.75" y="128.0" />
+      <point x="765.75" y="128.0" />
       <point x="80.0" y="14.5" />
+    </edge>
+    <edge source="com.taobao.yugong.applier.FullRecordApplier" target="com.taobao.yugong.applier.AbstractRecordApplier">
+      <point x="0.0" y="-14.5" />
+      <point x="667.0" y="770.0" />
+      <point x="556.375" y="770.0" />
+      <point x="23.375" y="14.5" />
     </edge>
     <edge source="com.taobao.yugong.applier.MultiThreadIncrementRecordApplier" target="com.taobao.yugong.applier.IncrementRecordApplier">
       <point x="0.0" y="-14.5" />
       <point x="0.0" y="14.5" />
     </edge>
-    <edge source="com.taobao.yugong.applier.FullRecordApplier" target="com.taobao.yugong.applier.AbstractRecordApplier">
-      <point x="0.0" y="-14.5" />
-      <point x="402.0" y="770.0" />
-      <point x="458.875" y="770.0" />
-      <point x="-23.375" y="14.5" />
-    </edge>
     <edge source="com.taobao.yugong.extractor.oracle.OracleRecRecordExtractor" target="com.taobao.yugong.extractor.oracle.AbstractOracleRecordExtractor">
       <point x="0.0" y="-14.5" />
-      <point x="890.5" y="459.0" />
-      <point x="675.0" y="459.0" />
-      <point x="48.0" y="14.5" />
+      <point x="1112.5" y="449.0" />
+      <point x="723.0" y="449.0" />
+      <point x="96.0" y="14.5" />
     </edge>
     <edge source="com.taobao.yugong.translator.NameTableMetaTranslator" target="com.taobao.yugong.translator.TableMetaTranslator">
-      <point x="0.0" y="-14.5" />
-      <point x="0.0" y="14.5" />
-    </edge>
-    <edge source="com.taobao.yugong.translator.AbstractDataTranslator" target="com.taobao.yugong.translator.DataTranslator">
       <point x="0.0" y="-14.5" />
       <point x="0.0" y="14.5" />
     </edge>
     <edge source="com.taobao.yugong.translator.BackTableDataTranslator" target="com.taobao.yugong.translator.DataTranslator">
       <point x="50.5" y="-14.5" />
       <point x="1356.0" y="59.0" />
-      <point x="747.55" y="59.0" />
+      <point x="713.55" y="59.0" />
       <point x="27.799999999999955" y="14.5" />
+    </edge>
+    <edge source="com.taobao.yugong.translator.AbstractDataTranslator" target="com.taobao.yugong.translator.DataTranslator">
+      <point x="0.0" y="-14.5" />
+      <point x="0.0" y="14.5" />
     </edge>
     <edge source="com.taobao.yugong.applier.MultiThreadFullRecordApplier" target="com.taobao.yugong.applier.FullRecordApplier">
       <point x="0.0" y="-14.5" />
       <point x="0.0" y="14.5" />
     </edge>
     <edge source="com.taobao.yugong.translator.YugongExampleJoinDataTranslator" target="com.taobao.yugong.translator.DataTranslator">
-      <point x="-66.25" y="-14.5" />
-      <point x="559.0078125" y="222.0" />
-      <point x="0.0" y="222.0" />
-      <point x="0.0" y="49.0" />
-      <point x="664.15" y="49.0" />
-      <point x="-55.60000000000002" y="14.5" />
+      <point x="66.25" y="-14.5" />
+      <point x="1510.625" y="222.0" />
+      <point x="1474.875" y="222.0" />
+      <point x="1474.875" y="49.0" />
+      <point x="741.35" y="49.0" />
+      <point x="55.60000000000002" y="14.5" />
     </edge>
     <edge source="com.taobao.yugong.applier.CheckRecordApplier" target="com.taobao.yugong.applier.AbstractRecordApplier">
       <point x="0.0" y="-14.5" />
-      <point x="731.5" y="760.0" />
-      <point x="552.375" y="760.0" />
-      <point x="70.125" y="14.5" />
+      <point x="122.5" y="760.0" />
+      <point x="462.875" y="760.0" />
+      <point x="-70.125" y="14.5" />
     </edge>
     <edge source="com.taobao.yugong.translator.MidBillOutDetailDataTranslator" target="com.taobao.yugong.translator.BackTableDataTranslator">
-      <point x="-59.0" y="-14.5" />
-      <point x="1378.125" y="222.0" />
-      <point x="1356.0" y="222.0" />
-      <point x="50.5" y="14.5" />
+      <point x="59.0" y="-14.5" />
+      <point x="681.6796875" y="222.0" />
+      <point x="1255.0" y="222.0" />
+      <point x="-50.5" y="14.5" />
     </edge>
     <edge source="com.taobao.yugong.extractor.oracle.OracleFullRecordExtractor" target="com.taobao.yugong.extractor.oracle.AbstractOracleRecordExtractor">
       <point x="0.0" y="-14.5" />
@@ -212,14 +231,14 @@
     </edge>
     <edge source="com.taobao.yugong.common.db.sql.OracleSqlTemplate" target="com.taobao.yugong.common.db.sql.SqlTemplate">
       <point x="0.0" y="-14.5" />
-      <point x="260.0" y="997.0" />
-      <point x="200.5" y="997.0" />
-      <point x="30.75" y="14.5" />
+      <point x="81.0" y="997.0" />
+      <point x="140.5" y="997.0" />
+      <point x="-30.75" y="14.5" />
     </edge>
   </edges>
-  <settings layout="Hierarchic Group" zoom="1.040449254653033" x="707.0" y="444.0" />
+  <settings layout="Hierarchic Group" zoom="0.9752035065748278" x="1038.7393091049184" y="285.56928213689486" />
   <SelectedNodes>
-    <node>com.taobao.yugong.translator.NameStyleDataTranslator</node>
+    <node>com.taobao.yugong.translator.ColumnFixDataTranslator</node>
   </SelectedNodes>
   <Categories>
     <Category>Inner Classes</Category>
