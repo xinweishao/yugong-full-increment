@@ -90,7 +90,7 @@ HJ 使用的 yugong 已经改为 fat jar 模式运行，摒弃了官方的打包
 *   -c：使用的 yugong properties，配置数据库信息和作业信息
 *   -y：使用的 YAML 配置文件，做 Translator 定制化
 
-编译 yugong jar 包（不想编译的同学，直接点击 https://gitlab.yeshj.com/hjarch-practice/yugong/tags/yugong-1.1.0 里面有 jar 包下载）:
+编译 yugong jar 包（不想编译的同学，直接点击 https://gitlab.yeshj.com/hjarch-practice/yugong/tags/ ，找到里面最新的版本，里面有 jar 包下载）:
 
 ```
 mvn clean package
