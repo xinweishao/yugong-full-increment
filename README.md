@@ -1,5 +1,8 @@
 # yugong
 
+[TOC]
+
+
 ## 目的
 
 *   SQL Server -> MySQL 的一致性检查（CHECK）
@@ -112,3 +115,10 @@ logs
     yugong.table.mode=
     ```
 *   运行
+
+
+## 需要帮助怎么办？
+
+
+请联系作者 **alswl**，CCTalk 找我「狄敬超」。
+
