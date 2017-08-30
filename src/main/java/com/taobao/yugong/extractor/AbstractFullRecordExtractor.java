@@ -44,7 +44,7 @@ public abstract class AbstractFullRecordExtractor extends AbstractRecordExtracto
 
   public ColumnValue getColumnValue(ResultSet rs, String encoding, ColumnMeta col)
       throws SQLException {
-    Object value = rs.getObject(col.getName());
+    Object value = rs.getObject(col.getName().trim());
     return new ColumnValue(col.clone(), value);
   }
   
