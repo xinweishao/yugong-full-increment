@@ -50,6 +50,9 @@ public class ColumnTranslator implements RecordTranslator {
   protected Map<String, Map<String, Object>> newColumns = Maps.newHashMap();
   @Setter
   @Getter
+  protected Map<String, Map<String, Object>> ifnullColumns = Maps.newHashMap();
+  @Setter
+  @Getter
   protected Map<String, List<String>> jsonExtract = Maps.newHashMap();
   @Setter
   @Getter
@@ -261,6 +264,13 @@ public class ColumnTranslator implements RecordTranslator {
       columnValue.setColumn(new ColumnMeta(entry.getKey(), (Integer) entry.getValue().get("type")));
       columnValue.setValue(entry.getValue().get("value"));
       record.getColumns().add(columnValue);
+    }
+    //如果设置了ifnullColumns，则根据配置的默认值来替换原来的null值
+    for (Map.Entry<String, Map<String, Object>> entry : ifnullColumns.entrySet()) {
+      ColumnValue column = record.getColumnByName(entry.getKey());
+      if(column.getValue()==null){
+        column.setValue(entry.getValue().get("value"));
+      }
     }
 
 

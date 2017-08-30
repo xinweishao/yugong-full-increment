@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.taobao.yugong.common.db.meta.ColumnValue;
 import com.taobao.yugong.common.model.record.Record;
 import lombok.Data;
+import org.springframework.beans.BeanUtils;
+import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,6 +49,12 @@ public class CompositeIndexesDataTranslator extends AbstractDataTranslator {
             List<ColumnValue> primaryKeys = record.getPrimaryKeys();
             //将主键作为普通列处理
             record.getColumns().addAll(primaryKeys);
+            //shilin 保存原有的主键
+            List<ColumnValue> tempKeys=new ArrayList<>();
+            record.setSourcePkeys(tempKeys);
+            primaryKeys.stream().forEach(k->{
+                tempKeys.add(k.clone());
+            });
             //清空原有主键
             primaryKeys.clear();
             //重设索引键

@@ -17,6 +17,7 @@ import com.taobao.yugong.exception.YuGongException;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.util.CollectionUtils;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -93,6 +94,11 @@ public abstract class AbstractFullRecordExtractor extends AbstractRecordExtracto
       List<ColumnValue> pks = record.getPrimaryKeys();
       if (YuGongUtils.isNotEmpty(pks)) {
         Object value = pks.get(0).getValue();
+        //shilin 添加如果复合主键则获取原表 id
+        if(pks.size()>1 && !CollectionUtils.isEmpty( record.getSourcePkeys())){
+            value = record.getSourcePkeys().get(0).getValue();
+        }
+
         if (value instanceof Number) {
           position.setId((Number) value);// 更新一下id
         }

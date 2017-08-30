@@ -49,6 +49,12 @@ public class ColumnFixDataTranslator extends AbstractDataTranslator {
   public Map<String, Map<String, Object>> getNewColumns() {
     return this.translator.getNewColumns();
   }
+  public Map<String, Map<String, Object>> getIfnullColumns() {
+    return this.translator.getIfnullColumns();
+  }
+  public void setIfnullColumns(Map<String, Map<String, Object>> ifnullColumns) {
+     this.translator.setIfnullColumns(ifnullColumns);
+  }
 
   public void setJsonExtract(Map<String, List<String>> jsonExtract) {
     this.translator.setJsonExtract(jsonExtract);
