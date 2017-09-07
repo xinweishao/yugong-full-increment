@@ -9,23 +9,14 @@ import com.taobao.yugong.common.db.meta.ColumnMeta;
 import com.taobao.yugong.common.db.meta.ColumnValue;
 import com.taobao.yugong.common.model.record.Record;
 import com.taobao.yugong.common.utils.YuGongUtils;
-
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-
 import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.sql.Types;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Slf4j
 public class ColumnTranslator implements RecordTranslator {
@@ -265,13 +256,13 @@ public class ColumnTranslator implements RecordTranslator {
       columnValue.setValue(entry.getValue().get("value"));
       record.getColumns().add(columnValue);
     }
-    //如果设置了ifnullColumns，则根据配置的默认值来替换原来的null值
-    for (Map.Entry<String, Map<String, Object>> entry : ifnullColumns.entrySet()) {
-      ColumnValue column = record.getColumnByName(entry.getKey());
-      if(column.getValue()==null){
-        column.setValue(entry.getValue().get("value"));
+      //如果设置了ifnullColumns，则根据配置的默认值来替换原来的null值
+      for (Map.Entry<String, Map<String, Object>> entry : ifnullColumns.entrySet()) {
+          ColumnValue column = record.getColumnByName(entry.getKey());
+          if (column.getValue() == null) {
+              column.setValue(entry.getValue().get("value"));
+          }
       }
-    }
 
 
     return record;

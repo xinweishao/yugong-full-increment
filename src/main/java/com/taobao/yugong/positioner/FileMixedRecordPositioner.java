@@ -4,10 +4,8 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.taobao.yugong.common.model.position.Position;
 import com.taobao.yugong.exception.YuGongException;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
-import org.apache.commons.lang3.time.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
@@ -111,14 +109,14 @@ public class FileMixedRecordPositioner extends MemoryRecordPositioner implements
           SerializerFeature.WriteClassName,
           SerializerFeature.WriteNullListAsEmpty);
       try {
-        FileUtils.writeStringToFile(dataFile, json);
-        //shilin 记录当前时间,方便增量同步时，根据更新时间进行同步
-        String tempName=dataFile.getName();
-        if(tempName.endsWith(".dat")) {
-          tempName=  dataFile.getName().replace(".dat", ".txt");
-          String tempStr=DateFormatUtils.format(new Date(),"yyyy-MM-dd HH:mm:ss");
-          FileUtils.writeStringToFile(new File(dataFile.getParent(), tempName), tempStr);
-        }
+          FileUtils.writeStringToFile(dataFile, json);
+          //shilin 记录当前时间,方便增量同步时，根据更新时间进行同步
+          String newDateFileName = dataFile.getName();
+          if (newDateFileName.endsWith(".dat")) {
+              newDateFileName = dataFile.getName().replace(".dat", ".txt");
+              String tempStr = DateFormatUtils.format(new Date(), "yyyy-MM-dd HH:mm:ss");
+              FileUtils.writeStringToFile(new File(dataFile.getParent(), newDateFileName), tempStr);
+          }
       } catch (IOException e) {
         throw new YuGongException(e);
       }
