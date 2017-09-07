@@ -256,13 +256,13 @@ public class ColumnTranslator implements RecordTranslator {
       columnValue.setValue(entry.getValue().get("value"));
       record.getColumns().add(columnValue);
     }
-      //如果设置了ifnullColumns，则根据配置的默认值来替换原来的null值
-      for (Map.Entry<String, Map<String, Object>> entry : ifnullColumns.entrySet()) {
-          ColumnValue column = record.getColumnByName(entry.getKey());
-          if (column.getValue() == null) {
-              column.setValue(entry.getValue().get("value"));
-          }
+    //如果设置了ifnullColumns，则根据配置的默认值来替换原来的null值
+    for (Map.Entry<String, Map<String, Object>> entry : ifnullColumns.entrySet()) {
+      ColumnValue column = record.getColumnByName(entry.getKey());
+      if (column.getValue() == null) {
+         column.setValue(entry.getValue().get("value"));
       }
+    }
 
 
     return record;
