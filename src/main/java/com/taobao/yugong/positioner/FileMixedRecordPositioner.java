@@ -2,6 +2,7 @@ package com.taobao.yugong.positioner;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
+import com.taobao.yugong.common.model.position.IdPosition;
 import com.taobao.yugong.common.model.position.Position;
 import com.taobao.yugong.exception.YuGongException;
 import org.apache.commons.io.FileUtils;
@@ -105,18 +106,14 @@ public class FileMixedRecordPositioner extends MemoryRecordPositioner implements
 
   private void flushDataToFile(File dataFile, Position position) {
     if (position != null) {
+      if(position instanceof IdPosition){
+          ((IdPosition) position).setUpdateTimeString(DateFormatUtils.format(new Date(), "yyyy-MM-dd HH:mm:ss"));
+      }
       String json = JSON.toJSONString(position,
           SerializerFeature.WriteClassName,
           SerializerFeature.WriteNullListAsEmpty);
       try {
           FileUtils.writeStringToFile(dataFile, json);
-          //shilin 记录当前时间,方便增量同步时，根据更新时间进行同步
-          String newDateFileName = dataFile.getName();
-          if (newDateFileName.endsWith(".dat")) {
-              newDateFileName = dataFile.getName().replace(".dat", ".txt");
-              String tempStr = DateFormatUtils.format(new Date(), "yyyy-MM-dd HH:mm:ss");
-              FileUtils.writeStringToFile(new File(dataFile.getParent(), newDateFileName), tempStr);
-          }
       } catch (IOException e) {
         throw new YuGongException(e);
       }

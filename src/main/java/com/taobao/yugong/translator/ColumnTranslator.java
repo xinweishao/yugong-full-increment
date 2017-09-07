@@ -41,7 +41,7 @@ public class ColumnTranslator implements RecordTranslator {
   protected Map<String, Map<String, Object>> newColumns = Maps.newHashMap();
   @Setter
   @Getter
-  protected Map<String, Map<String, Object>> ifnullColumns = Maps.newHashMap();
+  protected Map<String, Map<String, Object>> defaultColumns = Maps.newHashMap();
   @Setter
   @Getter
   protected Map<String, List<String>> jsonExtract = Maps.newHashMap();
@@ -256,8 +256,8 @@ public class ColumnTranslator implements RecordTranslator {
       columnValue.setValue(entry.getValue().get("value"));
       record.getColumns().add(columnValue);
     }
-    //如果设置了ifnullColumns，则根据配置的默认值来替换原来的null值
-    for (Map.Entry<String, Map<String, Object>> entry : ifnullColumns.entrySet()) {
+    //如果设置了defaultColumns，则根据配置的默认值来替换原来的null值
+    for (Map.Entry<String, Map<String, Object>> entry : defaultColumns.entrySet()) {
       ColumnValue column = record.getColumnByName(entry.getKey());
       if (column.getValue() == null) {
          column.setValue(entry.getValue().get("value"));
