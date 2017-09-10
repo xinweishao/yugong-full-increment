@@ -13,7 +13,8 @@ import com.taobao.yugong.common.utils.YuGongUtils;
 import com.taobao.yugong.exception.YuGongException;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.LoggerFactory
+    ;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCallback;
@@ -37,9 +38,9 @@ import java.util.Map;
  * @author agapple 2013-9-17 下午2:15:58
  * @since 5.1.0
  */
-public class IncrementRecordApplier extends AbstractRecordApplier {
+public class OracleIncrementRecordApplier extends AbstractRecordApplier {
 
-  protected static final Logger logger = LoggerFactory.getLogger(IncrementRecordApplier.class);
+  protected static final Logger logger = LoggerFactory.getLogger(OracleIncrementRecordApplier.class);
   protected Map<List<String>, TableSqlUnit> insertSqlCache;
   protected Map<List<String>, TableSqlUnit> updateSqlCache;
   protected Map<List<String>, TableSqlUnit> deleteSqlCache;
@@ -47,7 +48,7 @@ public class IncrementRecordApplier extends AbstractRecordApplier {
   protected YuGongContext context;
   protected DbType dbType;
 
-  public IncrementRecordApplier(YuGongContext context) {
+  public OracleIncrementRecordApplier(YuGongContext context) {
     this.context = context;
   }
 

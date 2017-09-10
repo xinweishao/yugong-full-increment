@@ -165,7 +165,7 @@
             <artifactId>lombok</artifactId>
             <version>1.16.16</version>
         </dependency>
-        <!-- oracle -->
+        <!-- oracle download from http://www.oracle.com/technetwork/database/enterprise-edition/jdbc-10201-088211.html -->
         <dependency>
             <groupId>com.oracle</groupId>
             <artifactId>ojdbc14</artifactId>

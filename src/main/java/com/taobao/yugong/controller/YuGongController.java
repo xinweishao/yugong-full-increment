@@ -4,10 +4,10 @@ import com.google.common.collect.Lists;
 import com.taobao.yugong.applier.AllRecordApplier;
 import com.taobao.yugong.applier.CheckRecordApplier;
 import com.taobao.yugong.applier.FullRecordApplier;
-import com.taobao.yugong.applier.IncrementRecordApplier;
+import com.taobao.yugong.applier.OracleIncrementRecordApplier;
 import com.taobao.yugong.applier.MultiThreadCheckRecordApplier;
 import com.taobao.yugong.applier.MultiThreadFullRecordApplier;
-import com.taobao.yugong.applier.MultiThreadIncrementRecordApplier;
+import com.taobao.yugong.applier.MultiThreadOracleIncrementRecordApplier;
 import com.taobao.yugong.applier.RecordApplier;
 import com.taobao.yugong.common.YuGongConstants;
 import com.taobao.yugong.common.alarm.AlarmService;
@@ -417,9 +417,9 @@ public class YuGongController extends AbstractYuGongLifeCycle {
       }
     } else if (runMode == RunMode.INC) {
       if (concurrent) {
-        return new MultiThreadIncrementRecordApplier(context, threadSize, splitSize, applierExecutor);
+        return new MultiThreadOracleIncrementRecordApplier(context, threadSize, splitSize, applierExecutor);
       } else {
-        return new IncrementRecordApplier(context);
+        return new OracleIncrementRecordApplier(context);
       }
     } else if (runMode == RunMode.ALL) {
       // 不会有并发问题，所以共用一份context
