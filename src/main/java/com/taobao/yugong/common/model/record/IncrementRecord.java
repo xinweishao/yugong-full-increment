@@ -3,6 +3,8 @@ package com.taobao.yugong.common.model.record;
 import com.taobao.yugong.common.db.meta.ColumnValue;
 import com.taobao.yugong.common.utils.YuGongToStringStyle;
 
+import lombok.Data;
+
 import org.apache.commons.lang.builder.ToStringBuilder;
 
 import java.util.List;
@@ -12,6 +14,7 @@ import java.util.List;
  *
  * @author agapple 2013-9-16 下午4:20:25
  */
+@Data
 public class IncrementRecord extends Record {
 
   private IncrementOpType opType;
@@ -22,14 +25,6 @@ public class IncrementRecord extends Record {
 
   public IncrementRecord(String schemaName, String tableName, List<ColumnValue> primaryKeys, List<ColumnValue> columns) {
     super(schemaName, tableName, primaryKeys, columns);
-  }
-
-  public IncrementOpType getOpType() {
-    return opType;
-  }
-
-  public void setOpType(IncrementOpType opType) {
-    this.opType = opType;
   }
 
   @Override
