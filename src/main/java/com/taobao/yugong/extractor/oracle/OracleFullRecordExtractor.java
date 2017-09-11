@@ -14,6 +14,7 @@ import com.taobao.yugong.common.model.record.Record;
 import com.taobao.yugong.common.utils.YuGongUtils;
 import com.taobao.yugong.common.utils.thread.NamedThreadFactory;
 import com.taobao.yugong.exception.YuGongException;
+import com.taobao.yugong.extractor.AbstractFullRecordExtractor;
 import com.taobao.yugong.extractor.FullContinueExtractor;
 
 import org.apache.commons.lang.StringUtils;

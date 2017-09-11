@@ -3,8 +3,11 @@ package com.taobao.yugong.extractor.sqlserver;
 import com.google.common.collect.Lists;
 import com.taobao.yugong.common.db.meta.ColumnMeta;
 import com.taobao.yugong.common.db.meta.ColumnValue;
+import com.taobao.yugong.common.db.meta.Table;
+import com.taobao.yugong.common.db.meta.TableMetaGenerator;
 import com.taobao.yugong.common.model.ProgressStatus;
 import com.taobao.yugong.common.model.YuGongContext;
+import com.taobao.yugong.common.model.position.Position;
 import com.taobao.yugong.common.model.record.Record;
 import com.taobao.yugong.common.model.record.SqlServerIncrementRecord;
 import com.taobao.yugong.common.utils.YuGongUtils;
@@ -25,6 +28,10 @@ public class SqlServerCdcExtractor extends AbstractSqlServerExtractor {
   private final String cdcGetNetChangesName;
   private final String schemaName;
   private final String tableName;
+  private Table tableMeta;
+  private List<ColumnMeta> primaryKeyMetas;
+  private List<ColumnMeta> columnsMetas;
+  private YuGongContext context;
 
   public SqlServerCdcExtractor(YuGongContext context) {
     this.context = context;
@@ -36,8 +43,9 @@ public class SqlServerCdcExtractor extends AbstractSqlServerExtractor {
   @Override
   public void start() {
     super.start();
-
-    String cdcExtractSql = "";
+    tableMeta = context.getTableMeta();
+    primaryKeyMetas = tableMeta.getPrimaryKeys();
+    columnsMetas = tableMeta.getColumns();
     // TODO
     tracer.update(context.getTableMeta().getFullName(), ProgressStatus.INCING);
   }
@@ -45,15 +53,19 @@ public class SqlServerCdcExtractor extends AbstractSqlServerExtractor {
   @Override
   public List<Record> extract() throws YuGongException {
     JdbcTemplate jdbcTemplate = new JdbcTemplate(context.getSourceDs());
-    List<ColumnMeta> primaryKeys = Lists.newArrayList();
-    List<ColumnMeta> columns = Lists.newArrayList();
-    List<SqlServerIncrementRecord> records = fetchCdcRecord(jdbcTemplate, primaryKeys, columns);
+    List<SqlServerIncrementRecord> records = fetchCdcRecord(jdbcTemplate, primaryKeyMetas, columnsMetas,
+        new DateTime(2017, 9, 11, 14, 3, 0), new DateTime(2017, 9, 11, 14, 51, 0));
     
     return (List<Record>) (List<? extends Record>) records;
   }
-  
+
+  @Override
+  public Position ack(List<Record> records) throws YuGongException {
+    return null;
+  }
+
   List<SqlServerIncrementRecord> fetchCdcRecord(JdbcTemplate jdbcTemplate,
-      List<ColumnMeta> primaryKeys, List<ColumnMeta> columns) {
+      List<ColumnMeta> primaryKeysM, List<ColumnMeta> columnsM, DateTime start, DateTime end) {
     SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     String sql = String.format(
@@ -63,8 +75,8 @@ public class SqlServerCdcExtractor extends AbstractSqlServerExtractor {
             + "SELECT @begin_lsn = sys.fn_cdc_map_time_to_lsn('smallest greater than or equal', @begin_time);\n"
             + "SELECT @end_lsn = sys.fn_cdc_map_time_to_lsn('largest less than', @end_time);\n"
             + "SELECT * FROM cdc.fn_cdc_get_all_changes_dbo_%s(@begin_lsn, @end_lsn, 'all');\n",
-        format.format(new DateTime(2017, 9, 11, 14, 3, 0).toDate()), // XXX
-        format.format(new DateTime(2017, 9, 11, 14, 51, 0).toDate()),
+        format.format(start.toDate()),
+        format.format(end.toDate()),
         tableName
     );
     List<SqlServerIncrementRecord> records = Lists.newArrayList();
@@ -72,14 +84,14 @@ public class SqlServerCdcExtractor extends AbstractSqlServerExtractor {
       ResultSet resultSet = ps.executeQuery();
       while (resultSet.next()) {
         List<ColumnValue> columnValues = Lists.newArrayList();
-        List<ColumnValue> pks = Lists.newArrayList();
-        for (ColumnMeta pk : primaryKeys) {
-          ColumnValue columnValue = YuGongUtils.getColumnValue(resultSet, null, pk);
-          pks.add(columnValue);
+        List<ColumnValue> primaryKeys = Lists.newArrayList();
+        for (ColumnMeta primaryKey : primaryKeysM) {
+          ColumnValue columnValue = YuGongUtils.getColumnValue(resultSet, null, primaryKey);
+          primaryKeys.add(columnValue);
         }
 
-        for (ColumnMeta col : columns) {
-          ColumnValue columnValue = YuGongUtils.getColumnValue(resultSet, null, col);
+        for (ColumnMeta column : columnsM) {
+          ColumnValue columnValue = YuGongUtils.getColumnValue(resultSet, null, column);
           columnValues.add(columnValue);
         }
 
@@ -88,7 +100,7 @@ public class SqlServerCdcExtractor extends AbstractSqlServerExtractor {
                 resultSet, null, new ColumnMeta("__$operation", Types.INTEGER)).getValue());
         SqlServerIncrementRecord record = new SqlServerIncrementRecord(
             context.getTableMeta().getSchema(),
-            context.getTableMeta().getName(), pks, columnValues, operation);
+            context.getTableMeta().getName(), primaryKeys, columnValues, operation);
         records.add(record);
       }
 
@@ -113,5 +125,15 @@ public class SqlServerCdcExtractor extends AbstractSqlServerExtractor {
   public void stop() {
     super.stop();
     tracer.update(context.getTableMeta().getFullName(), ProgressStatus.SUCCESS);
+  }
+
+  @Override
+  public String getGetMinPkSql() {
+    return "select '2017-09-11 00:00:00.000'"; // Fake
+  }
+
+  @Override
+  public String getExtractSql() {
+    return "select 1"; // Fake
   }
 }
