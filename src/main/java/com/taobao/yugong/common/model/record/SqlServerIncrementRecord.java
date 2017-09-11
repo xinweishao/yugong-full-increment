@@ -10,11 +10,20 @@ import java.util.List;
 @Data
 public class SqlServerIncrementRecord extends IncrementRecord {
 
-  private byte[] startLsn;
-  private byte[] seqval;
+//  private byte[] startLsn;
+//  private byte[] seqval;
   private CdcOperation operation;
-  private byte[] updateMask;
-  
+//  private byte[] updateMask;
+
+  public SqlServerIncrementRecord(String schemaName, String tableName,
+      List<ColumnValue> primaryKeys, List<ColumnValue> columns, CdcOperation operation) {
+    super(schemaName, tableName, primaryKeys, columns);
+//    this.startLsn = startLsn;
+//    this.seqval = seqval;
+    this.operation = operation;
+//    this.updateMask = updateMask;
+  }
+
   public enum CdcOperation {
     DELETE(1),
     INSERT(2),
@@ -26,6 +35,15 @@ public class SqlServerIncrementRecord extends IncrementRecord {
 
     CdcOperation(int value) {
       this.value = value;
+    }
+    public static CdcOperation of(int value) {
+      for (CdcOperation operation : values()) {
+        if (operation.value != value) {
+          continue;
+        }
+        return operation;
+      }
+      return null;
     }
   }
   

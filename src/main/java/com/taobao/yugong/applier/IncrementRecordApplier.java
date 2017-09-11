@@ -38,9 +38,9 @@ import java.util.Map;
  * @author agapple 2013-9-17 下午2:15:58
  * @since 5.1.0
  */
-public class OracleIncrementRecordApplier extends AbstractRecordApplier {
+public class IncrementRecordApplier extends AbstractRecordApplier {
 
-  protected static final Logger logger = LoggerFactory.getLogger(OracleIncrementRecordApplier.class);
+  protected static final Logger logger = LoggerFactory.getLogger(IncrementRecordApplier.class);
   protected Map<List<String>, TableSqlUnit> insertSqlCache;
   protected Map<List<String>, TableSqlUnit> updateSqlCache;
   protected Map<List<String>, TableSqlUnit> deleteSqlCache;
@@ -48,7 +48,7 @@ public class OracleIncrementRecordApplier extends AbstractRecordApplier {
   protected YuGongContext context;
   protected DbType dbType;
 
-  public OracleIncrementRecordApplier(YuGongContext context) {
+  public IncrementRecordApplier(YuGongContext context) {
     this.context = context;
   }
 

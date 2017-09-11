@@ -33,25 +33,25 @@ import java.util.concurrent.TimeUnit;
  *
  * @author agapple 2013-9-23 下午5:30:50
  */
-public class MultiThreadOracleIncrementRecordApplier extends OracleIncrementRecordApplier {
+public class MultiThreadIncrementRecordApplier extends IncrementRecordApplier {
 
   private int threadSize = 5;
   private int splitSize = 50;
   private ThreadPoolExecutor executor;
   private String executorName;
 
-  public MultiThreadOracleIncrementRecordApplier(YuGongContext context) {
+  public MultiThreadIncrementRecordApplier(YuGongContext context) {
     super(context);
   }
 
-  public MultiThreadOracleIncrementRecordApplier(YuGongContext context, int threadSize, int splitSize) {
+  public MultiThreadIncrementRecordApplier(YuGongContext context, int threadSize, int splitSize) {
     super(context);
 
     this.threadSize = threadSize;
     this.splitSize = splitSize;
   }
 
-  public MultiThreadOracleIncrementRecordApplier(YuGongContext context, int threadSize, int splitSize,
+  public MultiThreadIncrementRecordApplier(YuGongContext context, int threadSize, int splitSize,
       ThreadPoolExecutor executor) {
     super(context);
 
