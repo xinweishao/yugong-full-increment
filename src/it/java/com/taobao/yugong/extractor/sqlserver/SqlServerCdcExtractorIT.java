@@ -8,6 +8,7 @@ import com.taobao.yugong.common.db.meta.TableMetaGenerator;
 import com.taobao.yugong.common.model.DbType;
 import com.taobao.yugong.common.model.RunMode;
 import com.taobao.yugong.common.model.YuGongContext;
+import com.taobao.yugong.common.model.record.Record;
 import com.taobao.yugong.common.model.record.SqlServerIncrementRecord;
 import com.taobao.yugong.common.stats.ProgressTracer;
 
@@ -47,11 +48,36 @@ public class SqlServerCdcExtractorIT extends BaseDbIT {
 
     JdbcTemplate jdbcTemplate = new JdbcTemplate(context.getSourceDs());
     List<SqlServerIncrementRecord> records = extractor.fetchCdcRecord(
-        jdbcTemplate, Lists.newArrayList(), Lists.newArrayList(),
+        jdbcTemplate, tableMeta.getPrimaryKeys(), tableMeta.getColumns(),
         new DateTime(2017, 9, 11, 14, 3, 0), new DateTime(2017, 9, 11, 14, 51, 0));
     Assert.assertTrue(records.size() > 5);
 
     dataSourceFactory.stop();
   }
 
+  @Test
+  public void extract() throws Exception {
+    YuGongContext context = new YuGongContext();
+    DataSourceFactory dataSourceFactory = new DataSourceFactory();
+    dataSourceFactory.start();
+    DataSource dataSource = dataSourceFactory.getDataSource(getSqlServerConfig());
+    Table tableMeta = TableMetaGenerator.getTableMeta(DbType.SQL_SERVER, dataSource, SOURCE_SCHEMA,
+        SOURCE_TABLE);
+    ProgressTracer progressTracer = new ProgressTracer(RunMode.CHECK, 1);
+
+
+    context.setTableMeta(tableMeta);
+    context.setSourceDs(dataSource);
+    context.setOnceCrawNum(60 * 10); // Second
+
+    SqlServerCdcExtractor extractor = new SqlServerCdcExtractor(context);
+    extractor.setTracer(progressTracer);
+    extractor.start();
+    List<Record> extract = extractor.extract();
+    extractor.extract();
+    extractor.extract();
+    extractor.extract();
+    
+    dataSourceFactory.stop();
+  }
 }

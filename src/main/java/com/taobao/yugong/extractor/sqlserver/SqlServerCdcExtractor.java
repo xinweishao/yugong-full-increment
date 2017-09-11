@@ -32,12 +32,14 @@ public class SqlServerCdcExtractor extends AbstractSqlServerExtractor {
   private List<ColumnMeta> primaryKeyMetas;
   private List<ColumnMeta> columnsMetas;
   private YuGongContext context;
+  private DateTime start;
 
   public SqlServerCdcExtractor(YuGongContext context) {
     this.context = context;
     schemaName = context.getTableMeta().getSchema();
     tableName = context.getTableMeta().getName();
     cdcGetNetChangesName = "cdc.fn_cdc_get_all_changes_" + tableName;
+    start = new DateTime(2017, 9, 11, 14, 3, 0); // XXX
   }
 
   @Override
@@ -46,15 +48,16 @@ public class SqlServerCdcExtractor extends AbstractSqlServerExtractor {
     tableMeta = context.getTableMeta();
     primaryKeyMetas = tableMeta.getPrimaryKeys();
     columnsMetas = tableMeta.getColumns();
-    // TODO
     tracer.update(context.getTableMeta().getFullName(), ProgressStatus.INCING);
   }
 
   @Override
   public List<Record> extract() throws YuGongException {
     JdbcTemplate jdbcTemplate = new JdbcTemplate(context.getSourceDs());
-    List<SqlServerIncrementRecord> records = fetchCdcRecord(jdbcTemplate, primaryKeyMetas, columnsMetas,
-        new DateTime(2017, 9, 11, 14, 3, 0), new DateTime(2017, 9, 11, 14, 51, 0));
+    DateTime end = start.plusSeconds(context.getOnceCrawNum());
+    List<SqlServerIncrementRecord> records = fetchCdcRecord(jdbcTemplate, primaryKeyMetas,
+        columnsMetas, start, end);
+    start = end;
     
     return (List<Record>) (List<? extends Record>) records;
   }
@@ -109,31 +112,10 @@ public class SqlServerCdcExtractor extends AbstractSqlServerExtractor {
     return records;
   }
   
-  private byte[] convertStartDateToLsn(Date date) {
-    String sql = "sys.fn_cdc_map_time_to_lsn('smallest greater than', @begin_time)";
-    // XXX
-    return null;
-  }
-
-  private byte[] convertEndDateToLsn(Date date) {
-    String sql = "sys.fn_cdc_map_time_to_lsn('largest less than or equal', @end_time)";
-    // XXX
-    return null;
-  }
-
   @Override
   public void stop() {
     super.stop();
     tracer.update(context.getTableMeta().getFullName(), ProgressStatus.SUCCESS);
   }
-
-  @Override
-  public String getGetMinPkSql() {
-    return "select '2017-09-11 00:00:00.000'"; // Fake
-  }
-
-  @Override
-  public String getExtractSql() {
-    return "select 1"; // Fake
-  }
+  
 }

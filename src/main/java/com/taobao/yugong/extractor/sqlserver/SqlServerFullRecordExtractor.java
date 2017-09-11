@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class SqlServerFullRecordExtractor extends AbstractSqlServerExtractor {
+public class SqlServerFullRecordExtractor extends AbstractFullRecordExtractor {
 
   public static final String CONVERT_PHYSLOC_TO_BIGINT = "CONVERT(BIGINT, {0})";
 
