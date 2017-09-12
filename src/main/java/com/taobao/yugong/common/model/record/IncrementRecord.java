@@ -23,8 +23,15 @@ public class IncrementRecord extends Record {
     super();
   }
 
-  public IncrementRecord(String schemaName, String tableName, List<ColumnValue> primaryKeys, List<ColumnValue> columns) {
+  public IncrementRecord(String schemaName, String tableName, List<ColumnValue> primaryKeys,
+      List<ColumnValue> columns) {
     super(schemaName, tableName, primaryKeys, columns);
+  }
+
+  public IncrementRecord(String schemaName, String tableName, List<ColumnValue> primaryKeys,
+      List<ColumnValue> columns, IncrementOpType opType) {
+    super(schemaName, tableName, primaryKeys, columns);
+    this.opType = opType;
   }
 
   @Override

@@ -8,8 +8,8 @@ import com.taobao.yugong.common.model.DbType;
 import com.taobao.yugong.common.model.ExtractStatus;
 import com.taobao.yugong.common.model.RunMode;
 import com.taobao.yugong.common.model.YuGongContext;
+import com.taobao.yugong.common.model.record.IncrementRecord;
 import com.taobao.yugong.common.model.record.Record;
-import com.taobao.yugong.common.model.record.SqlServerIncrementRecord;
 import com.taobao.yugong.common.stats.ProgressTracer;
 
 import org.joda.time.DateTime;
@@ -47,7 +47,7 @@ public class SqlServerCdcExtractorIT extends BaseDbIT {
 
 
     JdbcTemplate jdbcTemplate = new JdbcTemplate(context.getSourceDs());
-    List<SqlServerIncrementRecord> records = extractor.fetchCdcRecord(
+    List<IncrementRecord> records = extractor.fetchCdcRecord(
         jdbcTemplate, tableMeta.getPrimaryKeys(), tableMeta.getColumns(),
         new DateTime(2017, 9, 11, 14, 3, 0), new DateTime(2017, 9, 11, 14, 51, 0));
     Assert.assertTrue(records.size() > 5);
@@ -77,10 +77,10 @@ public class SqlServerCdcExtractorIT extends BaseDbIT {
         break;
       }
       List<Record> extract = extractor.extract();
-      extract.forEach(x -> System.out.println(x));
+      extract.forEach(System.out::println);
       Thread.sleep(500);
     }
-    
+
     dataSourceFactory.stop();
   }
 }

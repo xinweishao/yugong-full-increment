@@ -40,6 +40,7 @@ import com.taobao.yugong.extractor.oracle.OracleFullRecordExtractor;
 import com.taobao.yugong.extractor.oracle.OracleMaterializedIncRecordExtractor;
 import com.taobao.yugong.extractor.oracle.OracleOnceFullRecordExtractor;
 import com.taobao.yugong.extractor.oracle.OracleRecRecordExtractor;
+import com.taobao.yugong.extractor.sqlserver.SqlServerCdcExtractor;
 import com.taobao.yugong.extractor.sqlserver.SqlServerFullRecordExtractor;
 import com.taobao.yugong.positioner.FileMixedRecordPositioner;
 import com.taobao.yugong.positioner.MemoryRecordPositioner;
@@ -360,6 +361,16 @@ public class YuGongController extends AbstractYuGongLifeCycle {
         recordExtractor.setSleepTime(config.getLong("yugong.extractor.noupdate.sleep", 1000L));
         recordExtractor.setThreadSize(config.getInt("yugong.extractor.concurrent.size", 5));
         recordExtractor.setExecutor(extractorExecutor);
+        recordExtractor.setTracer(progressTracer);
+        return recordExtractor;
+      } else if (sourceDbType == DbType.SQL_SERVER) {
+        SqlServerCdcExtractor recordExtractor =
+            new SqlServerCdcExtractor(context);
+//        recordExtractor.setConcurrent(config.getBoolean("yugong.extractor.concurrent.enable",
+//            true));
+//        recordExtractor.setSleepTime(config.getLong("yugong.extractor.noupdate.sleep", 1000L));
+//        recordExtractor.setThreadSize(config.getInt("yugong.extractor.concurrent.size", 5));
+//        recordExtractor.setExecutor(extractorExecutor);
         recordExtractor.setTracer(progressTracer);
         return recordExtractor;
       } else {

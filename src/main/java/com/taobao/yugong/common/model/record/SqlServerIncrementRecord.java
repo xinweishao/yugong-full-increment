@@ -7,6 +7,8 @@ import lombok.Getter;
 
 import java.util.List;
 
+// TODO delete
+@Deprecated
 @Data
 public class SqlServerIncrementRecord extends IncrementRecord {
 

@@ -4,13 +4,13 @@ import com.google.common.collect.Lists;
 import com.taobao.yugong.common.db.meta.ColumnMeta;
 import com.taobao.yugong.common.db.meta.ColumnValue;
 import com.taobao.yugong.common.db.meta.Table;
-import com.taobao.yugong.common.db.meta.TableMetaGenerator;
 import com.taobao.yugong.common.model.ExtractStatus;
 import com.taobao.yugong.common.model.ProgressStatus;
 import com.taobao.yugong.common.model.YuGongContext;
 import com.taobao.yugong.common.model.position.Position;
+import com.taobao.yugong.common.model.record.IncrementOpType;
+import com.taobao.yugong.common.model.record.IncrementRecord;
 import com.taobao.yugong.common.model.record.Record;
-import com.taobao.yugong.common.model.record.SqlServerIncrementRecord;
 import com.taobao.yugong.common.utils.YuGongUtils;
 import com.taobao.yugong.exception.YuGongException;
 
@@ -21,8 +21,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Types;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 public class SqlServerCdcExtractor extends AbstractSqlServerExtractor {
 
@@ -61,10 +61,10 @@ public class SqlServerCdcExtractor extends AbstractSqlServerExtractor {
 
     JdbcTemplate jdbcTemplate = new JdbcTemplate(context.getSourceDs());
     DateTime end = start.plusSeconds(context.getOnceCrawNum());
-    List<SqlServerIncrementRecord> records = fetchCdcRecord(jdbcTemplate, primaryKeyMetas,
+    List<IncrementRecord> records = fetchCdcRecord(jdbcTemplate, primaryKeyMetas,
         columnsMetas, start, end);
     start = end;
-    
+
     return (List<Record>) (List<? extends Record>) records;
   }
 
@@ -73,7 +73,7 @@ public class SqlServerCdcExtractor extends AbstractSqlServerExtractor {
     return null;
   }
 
-  List<SqlServerIncrementRecord> fetchCdcRecord(JdbcTemplate jdbcTemplate,
+  List<IncrementRecord> fetchCdcRecord(JdbcTemplate jdbcTemplate,
       List<ColumnMeta> primaryKeysM, List<ColumnMeta> columnsM, DateTime start, DateTime end) {
     SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
@@ -88,7 +88,7 @@ public class SqlServerCdcExtractor extends AbstractSqlServerExtractor {
         format.format(end.toDate()),
         tableName
     );
-    List<SqlServerIncrementRecord> records = Lists.newArrayList();
+    List<IncrementRecord> records = Lists.newArrayList();
     jdbcTemplate.execute(sql, (PreparedStatement ps) -> {
       ResultSet resultSet = ps.executeQuery();
       while (resultSet.next()) {
@@ -104,12 +104,14 @@ public class SqlServerCdcExtractor extends AbstractSqlServerExtractor {
           columnValues.add(columnValue);
         }
 
-        SqlServerIncrementRecord.CdcOperation operation = SqlServerIncrementRecord.CdcOperation
-            .of((Integer)YuGongUtils.getColumnValue(
-                resultSet, null, new ColumnMeta("__$operation", Types.INTEGER)).getValue());
-        SqlServerIncrementRecord record = new SqlServerIncrementRecord(
+        Optional<IncrementOpType> operation = IncrementOpType.ofSqlServerCdc((Integer) YuGongUtils.getColumnValue(
+            resultSet, null, new ColumnMeta("__$operation", Types.INTEGER)).getValue());
+        if (!operation.isPresent()) {
+          continue;
+        }
+        IncrementRecord record = new IncrementRecord(
             context.getTableMeta().getSchema(),
-            context.getTableMeta().getName(), primaryKeys, columnValues, operation);
+            context.getTableMeta().getName(), primaryKeys, columnValues, operation.get());
         records.add(record);
       }
 
@@ -117,11 +119,11 @@ public class SqlServerCdcExtractor extends AbstractSqlServerExtractor {
     });
     return records;
   }
-  
+
   @Override
   public void stop() {
     super.stop();
     tracer.update(context.getTableMeta().getFullName(), ProgressStatus.SUCCESS);
   }
-  
+
 }
