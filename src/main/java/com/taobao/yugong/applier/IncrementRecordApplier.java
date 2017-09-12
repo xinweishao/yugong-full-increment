@@ -157,9 +157,7 @@ public class IncrementRecordApplier extends AbstractRecordApplier {
         if (sqlUnit == null) { // double-check
           sqlUnit = new TableSqlUnit();
           String applierSql = null;
-          Table meta = TableMetaGenerator.getTableMeta(dbType, context.getTargetDs(),
-              context.isIgnoreSchema() ? null : names.get(0),
-              names.get(1));
+          Table meta = tableMetaGeneratorGetTableMeta(names.get(0), names.get(1));
 
           String[] primaryKeys = getPrimaryNames(record);
           String[] columns = getColumnNames(record);
@@ -231,9 +229,7 @@ public class IncrementRecordApplier extends AbstractRecordApplier {
         if (sqlUnit == null) { // double-check
           sqlUnit = new TableSqlUnit();
           String applierSql = null;
-          Table meta = TableMetaGenerator.getTableMeta(dbType, context.getTargetDs(),
-              context.isIgnoreSchema() ? null : names.get(0),
-              names.get(1));
+          Table meta = tableMetaGeneratorGetTableMeta(names.get(0), names.get(1));
 
           String[] primaryKeys = getPrimaryNames(record);
           String[] columns = getColumnNames(record);
@@ -251,6 +247,12 @@ public class IncrementRecordApplier extends AbstractRecordApplier {
                   primaryKeys,
                   columns,
                   false);
+            } else if (dbType == DbType.SQL_SERVER) {
+              applierSql = SqlTemplates.SQL_SERVER.getMergeSql(meta.getSchema(),
+                  meta.getName(),
+                  primaryKeys,
+                  columns,
+                  true);
             } else if (dbType == DbType.ORACLE) {
               applierSql = SqlTemplates.ORACLE.getMergeSql(meta.getSchema(),
                   meta.getName(),
@@ -297,9 +299,7 @@ public class IncrementRecordApplier extends AbstractRecordApplier {
         if (sqlUnit == null) { // double-check
           sqlUnit = new TableSqlUnit();
           String applierSql = null;
-          Table meta = TableMetaGenerator.getTableMeta(dbType, context.getTargetDs(),
-              context.isIgnoreSchema() ? null : names.get(0),
-              names.get(1));
+          Table meta = tableMetaGeneratorGetTableMeta(names.get(0), names.get(1));
 
           String[] primaryKeys = getPrimaryNames(record);
           applierSql = SqlTemplates.COMMON.getDeleteSql(meta.getSchema(), meta.getName(), primaryKeys);
@@ -321,6 +321,11 @@ public class IncrementRecordApplier extends AbstractRecordApplier {
     }
 
     return sqlUnit;
+  }
+
+  Table tableMetaGeneratorGetTableMeta(String schema, String table) {
+    return TableMetaGenerator.getTableMeta(dbType, context.getTargetDs(),
+        context.isIgnoreSchema() ? null : schema, table);
   }
 
   protected void processMissColumn(final IncrementRecord incRecord, final Map<String, Integer> indexs) {

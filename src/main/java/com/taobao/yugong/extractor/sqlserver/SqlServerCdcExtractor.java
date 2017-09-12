@@ -5,6 +5,7 @@ import com.taobao.yugong.common.db.meta.ColumnMeta;
 import com.taobao.yugong.common.db.meta.ColumnValue;
 import com.taobao.yugong.common.db.meta.Table;
 import com.taobao.yugong.common.db.meta.TableMetaGenerator;
+import com.taobao.yugong.common.model.ExtractStatus;
 import com.taobao.yugong.common.model.ProgressStatus;
 import com.taobao.yugong.common.model.YuGongContext;
 import com.taobao.yugong.common.model.position.Position;
@@ -53,6 +54,11 @@ public class SqlServerCdcExtractor extends AbstractSqlServerExtractor {
 
   @Override
   public List<Record> extract() throws YuGongException {
+    if (start.isAfter(DateTime.now())) {
+      setStatus(ExtractStatus.NO_UPDATE);
+      return Lists.newArrayList();
+    }
+
     JdbcTemplate jdbcTemplate = new JdbcTemplate(context.getSourceDs());
     DateTime end = start.plusSeconds(context.getOnceCrawNum());
     List<SqlServerIncrementRecord> records = fetchCdcRecord(jdbcTemplate, primaryKeyMetas,

@@ -1,11 +1,11 @@
 package com.taobao.yugong.extractor.sqlserver;
 
-import com.google.common.collect.Lists;
 import com.taobao.yugong.BaseDbIT;
 import com.taobao.yugong.common.db.DataSourceFactory;
 import com.taobao.yugong.common.db.meta.Table;
 import com.taobao.yugong.common.db.meta.TableMetaGenerator;
 import com.taobao.yugong.common.model.DbType;
+import com.taobao.yugong.common.model.ExtractStatus;
 import com.taobao.yugong.common.model.RunMode;
 import com.taobao.yugong.common.model.YuGongContext;
 import com.taobao.yugong.common.model.record.Record;
@@ -65,7 +65,6 @@ public class SqlServerCdcExtractorIT extends BaseDbIT {
         SOURCE_TABLE);
     ProgressTracer progressTracer = new ProgressTracer(RunMode.CHECK, 1);
 
-
     context.setTableMeta(tableMeta);
     context.setSourceDs(dataSource);
     context.setOnceCrawNum(60 * 10); // Second
@@ -73,10 +72,14 @@ public class SqlServerCdcExtractorIT extends BaseDbIT {
     SqlServerCdcExtractor extractor = new SqlServerCdcExtractor(context);
     extractor.setTracer(progressTracer);
     extractor.start();
-    List<Record> extract = extractor.extract();
-    extractor.extract();
-    extractor.extract();
-    extractor.extract();
+    while (true) {
+      if (extractor.getStatus() == ExtractStatus.NO_UPDATE) {
+        break;
+      }
+      List<Record> extract = extractor.extract();
+      extract.forEach(x -> System.out.println(x));
+      Thread.sleep(500);
+    }
     
     dataSourceFactory.stop();
   }
