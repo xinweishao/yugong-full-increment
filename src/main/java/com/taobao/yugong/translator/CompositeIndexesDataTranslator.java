@@ -47,6 +47,12 @@ public class CompositeIndexesDataTranslator extends AbstractDataTranslator {
             List<ColumnValue> primaryKeys = record.getPrimaryKeys();
             //将主键作为普通列处理
             record.getColumns().addAll(primaryKeys);
+            //shilin 保存原有的主键
+            List<ColumnValue> copyPrimaryKeys = new ArrayList<>();
+            record.setSourcePkeys(copyPrimaryKeys);
+            primaryKeys.stream().forEach(k -> {
+                copyPrimaryKeys.add(k.clone());
+            });
             //清空原有主键
             primaryKeys.clear();
             //重设索引键

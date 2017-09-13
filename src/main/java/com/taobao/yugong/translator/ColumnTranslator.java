@@ -9,23 +9,14 @@ import com.taobao.yugong.common.db.meta.ColumnMeta;
 import com.taobao.yugong.common.db.meta.ColumnValue;
 import com.taobao.yugong.common.model.record.Record;
 import com.taobao.yugong.common.utils.YuGongUtils;
-
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-
 import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.sql.Types;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Slf4j
 public class ColumnTranslator implements RecordTranslator {
@@ -48,6 +39,9 @@ public class ColumnTranslator implements RecordTranslator {
   @Setter
   @Getter
   protected Map<String, Map<String, Object>> newColumns = Maps.newHashMap();
+  @Setter
+  @Getter
+  protected Map<String, Map<String, Object>> defaultColumns = Maps.newHashMap();
   @Setter
   @Getter
   protected Map<String, List<String>> jsonExtract = Maps.newHashMap();
@@ -261,6 +255,13 @@ public class ColumnTranslator implements RecordTranslator {
       columnValue.setColumn(new ColumnMeta(entry.getKey(), (Integer) entry.getValue().get("type")));
       columnValue.setValue(entry.getValue().get("value"));
       record.getColumns().add(columnValue);
+    }
+    //如果设置了defaultColumns，则根据配置的默认值来替换原来的null值
+    for (Map.Entry<String, Map<String, Object>> entry : defaultColumns.entrySet()) {
+      ColumnValue column = record.getColumnByName(entry.getKey());
+      if (column.getValue() == null) {
+         column.setValue(entry.getValue().get("value"));
+      }
     }
 
 
