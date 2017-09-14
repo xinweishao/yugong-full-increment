@@ -3,6 +3,8 @@ package com.taobao.yugong.common.db.sql;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.taobao.yugong.common.db.meta.ColumnMeta;
+
 import org.apache.commons.lang3.text.StrSubstitutor;
 
 import java.util.HashMap;
@@ -92,4 +94,17 @@ public class SqlServerTemplate extends SqlTemplate {
     return StrSubstitutor.replace(sqlTemplate, params).intern();
   }
   
+
+  @Override
+  public String makeColumn(List<ColumnMeta> columns) {
+    StringBuilder str = new StringBuilder();
+    int size = columns.size();
+    for (int i = 0; i < size; i++) {
+      str.append("[" + getColumnName(columns.get(i)) + "]");
+      if (i < (size - 1)) {
+        str.append(",");
+      }
+    }
+    return str.toString();
+  }
 }

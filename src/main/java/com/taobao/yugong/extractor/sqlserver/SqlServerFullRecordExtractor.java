@@ -78,7 +78,7 @@ public class SqlServerFullRecordExtractor extends AbstractFullRecordExtractor {
       this.parameterIndexMap = PARAMETER_INDEX_MAP;
 
       if (Strings.isNullOrEmpty(extractSql)) {
-        String colStr = SqlTemplates.COMMON.makeColumn(context.getTableMeta().getColumnsWithPrimary());
+        String colStr = SqlTemplates.SQL_SERVER.makeColumn(context.getTableMeta().getColumnsWithPrimary());
         this.extractSql = MessageFormat.format(DEFALT_EXTRACT_SQL_FORMAT, colStr, schemaName,
                 tableName, primaryKey);
       }
