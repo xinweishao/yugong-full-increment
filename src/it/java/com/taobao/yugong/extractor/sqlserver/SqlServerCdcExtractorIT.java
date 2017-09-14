@@ -41,7 +41,8 @@ public class SqlServerCdcExtractorIT extends BaseDbIT {
     context.setSourceDs(dataSource);
     context.setOnceCrawNum(200);
 
-    SqlServerCdcExtractor extractor = new SqlServerCdcExtractor(context);
+    SqlServerCdcExtractor extractor = new SqlServerCdcExtractor(context,
+        new DateTime(2017, 9, 12, 14, 3, 0), 1000, 60 * 10);
     extractor.setTracer(progressTracer);
     extractor.start();
 
@@ -69,7 +70,9 @@ public class SqlServerCdcExtractorIT extends BaseDbIT {
     context.setSourceDs(dataSource);
     context.setOnceCrawNum(60 * 10); // Second
 
-    SqlServerCdcExtractor extractor = new SqlServerCdcExtractor(context);
+    SqlServerCdcExtractor extractor = new SqlServerCdcExtractor(context,
+        new DateTime(2017, 9, 12, 14, 3, 0), 1000, 60 * 10);
+
     extractor.setTracer(progressTracer);
     extractor.start();
     while (true) {

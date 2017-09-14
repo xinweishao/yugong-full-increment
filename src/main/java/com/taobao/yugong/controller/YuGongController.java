@@ -1,5 +1,6 @@
 package com.taobao.yugong.controller;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.taobao.yugong.applier.AllRecordApplier;
 import com.taobao.yugong.applier.CheckRecordApplier;
@@ -52,6 +53,7 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.joda.time.DateTime;
 import org.slf4j.MDC;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -364,11 +366,17 @@ public class YuGongController extends AbstractYuGongLifeCycle {
         recordExtractor.setTracer(progressTracer);
         return recordExtractor;
       } else if (sourceDbType == DbType.SQL_SERVER) {
-        SqlServerCdcExtractor recordExtractor =
-            new SqlServerCdcExtractor(context);
+        String dateStartString = config.getString("yugong.cdc.time.start");
+        if (Strings.isNullOrEmpty(dateStartString)) {
+          throw  new YuGongException("yugong.cdc.time.start should not be null");
+        }
+        DateTime dateStart = DateTime.parse(dateStartString);
+        int noUpdateSleepTime = config.getInt("yugong.extractor.noupdate.sleep", 1000);
+        int stepTime = config.getInt("yugong.cdc.steptime", 60 * 10);
+        SqlServerCdcExtractor recordExtractor = new SqlServerCdcExtractor(context, dateStart,
+            noUpdateSleepTime, stepTime);
 //        recordExtractor.setConcurrent(config.getBoolean("yugong.extractor.concurrent.enable",
 //            true));
-//        recordExtractor.setSleepTime(config.getLong("yugong.extractor.noupdate.sleep", 1000L));
 //        recordExtractor.setThreadSize(config.getInt("yugong.extractor.concurrent.size", 5));
 //        recordExtractor.setExecutor(extractorExecutor);
         recordExtractor.setTracer(progressTracer);
@@ -666,11 +674,11 @@ public class YuGongController extends AbstractYuGongLifeCycle {
                 strs[0],
                 strs[1]);
           } else {
-            throw new YuGongException("table[" + whiteTable + "] is not valid");
+            throw new YuGongException("Source table[" + whiteTable + "] is not valid");
           }
 
           if (whiteTables.isEmpty()) {
-            throw new YuGongException("table[" + whiteTable + "] is not found");
+            throw new YuGongException("Source table[" + whiteTable + "] is not found");
           }
 
           for (Table table : whiteTables) {

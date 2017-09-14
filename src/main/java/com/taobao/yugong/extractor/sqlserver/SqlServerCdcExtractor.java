@@ -34,13 +34,18 @@ public class SqlServerCdcExtractor extends AbstractSqlServerExtractor {
   private List<ColumnMeta> columnsMetas;
   private YuGongContext context;
   private DateTime start;
+  private int noUpdateSleepTime;
+  private int stepTime;
 
-  public SqlServerCdcExtractor(YuGongContext context) {
+  public SqlServerCdcExtractor(YuGongContext context, DateTime start, int noUpdateSleepTime,
+      int stepTime) {
     this.context = context;
-    schemaName = context.getTableMeta().getSchema();
-    tableName = context.getTableMeta().getName();
-    cdcGetNetChangesName = "cdc.fn_cdc_get_all_changes_" + tableName;
-    start = new DateTime(2017, 9, 11, 14, 3, 0); // XXX
+    this.schemaName = context.getTableMeta().getSchema();
+    this.tableName = context.getTableMeta().getName();
+    this.cdcGetNetChangesName = "cdc.fn_cdc_get_all_changes_" + tableName;
+    this.start = start;
+    this.noUpdateSleepTime = noUpdateSleepTime;
+    this.stepTime = stepTime;
   }
 
   @Override
@@ -53,14 +58,23 @@ public class SqlServerCdcExtractor extends AbstractSqlServerExtractor {
   }
 
   @Override
-  public List<Record> extract() throws YuGongException {
-    if (start.isAfter(DateTime.now())) {
-      setStatus(ExtractStatus.NO_UPDATE);
+  public List<Record> extract() {
+    DateTime now = DateTime.now();
+    if (start.isAfter(now)) {
+      setStatus(ExtractStatus.CATCH_UP);
+      tracer.update(context.getTableMeta().getFullName(), ProgressStatus.SUCCESS);
+      try {
+        Thread.sleep(noUpdateSleepTime);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();// 传递下去
+        return Lists.newArrayList();
+      }
       return Lists.newArrayList();
     }
 
     JdbcTemplate jdbcTemplate = new JdbcTemplate(context.getSourceDs());
-    DateTime end = start.plusSeconds(context.getOnceCrawNum());
+    DateTime wantedEnd = start.plusSeconds(stepTime);
+    DateTime end = wantedEnd.isAfter(now) ? now : wantedEnd;
     List<IncrementRecord> records = fetchCdcRecord(jdbcTemplate, primaryKeyMetas,
         columnsMetas, start, end);
     start = end;
@@ -69,7 +83,7 @@ public class SqlServerCdcExtractor extends AbstractSqlServerExtractor {
   }
 
   @Override
-  public Position ack(List<Record> records) throws YuGongException {
+  public Position ack(List<Record> records) {
     return null;
   }
 
@@ -104,8 +118,9 @@ public class SqlServerCdcExtractor extends AbstractSqlServerExtractor {
           columnValues.add(columnValue);
         }
 
-        Optional<IncrementOpType> operation = IncrementOpType.ofSqlServerCdc((Integer) YuGongUtils.getColumnValue(
-            resultSet, null, new ColumnMeta("__$operation", Types.INTEGER)).getValue());
+        int operationValue = (Integer)(YuGongUtils.getColumnValue(resultSet, null,
+            new ColumnMeta("__$operation", Types.INTEGER)).getValue());
+        Optional<IncrementOpType> operation = IncrementOpType.ofSqlServerCdc(operationValue);
         if (!operation.isPresent()) {
           continue;
         }

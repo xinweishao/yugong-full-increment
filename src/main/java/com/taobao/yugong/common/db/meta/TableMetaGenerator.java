@@ -1,5 +1,6 @@
 package com.taobao.yugong.common.db.meta;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.taobao.yugong.common.model.DbType;
 import com.taobao.yugong.common.utils.LikeUtil;
@@ -65,6 +66,10 @@ public class TableMetaGenerator {
         String schema = rs.getString(2);
         String name = rs.getString(3);
         String type = rs.getString(4);
+        //if (ImmutableList.of("__$start_lsn", "__$end_lsn", "__$seqval", "__$operation",
+            //"__$update_mask").contains(name)) {
+          //continue;
+        //}
 
         if ((schemaNameIdentifier == null || LikeUtil.isMatch(schemaNameIdentifier, catlog) || LikeUtil.isMatch(schemaNameIdentifier, schema))
             && LikeUtil.isMatch(tableNameIdentifier, name)) {

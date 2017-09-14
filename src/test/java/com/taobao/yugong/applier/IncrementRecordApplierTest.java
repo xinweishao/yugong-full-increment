@@ -50,7 +50,7 @@ public class IncrementRecordApplierTest {
   @Test
   public void getInsertSqlUnit() throws Exception {
     IncrementRecordApplier applier = Mockito.spy(new IncrementRecordApplier(new YuGongContext()));
-    applier.dbType = DbType.MYSQL;
+    applier.targetDbType = DbType.MYSQL;
 
     applier.insertSqlCache = MigrateMap.makeMap();
     IncrementRecord record = newRecordInstance();
@@ -70,7 +70,7 @@ public class IncrementRecordApplierTest {
   @Test
   public void getUpdateSqlUnit() throws Exception {
     IncrementRecordApplier applier = Mockito.spy(new IncrementRecordApplier(new YuGongContext()));
-    applier.dbType = DbType.SQL_SERVER;
+    applier.targetDbType = DbType.SQL_SERVER;
 
     applier.updateSqlCache = MigrateMap.makeMap();
     IncrementRecord record = newRecordInstance();
