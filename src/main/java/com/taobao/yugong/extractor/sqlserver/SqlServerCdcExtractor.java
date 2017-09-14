@@ -26,6 +26,7 @@ import java.util.Optional;
 
 public class SqlServerCdcExtractor extends AbstractSqlServerExtractor {
 
+  public static final int CDC_MIN_DURATION = 10 * 60;
   private final String cdcGetNetChangesName;
   private final String schemaName;
   private final String tableName;
@@ -60,7 +61,8 @@ public class SqlServerCdcExtractor extends AbstractSqlServerExtractor {
   @Override
   public List<Record> extract() {
     DateTime now = DateTime.now();
-    if (start.isAfter(now)) {
+    DateTime end = start.plusSeconds(stepTime);
+    if (end.isAfter(now)) {
       setStatus(ExtractStatus.CATCH_UP);
       tracer.update(context.getTableMeta().getFullName(), ProgressStatus.SUCCESS);
       try {
@@ -73,8 +75,6 @@ public class SqlServerCdcExtractor extends AbstractSqlServerExtractor {
     }
 
     JdbcTemplate jdbcTemplate = new JdbcTemplate(context.getSourceDs());
-    DateTime wantedEnd = start.plusSeconds(stepTime);
-    DateTime end = wantedEnd.isAfter(now) ? now : wantedEnd;
     List<IncrementRecord> records = fetchCdcRecord(jdbcTemplate, primaryKeyMetas,
         columnsMetas, start, end);
     start = end;
