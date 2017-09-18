@@ -1,6 +1,7 @@
 package com.taobao.yugong.extractor.sqlserver;
 
 import com.google.common.collect.Lists;
+import com.microsoft.sqlserver.jdbc.SQLServerException;
 import com.taobao.yugong.common.db.meta.ColumnMeta;
 import com.taobao.yugong.common.db.meta.ColumnValue;
 import com.taobao.yugong.common.db.meta.Table;
@@ -15,6 +16,7 @@ import com.taobao.yugong.common.utils.YuGongUtils;
 import com.taobao.yugong.exception.YuGongException;
 
 import org.joda.time.DateTime;
+import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.sql.PreparedStatement;
@@ -75,8 +77,19 @@ public class SqlServerCdcExtractor extends AbstractSqlServerExtractor {
     }
 
     JdbcTemplate jdbcTemplate = new JdbcTemplate(context.getSourceDs());
-    List<IncrementRecord> records = fetchCdcRecord(jdbcTemplate, primaryKeyMetas,
-        columnsMetas, start, end);
+    List<IncrementRecord> records = Lists.newArrayList();
+    try {
+      records = fetchCdcRecord(jdbcTemplate, primaryKeyMetas,
+          columnsMetas, start, end);
+    }
+    catch (BadSqlGrammarException e) {
+      if (e.getCause().getMessage().equals("An insufficient number of arguments were supplied for the procedure or function cdc.fn_cdc_get_all_changes_ ... .")) {
+        logger.info("An insufficient number counter, ignore");
+      } else {
+        logger.error("message is: {}", e.getMessage());
+        throw new YuGongException(e);
+      }
+    }
     start = end;
 
     return (List<Record>) (List<? extends Record>) records;
@@ -88,7 +101,8 @@ public class SqlServerCdcExtractor extends AbstractSqlServerExtractor {
   }
 
   List<IncrementRecord> fetchCdcRecord(JdbcTemplate jdbcTemplate,
-      List<ColumnMeta> primaryKeysM, List<ColumnMeta> columnsM, DateTime start, DateTime end) {
+      List<ColumnMeta> primaryKeysM, List<ColumnMeta> columnsM, DateTime start, DateTime end)
+  throws BadSqlGrammarException {
     SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     String sql = String.format(
