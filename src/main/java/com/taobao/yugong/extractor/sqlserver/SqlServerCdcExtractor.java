@@ -1,5 +1,6 @@
 package com.taobao.yugong.extractor.sqlserver;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.microsoft.sqlserver.jdbc.SQLServerException;
 import com.taobao.yugong.common.db.meta.ColumnMeta;
@@ -25,7 +26,12 @@ import java.sql.Types;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
+/**
+ * Not thread safe
+ */
 public class SqlServerCdcExtractor extends AbstractSqlServerExtractor {
 
   public static final int CDC_MIN_DURATION = 10 * 60;
@@ -62,8 +68,8 @@ public class SqlServerCdcExtractor extends AbstractSqlServerExtractor {
 
   @Override
   public List<Record> extract() {
-    DateTime now = DateTime.now();
-    DateTime end = start.plusSeconds(stepTime);
+    final DateTime now = DateTime.now();
+    final DateTime end = start.plusSeconds(stepTime);
     if (end.isAfter(now)) {
       setStatus(ExtractStatus.CATCH_UP);
       tracer.update(context.getTableMeta().getFullName(), ProgressStatus.SUCCESS);
@@ -90,6 +96,9 @@ public class SqlServerCdcExtractor extends AbstractSqlServerExtractor {
         throw new YuGongException(e);
       }
     }
+    logger.info("processed ids: {}", Joiner.on(",").join(records.stream()
+        .map(x -> Joiner.on("+").join(x.getPrimaryKeys().stream()
+            .map(x1 -> x1.getValue().toString()).collect(Collectors.toList()))).collect(Collectors.toList())));
     start = end;
 
     return (List<Record>) (List<? extends Record>) records;
