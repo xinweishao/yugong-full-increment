@@ -15,7 +15,7 @@ TARGET=./target/$( ls ./target/ | grep shaded.jar )
 REPO_PATH=`git rev-parse --show-toplevel`
 REPO_NAME=`basename $REPO_PATH`
 
-#mvn clean package
+mvn clean package
 GIT_HASH=`git rev-parse --short HEAD`
 TAG=$REPO_NAME-release-binary-`date +%y%m%d.%H%M`-$GIT_HASH
 git tag $TAG
