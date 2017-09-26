@@ -1,9 +1,16 @@
 #!/bin/bash
 
+# Require
+# jq
+# gitlab client https://github.com/NARKOZ/gitlab
+
 set -e
 set -x
 
+API_ENDPOINT=https://gitlab.yeshj.com/api/v3
+PROJECT_ID=2523
 TARGET=./target/*-shaded.jar
+
 
 REPO_PATH=`git rev-parse --show-toplevel`
 REPO_NAME=`basename $REPO_PATH`
@@ -14,11 +21,7 @@ BRANCH=$REPO_NAME-release-binary-`date +%y%m%d.%H%M`-$GIT_HASH
 TAG=$REPO_NAME-`date +%y%m%d.%H%M`
 git tag $TAG
 git push origin $TAG
-git checkout --orphan $BRANCH
-cp $TARGET .
-git rm --cached -r .
-git add -f *.jar
-git commit -a -m 'release'
-git push origin HEAD
-git checkout -f master
-git branch -D $BRANCH
+
+JAR_URL_MARKDOWN=$(curl --request POST --header "PRIVATE-TOKEN: $GITLAB_API_PRIVATE_TOKEN" --form "file=@$TARGET" $(API_ENDPOINT)/projects/$(PROJECT_ID)/uploads | jq -r '.markdown')
+gitlab update_release hjarch-practice/yugong $TAG "Release $JAR_URL_MARKDOWN"
+
