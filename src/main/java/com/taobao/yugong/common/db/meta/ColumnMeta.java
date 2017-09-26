@@ -7,6 +7,8 @@ import lombok.Data;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.ToStringBuilder;
 
+import java.sql.JDBCType;
+
 /**
  * 代表一个字段的信息
  *
@@ -38,7 +40,7 @@ public class ColumnMeta {
   }
 
   public String toString() {
-    return ToStringBuilder.reflectionToString(this, YuGongToStringStyle.DEFAULT_STYLE);
+    return String.format("ColumnMeta[name=%s,type=%s]", this.name, JDBCType.valueOf(this.type));
   }
 
   @Override

@@ -5,6 +5,7 @@ import com.taobao.yugong.common.db.meta.ColumnValue;
 import com.taobao.yugong.common.db.meta.Table;
 import com.taobao.yugong.common.db.meta.TableMetaGenerator;
 import com.taobao.yugong.common.db.sql.SqlTemplates;
+import com.taobao.yugong.common.db.sql.TypeMapping;
 import com.taobao.yugong.common.model.DbType;
 import com.taobao.yugong.common.model.YuGongContext;
 import com.taobao.yugong.common.model.record.IncrementRecord;
@@ -13,7 +14,8 @@ import com.taobao.yugong.common.utils.YuGongUtils;
 import com.taobao.yugong.exception.YuGongException;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.LoggerFactory
+    ;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCallback;
@@ -45,7 +47,8 @@ public class IncrementRecordApplier extends AbstractRecordApplier {
   protected Map<List<String>, TableSqlUnit> deleteSqlCache;
   protected boolean useMerge = true;
   protected YuGongContext context;
-  protected DbType dbType;
+  protected DbType sourceDbType;
+  protected DbType targetDbType;
 
   public IncrementRecordApplier(YuGongContext context) {
     this.context = context;
@@ -53,7 +56,8 @@ public class IncrementRecordApplier extends AbstractRecordApplier {
 
   public void start() {
     super.start();
-    dbType = YuGongUtils.judgeDbType(context.getTargetDs());
+    sourceDbType = YuGongUtils.judgeDbType(context.getSourceDs());
+    targetDbType = YuGongUtils.judgeDbType(context.getTargetDs());
     insertSqlCache = MigrateMap.makeMap();
     updateSqlCache = MigrateMap.makeMap();
     deleteSqlCache = MigrateMap.makeMap();
@@ -96,7 +100,8 @@ public class IncrementRecordApplier extends AbstractRecordApplier {
           for (ColumnValue cv : cvs) {
             Integer index = getIndex(indexs, cv, true); // 考虑delete的目标库主键，可能在源库的column中
             if (index != null) {
-              ps.setObject(index, cv.getValue(), cv.getColumn().getType());
+              int type = TypeMapping.map(sourceDbType, targetDbType, cv.getColumn().getType());
+              ps.setObject(index, cv.getValue(), type);
               count++;
             }
           }
@@ -106,7 +111,8 @@ public class IncrementRecordApplier extends AbstractRecordApplier {
           for (ColumnValue pk : pks) {
             Integer index = getIndex(indexs, pk, true);// 考虑delete的目标库主键，可能在源库的column中
             if (index != null) {
-              ps.setObject(index, pk.getValue(), pk.getColumn().getType());
+              int type = TypeMapping.map(sourceDbType, targetDbType, pk.getColumn().getType());
+              ps.setObject(index, pk.getValue(), type);
               count++;
             }
           }
@@ -156,34 +162,32 @@ public class IncrementRecordApplier extends AbstractRecordApplier {
         if (sqlUnit == null) { // double-check
           sqlUnit = new TableSqlUnit();
           String applierSql = null;
-          Table meta = TableMetaGenerator.getTableMeta(dbType, context.getTargetDs(),
-              context.isIgnoreSchema() ? null : names.get(0),
-              names.get(1));
+          Table meta = tableMetaGeneratorGetTableMeta(names.get(0), names.get(1));
 
           String[] primaryKeys = getPrimaryNames(record);
           String[] columns = getColumnNames(record);
           if (useMerge && YuGongUtils.isNotEmpty(meta.getColumns())) {
             // merge sql必须不是全主键
-            if (dbType == DbType.MYSQL) {
+            if (targetDbType == DbType.MYSQL) {
               applierSql = SqlTemplates.MYSQL.getMergeSql(meta.getSchema(),
                   meta.getName(),
                   primaryKeys,
                   columns,
                   true);
-            } else if (dbType == DbType.DRDS) {
+            } else if (targetDbType == DbType.DRDS) {
               applierSql = SqlTemplates.MYSQL.getMergeSql(meta.getSchema(),
                   meta.getName(),
                   primaryKeys,
                   columns,
                   false);
-            } else if (dbType == DbType.ORACLE) {
+            } else if (targetDbType == DbType.ORACLE) {
               applierSql = SqlTemplates.ORACLE.getMergeSql(meta.getSchema(),
                   meta.getName(),
                   primaryKeys,
                   columns);
             }
           } else {
-            if (YuGongUtils.isEmpty(meta.getColumns()) && dbType == DbType.MYSQL) {
+            if (YuGongUtils.isEmpty(meta.getColumns()) && targetDbType == DbType.MYSQL) {
               // 如果mysql，全主键时使用insert ignore
               applierSql = SqlTemplates.MYSQL.getInsertIgnoreSql(meta.getSchema(),
                   meta.getName(),
@@ -230,27 +234,31 @@ public class IncrementRecordApplier extends AbstractRecordApplier {
         if (sqlUnit == null) { // double-check
           sqlUnit = new TableSqlUnit();
           String applierSql = null;
-          Table meta = TableMetaGenerator.getTableMeta(dbType, context.getTargetDs(),
-              context.isIgnoreSchema() ? null : names.get(0),
-              names.get(1));
+          Table meta = tableMetaGeneratorGetTableMeta(names.get(0), names.get(1));
 
           String[] primaryKeys = getPrimaryNames(record);
           String[] columns = getColumnNames(record);
           if (useMerge && YuGongUtils.isNotEmpty(meta.getColumns())) {
             // merge sql必须不是全主键
-            if (dbType == DbType.MYSQL) {
+            if (targetDbType == DbType.MYSQL) {
               applierSql = SqlTemplates.MYSQL.getMergeSql(meta.getSchema(),
                   meta.getName(),
                   primaryKeys,
                   columns,
                   true);
-            } else if (dbType == DbType.DRDS) {
+            } else if (targetDbType == DbType.DRDS) {
               applierSql = SqlTemplates.MYSQL.getMergeSql(meta.getSchema(),
                   meta.getName(),
                   primaryKeys,
                   columns,
                   false);
-            } else if (dbType == DbType.ORACLE) {
+            } else if (targetDbType == DbType.SQL_SERVER) {
+              applierSql = SqlTemplates.SQL_SERVER.getMergeSql(meta.getSchema(),
+                  meta.getName(),
+                  primaryKeys,
+                  columns,
+                  true);
+            } else if (targetDbType == DbType.ORACLE) {
               applierSql = SqlTemplates.ORACLE.getMergeSql(meta.getSchema(),
                   meta.getName(),
                   primaryKeys,
@@ -296,9 +304,7 @@ public class IncrementRecordApplier extends AbstractRecordApplier {
         if (sqlUnit == null) { // double-check
           sqlUnit = new TableSqlUnit();
           String applierSql = null;
-          Table meta = TableMetaGenerator.getTableMeta(dbType, context.getTargetDs(),
-              context.isIgnoreSchema() ? null : names.get(0),
-              names.get(1));
+          Table meta = tableMetaGeneratorGetTableMeta(names.get(0), names.get(1));
 
           String[] primaryKeys = getPrimaryNames(record);
           applierSql = SqlTemplates.COMMON.getDeleteSql(meta.getSchema(), meta.getName(), primaryKeys);
@@ -320,6 +326,11 @@ public class IncrementRecordApplier extends AbstractRecordApplier {
     }
 
     return sqlUnit;
+  }
+
+  Table tableMetaGeneratorGetTableMeta(String schema, String table) {
+    return TableMetaGenerator.getTableMeta(targetDbType, context.getTargetDs(),
+        context.isIgnoreSchema() ? null : schema, table);
   }
 
   protected void processMissColumn(final IncrementRecord incRecord, final Map<String, Integer> indexs) {

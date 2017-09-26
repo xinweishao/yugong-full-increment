@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 
+// TODO convert to proxy
 public abstract class AbstractFullRecordExtractor extends AbstractRecordExtractor {
   @Getter
   @Setter

@@ -10,7 +10,7 @@ import java.text.MessageFormat;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class MysqlFullRecordExtractor extends AbstractFullRecordExtractor {
+public class MysqlFullRecordExtractor extends AbstractMysqlExtractor {
 
   private static final String MIN_PK_FORMAT = "select min({0}) from {1}.{2}";
   private static final String DEFALT_EXTRACT_SQL_FORMAT =
