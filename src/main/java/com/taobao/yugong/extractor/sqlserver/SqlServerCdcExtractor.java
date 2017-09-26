@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 public class SqlServerCdcExtractor extends AbstractSqlServerExtractor {
 
   public static final int CDC_MIN_DURATION = 10 * 60;
+  public static final int WAITING_POLLING_SECONDS = 60;
   private final String cdcGetNetChangesName;
   private final String schemaName;
   private final String tableName;
@@ -70,7 +71,7 @@ public class SqlServerCdcExtractor extends AbstractSqlServerExtractor {
   public List<Record> extract() {
     final DateTime now = DateTime.now();
     final DateTime end = start.plusSeconds(stepTime);
-    if (end.isAfter(now)) {
+    if (end.isAfter(now.minusSeconds(WAITING_POLLING_SECONDS))) {
       setStatus(ExtractStatus.CATCH_UP);
       tracer.update(context.getTableMeta().getFullName(), ProgressStatus.SUCCESS);
       try {
@@ -82,6 +83,7 @@ public class SqlServerCdcExtractor extends AbstractSqlServerExtractor {
       return Lists.newArrayList();
     }
 
+    logger.info("start {}, end {}", start, end);
     JdbcTemplate jdbcTemplate = new JdbcTemplate(context.getSourceDs());
     List<IncrementRecord> records = Lists.newArrayList();
     try {
@@ -118,8 +120,8 @@ public class SqlServerCdcExtractor extends AbstractSqlServerExtractor {
         "DECLARE @begin_time datetime, @end_time datetime, @begin_lsn binary(10), @end_lsn binary(10);\n"
             + "SET @begin_time = '%s';\n"
             + "SET @end_time   = '%s';\n"
-            + "SELECT @begin_lsn = sys.fn_cdc_map_time_to_lsn('smallest greater than or equal', @begin_time);\n"
-            + "SELECT @end_lsn = sys.fn_cdc_map_time_to_lsn('largest less than', @end_time);\n"
+            + "SELECT @begin_lsn = sys.fn_cdc_map_time_to_lsn('smallest greater than', @begin_time);\n"
+            + "SELECT @end_lsn = sys.fn_cdc_map_time_to_lsn('largest less than or equal', @end_time);\n"
             + "SELECT * FROM cdc.fn_cdc_get_all_changes_dbo_%s(@begin_lsn, @end_lsn, 'all');\n",
         format.format(start.toDate()),
         format.format(end.toDate()),
