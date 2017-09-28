@@ -25,6 +25,7 @@ public class TranslatorRegister {
       .put(NameStyleDataTranslator.class.getCanonicalName(), NameStyleDataTranslator.class)
       .put(CompositeIndexesDataTranslator.class.getCanonicalName(), CompositeIndexesDataTranslator.class)
       .put(ColumnFixDataTranslator.class.getCanonicalName(), ColumnFixDataTranslator.class)
+      .put(UserCenterShardingTranslator.class.getCanonicalName(), UserCenterShardingTranslator.class)
       .build();
 
 
