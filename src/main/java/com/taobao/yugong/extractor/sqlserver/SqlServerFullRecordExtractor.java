@@ -20,13 +20,13 @@ public class SqlServerFullRecordExtractor extends AbstractFullRecordExtractor {
 
   private static final String PHYSLOC = "%%physloc%%";
 
-  private static final String MIN_PK_FORMAT = "select min({0}) from {1}.dbo.{2}";
+  private static final String MIN_PK_FORMAT = "select min([{0}]) from {1}.dbo.[{2}]";
 
   private static final String DEFALT_EXTRACT_SQL_FORMAT =
-      "select TOP (?) {0} from {1}.dbo.{2} where {3} > ? order by {3} asc;";
+      "select TOP (?) {0} from {1}.dbo.[{2}] where [{3}] > ? order by [{3}] asc;";
 
   public static final String DEFAULT_EXTRACT_COMPOSITE_INDEXS_SQL_FORMAT =
-          "select TOP (?) {0}, _physloc_pk=CONVERT(BIGINT, " + PHYSLOC + ") from {1}.dbo.{2}  where CONVERT(BIGINT, " + PHYSLOC + ") > ? order by _physloc_pk asc";
+          "select TOP (?) {0}, _physloc_pk=CONVERT(BIGINT, " + PHYSLOC + ") from {1}.dbo.[{2}]  where CONVERT(BIGINT, " + PHYSLOC + ") > ? order by _physloc_pk asc";
 
   private static Map<String, Integer> PARAMETER_INDEX_MAP = ImmutableMap.of("id", 2, "limit", 1);
 
