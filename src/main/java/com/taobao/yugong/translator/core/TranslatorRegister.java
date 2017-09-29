@@ -26,6 +26,7 @@ public class TranslatorRegister {
       .put(CompositeIndexesDataTranslator.class.getCanonicalName(), CompositeIndexesDataTranslator.class)
       .put(ColumnFixDataTranslator.class.getCanonicalName(), ColumnFixDataTranslator.class)
       .put(ModShardingTranslator.class.getCanonicalName(), ModShardingTranslator.class)
+      .put(UserRouterMapShardingTranslator.class.getCanonicalName(), UserRouterMapShardingTranslator.class)
       .build();
 
 
