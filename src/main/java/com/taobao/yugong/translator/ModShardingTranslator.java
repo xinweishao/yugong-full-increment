@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
-public class UserCenterShardingTranslator implements DataTranslator {
+public class ModShardingTranslator implements DataTranslator {
 
   @Getter
   @Setter

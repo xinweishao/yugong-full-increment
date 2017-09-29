@@ -12,11 +12,11 @@ import org.junit.Test;
 import java.sql.Types;
 import java.util.List;
 
-public class UserCenterShardingTranslatorTest {
+public class ModShardingTranslatorTest {
 
   @Test
   public void translator() throws Exception {
-    UserCenterShardingTranslator translator = new UserCenterShardingTranslator();
+    ModShardingTranslator translator = new ModShardingTranslator();
     translator.setShardingKeyName("id");
 
     ColumnMeta columnId = new ColumnMeta("id", Types.INTEGER);
