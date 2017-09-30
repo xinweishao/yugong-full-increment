@@ -3,24 +3,19 @@ package com.taobao.yugong.translator;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.taobao.yugong.common.db.meta.ColumnMeta;
 import com.taobao.yugong.common.db.meta.ColumnValue;
 import com.taobao.yugong.common.model.record.Record;
-import com.taobao.yugong.exception.YuGongException;
-
-import lombok.Getter;
-import lombok.Setter;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
+import java.math.BigInteger;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class UserRouterMapShardingTranslator implements DataTranslator {
@@ -43,10 +38,11 @@ public class UserRouterMapShardingTranslator implements DataTranslator {
   @VisibleForTesting
   int calculateShardingKey(String input) {
     String sha1 = DigestUtils.sha1Hex(input);
-    Long sharding = Long.valueOf(sha1.substring(0, sha1.length() < 15 ? sha1.length() : 15), 16) % 64L;
-    return sharding.intValue();
+    BigInteger sharding = new BigInteger(
+        sha1.substring(0, sha1.length() < 16 ? sha1.length() : 16), 16);
+    return sharding.mod(BigInteger.valueOf(64)).intValue();
   }
-  
+
   @VisibleForTesting
   Record newRouteMapRecord(RouteMapType type, String input, int userId) {
     ColumnMeta idColumn = new ColumnMeta("Id", Types.INTEGER);
@@ -63,7 +59,7 @@ public class UserRouterMapShardingTranslator implements DataTranslator {
         new ColumnValue(createdColumn, new Date())
     );
     Record record = new Record();
-    record.setTableName("LoginRoutMap_" + calculateShardingKey(input));
+    record.setTableName("LoginRouteMap_" + calculateShardingKey(input));
     record.setPrimaryKeys(primaryKeys);
     record.setColumns(columns);
     return record;
@@ -84,7 +80,7 @@ public class UserRouterMapShardingTranslator implements DataTranslator {
       return Optional.empty();
     }
     ColumnValue userIdColumn = record.getColumnByName("UserID");
-    return Optional.of(newRouteMapRecord(RouteMapType.USER_NAME, (String) inputColumn.getValue(),
+    return Optional.of(newRouteMapRecord(RouteMapType.EMAIL, (String) inputColumn.getValue(),
         (int) userIdColumn.getValue()));
   }
 
@@ -95,23 +91,19 @@ public class UserRouterMapShardingTranslator implements DataTranslator {
       return Optional.empty();
     }
     ColumnValue userIdColumn = record.getColumnByName("UserID");
-    return Optional.of(newRouteMapRecord(RouteMapType.USER_NAME, (String) inputColumn.getValue(),
+    return Optional.of(newRouteMapRecord(RouteMapType.MOBILE, (String) inputColumn.getValue(),
         (int) userIdColumn.getValue()));
   }
-  
+
   @Override
   public List<Record> translator(List<Record> records) {
     ArrayList<Record> newRecords = Lists.newArrayList();
     records.forEach(record -> {
       newRecords.add(newUserNameRecord(record));
-      Optional<Record> recordOpt = newUserEmailRecord(record);
-      if (recordOpt.isPresent()) {
-        newRecords.add(record);
-      }
-      Optional<Record> recordMobileNumOpt = newMobileNumRecord(record);
-      if (recordMobileNumOpt.isPresent()) {
-        newRecords.add(record);
-      }
+      Optional<Record> emailRecordOpt = newUserEmailRecord(record);
+      emailRecordOpt.ifPresent(newRecords::add);
+      Optional<Record> mobileNumRecordOpt = newMobileNumRecord(record);
+      mobileNumRecordOpt.ifPresent(newRecords::add);
     });
     newRecords.addAll(records);
     return newRecords;

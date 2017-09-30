@@ -11,9 +11,9 @@ public class UserRouterMapShardingTranslatorTest {
   @Test
   public void calculateShardingKey() throws Exception {
     UserRouterMapShardingTranslator translator = new UserRouterMapShardingTranslator();
-    assertEquals(54, translator.calculateShardingKey("1122334455"));
-    assertEquals(46, translator.calculateShardingKey("aaa_kao"));
-    assertEquals(10, translator.calculateShardingKey("hello"));
+    assertEquals(32, translator.calculateShardingKey("1122334455"));
+    assertEquals(35, translator.calculateShardingKey("aaa_kao"));
+    assertEquals(34, translator.calculateShardingKey("hello"));
   }
 
   @Test

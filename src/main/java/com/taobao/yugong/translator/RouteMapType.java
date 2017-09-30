@@ -4,9 +4,9 @@ public enum RouteMapType {
 //  USER_NAME("USER_NAME"),
 //  EMAIL("EMAIL"),
 //  MOBILE("MOBILE");
-    USER_NAME(1),
-    EMAIL(2),
-    MOBILE(3);
+    USER_NAME(0),
+    EMAIL(1),
+    MOBILE(2);
 
   private final int value;
 
@@ -15,6 +15,6 @@ public enum RouteMapType {
   }
 
   public int getValue() {
-    return value;
+    return this.value;
   }
 }
