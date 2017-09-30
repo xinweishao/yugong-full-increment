@@ -13,6 +13,8 @@ import com.taobao.yugong.exception.YuGongException;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.apache.commons.codec.digest.DigestUtils;
+
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Date;
@@ -38,8 +40,11 @@ public class UserRouterMapShardingTranslator implements DataTranslator {
     return true;
   }
 
-  private int calculateShardingKey(String input) {
-    return 0; // XXX
+  @VisibleForTesting
+  int calculateShardingKey(String input) {
+    String sha1 = DigestUtils.sha1Hex(input);
+    Long sharding = Long.valueOf(sha1.substring(0, sha1.length() < 15 ? sha1.length() : 15), 16) % 64L;
+    return sharding.intValue();
   }
   
   @VisibleForTesting
