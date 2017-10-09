@@ -86,8 +86,11 @@ public class UserRouterMapShardingTranslator implements DataTranslator {
 
   @VisibleForTesting
   Optional<Record> newMobileNumRecord(Record record) {
-    ColumnValue inputColumn = record.getColumnByName("Phone");
+    ColumnValue inputColumn = record.getColumnByName("Phone"); // XXX
     if (inputColumn == null) {
+      return Optional.empty();
+    }
+    if (inputColumn.getValue() == null) {
       return Optional.empty();
     }
     ColumnValue userIdColumn = record.getColumnByName("UserID");

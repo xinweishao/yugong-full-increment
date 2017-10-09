@@ -2,6 +2,7 @@ package com.taobao.yugong.translator;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.taobao.yugong.common.db.meta.ColumnValue;
 import com.taobao.yugong.common.model.record.Record;
@@ -36,8 +37,9 @@ public class ModShardingTranslator implements DataTranslator {
     return true;
   }
 
-  private int calculateShardingKey(long userid) {
-    return (int) (userid % 64);
+  @VisibleForTesting
+  int calculateShardingKey(long userid) {
+    return (int) ((userid % 64 + 64) % 64);
   }
 
   @Override

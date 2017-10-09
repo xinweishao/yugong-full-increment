@@ -12,6 +12,8 @@ import org.junit.Test;
 import java.sql.Types;
 import java.util.List;
 
+import static org.junit.Assert.assertEquals;
+
 public class ModShardingTranslatorTest {
 
   @Test
@@ -36,4 +38,11 @@ public class ModShardingTranslatorTest {
     
   }
 
+  @Test
+  public void negativeNumber() throws Exception {
+    ModShardingTranslator translator = new ModShardingTranslator();
+    assertEquals(63, translator.calculateShardingKey(-1));
+    assertEquals(56, translator.calculateShardingKey(-200));
+    ;
+  }
 }
