@@ -39,6 +39,7 @@ public class YugongApp {
     } catch (ConfigurationException e) {
       log.error("Configuration load error: {}", yugongApp.configFile.getPath());
       System.exit(0);
+      return;
     }
     YugongConfiguration yugongConfiguration;
     try {
@@ -46,6 +47,7 @@ public class YugongApp {
           YugongConfiguration.class);
     } catch (IOException e) {
       log.error("YAML configuration load error: {}", yugongApp.configYamlFile.getPath());
+      System.exit(0);
       return;
     }
 
