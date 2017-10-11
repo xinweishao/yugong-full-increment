@@ -20,7 +20,7 @@ public class UserRouterMapShardingTranslatorTest {
   @Test
   public void newRouteMapRecord() throws Exception {
     UserRouterMapShardingTranslator translator = new UserRouterMapShardingTranslator();
-    Record record = translator.newRouteMapRecord(RouteMapType.USER_NAME, "hello", 123);
+    Record record = translator.buildRouteMapRecord(RouteMapType.USER_NAME, "hello", 123);
     assertEquals("hello", record.getColumnByName("Content").getValue());
   }
 
