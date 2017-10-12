@@ -58,19 +58,17 @@ public class UserRouterMapUtil {
     IncrementRecord incrementRecord = new IncrementRecord();
     BeanUtils.copyProperties(record, incrementRecord);
     
-    if (opType == IncrementOpType.I) {
-      incrementRecord.setOpType(IncrementOpType.I);
-      records.add(incrementRecord);
-    } else if (opType == IncrementOpType.U) {
+    // LoginRouteMap 是无法做幂等，无论 I/D，都先做数据清理
+    if (opType == IncrementOpType.I || opType == IncrementOpType.U) {
       // delete all previous data
       IntStream.range(0, 64).forEach(x -> {
         IncrementRecord deleteRecord = new IncrementRecord();
         BeanUtils.copyProperties(buildRouteMapRecord(type, input, userId), deleteRecord);
         deleteRecord.setOpType(IncrementOpType.D);
         deleteRecord.setTableName("LoginRouteMap_" + x);
-        deleteRecord.getPrimaryKeys().add(deleteRecord.getColumnByName("Content")); // fix no pk
         deleteRecord.getPrimaryKeys().add(deleteRecord.getColumnByName("Type")); // fix no pk
         deleteRecord.getPrimaryKeys().add(deleteRecord.getColumnByName("User_Id")); // fix no pk
+        deleteRecord.setSkipCheckColumnsCount(true);
         records.add(deleteRecord);
       });
       // add new data
@@ -78,12 +76,16 @@ public class UserRouterMapUtil {
       incrementRecord.getPrimaryKeys().add(incrementRecord.getColumnByName("Content")); // fix no pk
       incrementRecord.getPrimaryKeys().add(incrementRecord.getColumnByName("Type")); // fix no pk
       incrementRecord.getPrimaryKeys().add(incrementRecord.getColumnByName("User_Id")); // fix no pk
+      incrementRecord.getColumns().remove(incrementRecord.getColumnByName("Content"));
+      incrementRecord.getColumns().remove(incrementRecord.getColumnByName("Type"));
+      incrementRecord.getColumns().remove(incrementRecord.getColumnByName("User_Id"));
+      incrementRecord.setSkipCheckColumnsCount(true);
       records.add(incrementRecord);
     } else if (opType == IncrementOpType.D) {
       incrementRecord.setOpType(IncrementOpType.D);
-      incrementRecord.getPrimaryKeys().add(incrementRecord.getColumnByName("Content")); // fix no pk
       incrementRecord.getPrimaryKeys().add(incrementRecord.getColumnByName("Type")); // fix no pk
       incrementRecord.getPrimaryKeys().add(incrementRecord.getColumnByName("User_Id")); // fix no pk
+      incrementRecord.setSkipCheckColumnsCount(true);
       records.add(incrementRecord);
     }
     return records;

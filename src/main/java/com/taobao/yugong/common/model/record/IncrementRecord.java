@@ -4,6 +4,8 @@ import com.taobao.yugong.common.db.meta.ColumnValue;
 import com.taobao.yugong.common.utils.YuGongToStringStyle;
 
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import org.apache.commons.lang.builder.ToStringBuilder;
 
@@ -18,6 +20,14 @@ import java.util.List;
 public class IncrementRecord extends Record {
 
   private IncrementOpType opType;
+
+  /**
+   * Is skip Applier column size.
+   * Default is false.
+   */
+  @Setter
+  @Getter
+  private boolean skipCheckColumnsCount = false;
 
   public IncrementRecord() {
     super();

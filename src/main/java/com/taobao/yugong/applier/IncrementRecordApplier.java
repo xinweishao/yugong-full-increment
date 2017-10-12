@@ -90,50 +90,48 @@ public class IncrementRecordApplier extends AbstractRecordApplier {
       TableSqlUnit sqlUnit = getSqlUnit(incRecord);
       String applierSql = sqlUnit.applierSql;
       final Map<String, Integer> indexs = sqlUnit.applierIndexs;
-      jdbcTemplate.execute(applierSql, new PreparedStatementCallback() {
+      jdbcTemplate.execute(applierSql, (PreparedStatementCallback) ps -> {
 
-        public Object doInPreparedStatement(PreparedStatement ps) throws SQLException, DataAccessException {
-
-          int count = 0;
-          // 字段
-          List<ColumnValue> cvs = incRecord.getColumns();
-          for (ColumnValue cv : cvs) {
-            Integer index = getIndex(indexs, cv, true); // 考虑delete的目标库主键，可能在源库的column中
-            if (index != null) {
-              int type = TypeMapping.map(sourceDbType, targetDbType, cv.getColumn().getType());
-              ps.setObject(index, cv.getValue(), type);
-              count++;
-            }
+        int count = 0;
+        // 字段
+        List<ColumnValue> cvs = incRecord.getColumns();
+        for (ColumnValue cv : cvs) {
+          Integer index = getIndex(indexs, cv, true); // 考虑delete的目标库主键，可能在源库的column中
+          if (index != null) {
+            int type = TypeMapping.map(sourceDbType, targetDbType, cv.getColumn().getType());
+            ps.setObject(index, cv.getValue(), type);
+            count++;
           }
+        }
 
-          // 添加主键
-          List<ColumnValue> pks = incRecord.getPrimaryKeys();
-          for (ColumnValue pk : pks) {
-            Integer index = getIndex(indexs, pk, true);// 考虑delete的目标库主键，可能在源库的column中
-            if (index != null) {
-              int type = TypeMapping.map(sourceDbType, targetDbType, pk.getColumn().getType());
-              ps.setObject(index, pk.getValue(), type);
-              count++;
-            }
+        // 添加主键
+        List<ColumnValue> pks = incRecord.getPrimaryKeys();
+        for (ColumnValue pk : pks) {
+          Integer index = getIndex(indexs, pk, true);// 考虑delete的目标库主键，可能在源库的column中
+          if (index != null) {
+            int type = TypeMapping.map(sourceDbType, targetDbType, pk.getColumn().getType());
+            ps.setObject(index, pk.getValue(), type);
+            count++;
           }
+        }
 
+        if (!incRecord.isSkipCheckColumnsCount()) {
           if (count != indexs.size()) {
             processMissColumn(incRecord, indexs);
           }
-
-          try {
-            ps.execute();
-          } catch (SQLException e) {
-            if (context.isSkipApplierException()) {
-              logger.error("skiped Record Data : " + incRecord.toString(), e);
-            } else {
-              throw new SQLException("failed Record Data : " + incRecord.toString(), e);
-            }
-          }
-
-          return null;
         }
 
+        try {
+          ps.execute();
+        } catch (SQLException e) {
+          if (context.isSkipApplierException()) {
+            logger.error("skiped Record Data : " + incRecord.toString(), e);
+          } else {
+            throw new SQLException("failed Record Data : " + incRecord.toString(), e);
+          }
+        }
+
+        return null;
       });
     }
   }
