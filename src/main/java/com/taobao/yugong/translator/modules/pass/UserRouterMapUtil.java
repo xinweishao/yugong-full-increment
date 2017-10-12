@@ -45,7 +45,7 @@ public class UserRouterMapUtil {
 
   @VisibleForTesting
   public static int calculateShardingKey(String input) {
-    String sha1 = DigestUtils.sha1Hex(input);
+    String sha1 = DigestUtils.sha1Hex(input.toLowerCase());
     BigInteger sharding = new BigInteger(
         sha1.substring(0, sha1.length() < 16 ? sha1.length() : 16), 16);
     return sharding.mod(BigInteger.valueOf(64)).intValue();
