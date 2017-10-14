@@ -41,8 +41,8 @@ public class ModShardingTranslatorTest {
   @Test
   public void negativeNumber() throws Exception {
     ModShardingTranslator translator = new ModShardingTranslator();
+    translator.setModNumber(64);
     assertEquals(63, translator.calculateShardingKey(-1));
     assertEquals(56, translator.calculateShardingKey(-200));
-    ;
   }
 }

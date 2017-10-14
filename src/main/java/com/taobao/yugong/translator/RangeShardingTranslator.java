@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
-public class ModShardingTranslator implements DataTranslator {
+public class RangeShardingTranslator implements DataTranslator {
 
   @Getter
   @Setter
@@ -24,7 +24,7 @@ public class ModShardingTranslator implements DataTranslator {
 
   @Getter
   @Setter
-  private Integer modNumber;
+  private Integer rangeSize;
 
   @Override
   public String translatorSchema() {
@@ -42,8 +42,8 @@ public class ModShardingTranslator implements DataTranslator {
   }
 
   @VisibleForTesting
-  int calculateShardingKey(long input) {
-    return (int) ((input % modNumber + modNumber) % modNumber);
+  int calculateShardingKey(long inputSharding) {
+    return (int)(inputSharding / rangeSize);
   }
 
   @Override
@@ -51,8 +51,8 @@ public class ModShardingTranslator implements DataTranslator {
     if (Strings.isNullOrEmpty(shardingKeyName)) {
       throw new YuGongException("shardingKeyName is not set");
     }
-    if (modNumber == null) {
-      throw new YuGongException("modNumber is not set");
+    if (rangeSize == null) {
+      throw new YuGongException("rangeSize is not set");
     }
 
     return records.stream().peek(record -> {
