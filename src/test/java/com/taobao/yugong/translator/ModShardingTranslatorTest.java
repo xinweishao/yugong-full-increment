@@ -19,6 +19,7 @@ public class ModShardingTranslatorTest {
   @Test
   public void translator() throws Exception {
     ModShardingTranslator translator = new ModShardingTranslator();
+    translator.setModNumber(64);
     translator.setShardingKeyName("id");
 
     ColumnMeta columnId = new ColumnMeta("id", Types.INTEGER);
