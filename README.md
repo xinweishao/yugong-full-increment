@@ -21,7 +21,7 @@ cp target/yugong-shaded.jar .
 
 方法二：
 不想编译的同学，
-直接点击 [Branches · HJArch-Internal / yugong · GitLab](https://gitlab.yeshj.com/hjarch-practice/yugong/branches?search=release&sort=updated_desc) ，
+直接点击 [Tags · HJArch-Internal / yugong · GitLab](https://gitlab.yeshj.com/hjarch-practice/yugong/tags?search=release-binary&sort=updated_desc) ,
 找到里面最新的版本，里面有 jar 包下载。
 
 
