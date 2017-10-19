@@ -26,6 +26,10 @@ public class RangeShardingTranslator implements DataTranslator {
   @Setter
   private Integer rangeSize;
 
+  @Getter
+  @Setter
+  private Integer startFrom = 0;
+
   @Override
   public String translatorSchema() {
     return null;
@@ -43,7 +47,7 @@ public class RangeShardingTranslator implements DataTranslator {
 
   @VisibleForTesting
   int calculateShardingKey(long inputSharding) {
-    return (int)(inputSharding / rangeSize);
+    return (int)(inputSharding / rangeSize) + startFrom;
   }
 
   @Override
