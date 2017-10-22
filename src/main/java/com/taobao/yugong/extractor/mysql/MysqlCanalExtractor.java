@@ -46,7 +46,6 @@ public class MysqlCanalExtractor extends AbstractSqlServerExtractor {
   private List<ColumnMeta> primaryKeyMetas;
   private List<ColumnMeta> columnsMetas;
   private YuGongContext context;
-  private DateTime start;
   private int stepTime;
   private String canalServerIp;
   private int canalServerPort;
@@ -61,7 +60,6 @@ public class MysqlCanalExtractor extends AbstractSqlServerExtractor {
     this.canalServerIp = canalServerIp;
     this.canalServerPort = canalServerPort;
     this.canalServerInstance = canalServerInstance;
-    this.start = start;
     this.stepTime = stepTime;
     this.connector = CanalConnectors.newSingleConnector(
         new InetSocketAddress(canalServerIp, canalServerPort), canalServerInstance, "", "");
@@ -76,37 +74,32 @@ public class MysqlCanalExtractor extends AbstractSqlServerExtractor {
     tracer.update(context.getTableMeta().getFullName(), ProgressStatus.INCING);
 
     connector.connect();
-//    connector.unsubscribe();
-    connector.subscribe("bbs\\.*");
+    connector.subscribe("");
 //    connector.subscribe(String.format("%s.%s",
 //        context.getTableMeta().getSchema(), context.getTableMeta().getName()));
   }
 
   @Override
   public List<Record> extract() {
-    final DateTime now = DateTime.now();
-    final DateTime end = start.plusSeconds(stepTime);
 
-    logger.info("start {}, end {}", start, end);
+//    logger.info("start {}, end {}", now, end);
     JdbcTemplate jdbcTemplate = new JdbcTemplate(context.getSourceDs());
     List<IncrementRecord> records;
     records = fetchCanalRecord(jdbcTemplate, primaryKeyMetas,
-        columnsMetas, start, end);
+        columnsMetas);
     logger.info("processed ids: {}", Joiner.on(",").join(records.stream()
         .map(x -> Joiner.on("+").join(x.getPrimaryKeys().stream()
             .map(x1 -> x1.getValue().toString()).collect(Collectors.toList()))).collect(Collectors.toList())));
-    start = end;
 
     return (List<Record>) (List<? extends Record>) records;
   }
 
   private List<IncrementRecord> fetchCanalRecord(JdbcTemplate jdbcTemplate,
-      List<ColumnMeta> primaryKeyMetas, List<ColumnMeta> columnsMetas,
-      DateTime start, DateTime end) {
+      List<ColumnMeta> primaryKeyMetas, List<ColumnMeta> columnsMetas) {
 //    connector.unsubscribe();
 //    connector.subscribe("bbs.user_0");
 //    connector.subscribe("bbs.user_1");
-    Message message = connector.getWithoutAck(1000, 1L, TimeUnit.SECONDS);
+    Message message = connector.getWithoutAck(100, 10L, TimeUnit.SECONDS);
     long batchId = message.getId();
     int size = message.getEntries().size();
     if (batchId == -1 || size == 0) {
@@ -120,7 +113,7 @@ public class MysqlCanalExtractor extends AbstractSqlServerExtractor {
             CanalEntry.EventType.UPDATE
             ).contains(x.getHeader().getEventType())
         )
-        .filter(x -> x.getEntryType() == CanalEntry.EntryType.ROWDATA)
+//        .filter(x -> x.getEntryType() == CanalEntry.EntryType.ROWDATA)
         .map(entity -> {
           CanalEntry.RowChange rowChange;
           try {
