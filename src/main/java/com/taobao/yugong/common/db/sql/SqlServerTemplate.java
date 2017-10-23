@@ -17,8 +17,8 @@ public class SqlServerTemplate extends SqlTemplate {
   @Override
   public String getInsertSql(String schemaName, String tableName, String[] pkNames, String[] columnNames) {
     StringBuilder sql = new StringBuilder();
-    sql.append(String.format("SET IDENTITY_INSERT %s ON;", tableName));
-    sql.append("INSERT INTO ").append(makeFullName("dbo", tableName)).append("(");
+    sql.append(String.format("SET IDENTITY_INSERT [%s] ON;", tableName));
+    sql.append("INSERT INTO [").append(makeFullName("dbo", tableName)).append("] (");
     String[] allColumns = buildAllColumns(pkNames, columnNames);
     int size = allColumns.length;
     for (int i = 0; i < size; i++) {
@@ -42,7 +42,7 @@ public class SqlServerTemplate extends SqlTemplate {
       sql.append(getColumnName(allColumns[i])).append(splitCommea(size, i));
     }
 
-    sql.append(" FROM ").append(makeFullName("dbo", tableName)).append(" WHERE ( ");
+    sql.append(" FROM [").append(makeFullName("dbo", tableName)).append("] WHERE ( ");
     if (pkNames.size() > 0) { // 可能没有主键
       makeColumnEquals(sql, pkNames.toArray(new String[0]), "AND");
     } else {
@@ -59,11 +59,11 @@ public class SqlServerTemplate extends SqlTemplate {
     String identityInsert = "";
 
     if(identityInsertMode){
-      identityInsert = "SET IDENTITY_INSERT ${tableName} ON;\n";
+      identityInsert = "SET IDENTITY_INSERT [${tableName}] ON;\n";
     }
 
     String sqlTemplate = identityInsert
-        + "MERGE ${tableName} AS target\n"
+        + "MERGE [${tableName}] AS target\n"
         + "USING (values (${questions})) AS source (${allColumns})\n"
         + "ON ${conditionPrimaryEqualString}\n"
         + "WHEN MATCHED THEN\n"

@@ -34,6 +34,7 @@ import com.taobao.yugong.conf.YugongConfiguration;
 import com.taobao.yugong.exception.YuGongException;
 import com.taobao.yugong.extractor.AbstractRecordExtractor;
 import com.taobao.yugong.extractor.RecordExtractor;
+import com.taobao.yugong.extractor.mysql.MysqlCanalExtractor;
 import com.taobao.yugong.extractor.mysql.MysqlFullRecordExtractor;
 import com.taobao.yugong.extractor.oracle.AbstractOracleRecordExtractor;
 import com.taobao.yugong.extractor.oracle.OracleAllRecordExtractor;
@@ -368,17 +369,27 @@ public class YuGongController extends AbstractYuGongLifeCycle {
       } else if (sourceDbType == DbType.SQL_SERVER) {
         String dateStartString = config.getString("yugong.cdc.time.start");
         if (Strings.isNullOrEmpty(dateStartString)) {
-          throw  new YuGongException("yugong.cdc.time.start should not be null");
+          throw new YuGongException("yugong.cdc.time.start should not be null");
         }
         DateTime dateStart = DateTime.parse(dateStartString);
         int noUpdateSleepTime = config.getInt("yugong.extractor.noupdate.sleep", 1000);
         int stepTime = config.getInt("yugong.cdc.steptime", 60 * 10);
         SqlServerCdcExtractor recordExtractor = new SqlServerCdcExtractor(context, dateStart,
             noUpdateSleepTime, stepTime);
-//        recordExtractor.setConcurrent(config.getBoolean("yugong.extractor.concurrent.enable",
-//            true));
-//        recordExtractor.setThreadSize(config.getInt("yugong.extractor.concurrent.size", 5));
-//        recordExtractor.setExecutor(extractorExecutor);
+        //        recordExtractor.setConcurrent(config.getBoolean("yugong.extractor.concurrent.enable",
+        //            true));
+        //        recordExtractor.setThreadSize(config.getInt("yugong.extractor.concurrent.size", 5));
+        //        recordExtractor.setExecutor(extractorExecutor);
+        recordExtractor.setTracer(progressTracer);
+        return recordExtractor;
+      } else if (sourceDbType == DbType.MYSQL) {
+        String canalServerIp = config.getString("yugong.canal.ip");
+        if (Strings.isNullOrEmpty(canalServerIp)) {
+          throw new YuGongException("yugong.canal.ip should not be empty");
+        }
+        int canalServerPort = config.getInt("yugong.canal.port", 11111);
+        MysqlCanalExtractor recordExtractor = new MysqlCanalExtractor(context, canalServerIp,
+            canalServerPort);
         recordExtractor.setTracer(progressTracer);
         return recordExtractor;
       } else {

@@ -38,8 +38,7 @@ public class MysqlCanalExtractorIT extends BaseDbIT {
     context.setSourceDs(dataSource);
     context.setOnceCrawNum(200);
 
-    MysqlCanalExtractor extractor = new MysqlCanalExtractor(context, new DateTime(), 60,
-        "192.168.38.99", 11111, "bbs_user_0");
+    MysqlCanalExtractor extractor = new MysqlCanalExtractor(context, "192.168.38.99", 11111);
     extractor.setTracer(progressTracer);
     extractor.start();
     while (true) {

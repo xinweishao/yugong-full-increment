@@ -46,21 +46,19 @@ public class MysqlCanalExtractor extends AbstractSqlServerExtractor {
   private List<ColumnMeta> primaryKeyMetas;
   private List<ColumnMeta> columnsMetas;
   private YuGongContext context;
-  private int stepTime;
   private String canalServerIp;
   private int canalServerPort;
   private String canalServerInstance;
   private CanalConnector connector;
 
-  public MysqlCanalExtractor(YuGongContext context, DateTime start,
-      int stepTime, String canalServerIp, int canalServerPort, String canalServerInstance) {
+  public MysqlCanalExtractor(YuGongContext context,
+      String canalServerIp, int canalServerPort) {
     this.context = context;
     this.schemaName = context.getTableMeta().getSchema();
     this.tableName = context.getTableMeta().getName();
     this.canalServerIp = canalServerIp;
     this.canalServerPort = canalServerPort;
-    this.canalServerInstance = canalServerInstance;
-    this.stepTime = stepTime;
+    this.canalServerInstance = this.schemaName + "_" + this.tableName;
     this.connector = CanalConnectors.newSingleConnector(
         new InetSocketAddress(canalServerIp, canalServerPort), canalServerInstance, "", "");
   }

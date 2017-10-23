@@ -19,7 +19,7 @@ public class SqlServerTemplateTest {
     String[] primaryKeys =  {"i1"};
     String[] columns =  {"c1", "c2"};
     String sql = template.getInsertSql("s", "user", primaryKeys, columns);
-    assertEquals("SET IDENTITY_INSERT user ON;INSERT INTO dbo.user(c1 , c2 , i1) VALUES "
+    assertEquals("SET IDENTITY_INSERT user ON;INSERT INTO [dbo.user](c1 , c2 , i1) VALUES "
         + "(? , ? , ?)", sql);
   }
 
@@ -29,8 +29,8 @@ public class SqlServerTemplateTest {
     String[] primaryKeys =  {"pk1"};
     String[] columns =  {"c1", "c2", "c3"};
     String sql = template.getMergeSql("sss", "ttt", primaryKeys, columns, true);
-    assertEquals("SET IDENTITY_INSERT ttt ON;\n" 
-        + "MERGE ttt AS target\n"
+    assertEquals("SET IDENTITY_INSERT [ttt] ON;\n" 
+        + "MERGE [ttt] AS target\n"
         + "USING (values (?, ?, ?, ?)) AS source (c1, c2, c3, pk1)\n"
         + "ON target.pk1 = source.pk1\n"
         + "WHEN MATCHED THEN\n"
@@ -45,8 +45,8 @@ public class SqlServerTemplateTest {
     String[] primaryKeys =  {"pk1", "pk2"};
     String[] columns =  {"c1", "c2", "c3"};
     String sql = template.getMergeSql("sss", "ttt", primaryKeys, columns, true);
-    assertEquals("SET IDENTITY_INSERT ttt ON;\n" 
-        + "MERGE ttt AS target\n"
+    assertEquals("SET IDENTITY_INSERT [ttt] ON;\n" 
+        + "MERGE [ttt] AS target\n"
         + "USING (values (?, ?, ?, ?, ?)) AS source (c1, c2, c3, pk1, pk2)\n"
         + "ON target.pk1 = source.pk1 AND target.pk2 = source.pk2\n"
         + "WHEN MATCHED THEN\n"
