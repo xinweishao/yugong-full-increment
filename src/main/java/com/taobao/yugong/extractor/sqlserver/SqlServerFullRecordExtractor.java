@@ -13,6 +13,7 @@ import java.text.MessageFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.stream.Collectors;
 
 public class SqlServerFullRecordExtractor extends AbstractFullRecordExtractor {
 
@@ -57,21 +58,43 @@ public class SqlServerFullRecordExtractor extends AbstractFullRecordExtractor {
       if (!Strings.isNullOrEmpty(extractSql))throw new IllegalArgumentException("指定主键的模式不支持extractSql的自定义");
 
       String colStr = SqlTemplates.COMMON.makeColumn(context.getTableMeta().getColumnsWithPrimary());
-      this.extractSql = MessageFormat.format(
-              DEFAULT_EXTRACT_COMPOSITE_INDEXS_SQL_FORMAT,
-              colStr,
-              schemaName,
-              tableName,
-              getConvertedPhysloc()
-      );
+      if (context.getSpecifiedPks().containsKey(tableName)
+          && context.getSpecifiedPks().get(tableName).length == 1) {  // Defined one pk
+        String DefinedPramiryKey = context.getSpecifiedPks().get(tableName)[0];
+        this.extractSql = MessageFormat.format(
+            DEFALT_EXTRACT_SQL_FORMAT,
+            colStr,
+            schemaName,
+            tableName,
+            DefinedPramiryKey
+        );
 
-      //上下文主键替换
-      List<ColumnMeta> pks = context.getTableMeta().getPrimaryKeys();
-      context.getTableMeta().getColumns().addAll(pks);
-      pks.clear();
-      pks.add(new ColumnMeta("_physloc_pk", Types.BIGINT));
+        //上下文主键替换
+        List<ColumnMeta> pks = context.getTableMeta().getPrimaryKeys();
+        context.getTableMeta().getColumns().addAll(pks);
+        pks.clear();
+        pks.add(new ColumnMeta(DefinedPramiryKey, Types.BIGINT));
+        context.getTableMeta().setColumns(
+         context.getTableMeta().getColumns().stream()
+             .filter(x -> !x.getName().equals(DefinedPramiryKey))
+             .collect(Collectors.toList())
+        );
+      } else { // TODO use physloc in where will be slow, only command in small tables
+        this.extractSql = MessageFormat.format(
+            DEFAULT_EXTRACT_COMPOSITE_INDEXS_SQL_FORMAT,
+            colStr,
+            schemaName,
+            tableName,
+            getConvertedPhysloc()
+        );
 
-    }else{
+        //上下文主键替换
+        List<ColumnMeta> pks = context.getTableMeta().getPrimaryKeys();
+        context.getTableMeta().getColumns().addAll(pks);
+        pks.clear();
+        pks.add(new ColumnMeta("_physloc_pk", Types.BIGINT));
+      }
+    } else {
       String primaryKey = context.getTableMeta().getPrimaryKeys().get(0).getName();
       String schemaName = context.getTableMeta().getSchema();
       String tableName = context.getTableMeta().getName();

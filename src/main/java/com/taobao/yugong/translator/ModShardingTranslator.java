@@ -58,10 +58,10 @@ public class ModShardingTranslator implements DataTranslator {
     return records.stream().peek(record -> {
       ColumnValue column = record.getColumnByName(shardingKeyName);
       long shardingValue;
-      if (column.getColumn().getType() == Types.BIGINT) {
-        shardingValue = (long) column.getValue();
-      } else if (column.getColumn().getType() == Types.INTEGER) {
+      if (column.getValue() instanceof Integer) {
         shardingValue = (int) column.getValue();
+      } else if (column.getValue() instanceof Long) {
+        shardingValue = (long) column.getValue();
       } else {
         throw new YuGongException(String.format("shardingKey value is not BIGINT or INTEGER %s",
             column.getColumn().getType()));
