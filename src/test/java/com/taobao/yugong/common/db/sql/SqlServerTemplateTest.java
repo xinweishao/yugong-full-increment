@@ -19,7 +19,7 @@ public class SqlServerTemplateTest {
     String[] primaryKeys =  {"i1"};
     String[] columns =  {"c1", "c2"};
     String sql = template.getInsertSql("s", "user", primaryKeys, columns);
-    assertEquals("SET IDENTITY_INSERT user ON;INSERT INTO [dbo.user](c1 , c2 , i1) VALUES "
+    assertEquals("SET IDENTITY_INSERT [user] ON;INSERT INTO [dbo.user] (c1 , c2 , i1) VALUES "
         + "(? , ? , ?)", sql);
   }
 
