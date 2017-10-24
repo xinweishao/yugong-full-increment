@@ -46,12 +46,6 @@ public class SqlServerFullRecordExtractor extends AbstractFullRecordExtractor {
       String schemaName = context.getTableMeta().getSchema();
       String tableName = context.getTableMeta().getName();
 
-      this.getMinPkSql = MessageFormat.format(
-              MIN_PK_FORMAT_WHIHOUT_ESCAPE,
-              getConvertedPhysloc(),
-              schemaName,
-              tableName
-      );
       this.parameterIndexMap = PARAMETER_INDEX_MAP;
 
       //TODO: 暂不支持extractSql的自定义
@@ -60,23 +54,33 @@ public class SqlServerFullRecordExtractor extends AbstractFullRecordExtractor {
       String colStr = SqlTemplates.COMMON.makeColumn(context.getTableMeta().getColumnsWithPrimary());
       if (context.getSpecifiedPks().containsKey(tableName)
           && context.getSpecifiedPks().get(tableName).length == 1) {  // Defined one pk
-        String DefinedPramiryKey = context.getSpecifiedPks().get(tableName)[0];
+        String definedPramiryKey = context.getSpecifiedPks().get(tableName)[0];
         this.extractSql = MessageFormat.format(
             DEFALT_EXTRACT_SQL_FORMAT,
             colStr,
             schemaName,
             tableName,
-            DefinedPramiryKey
+            definedPramiryKey
+        );
+        this.getMinPkSql = MessageFormat.format(
+            MIN_PK_FORMAT_WHIHOUT_ESCAPE,
+            definedPramiryKey,
+            schemaName,
+            tableName
         );
 
         //上下文主键替换
         List<ColumnMeta> pks = context.getTableMeta().getPrimaryKeys();
         context.getTableMeta().getColumns().addAll(pks);
         pks.clear();
-        pks.add(new ColumnMeta(DefinedPramiryKey, Types.BIGINT));
+        if (tableName.equals("Hujiangid_WXunionid") && definedPramiryKey.equals("UnionId")) {
+          pks.add(new ColumnMeta(definedPramiryKey, Types.VARCHAR));
+        } else {
+          pks.add(new ColumnMeta(definedPramiryKey, Types.BIGINT));
+        }
         context.getTableMeta().setColumns(
          context.getTableMeta().getColumns().stream()
-             .filter(x -> !x.getName().equals(DefinedPramiryKey))
+             .filter(x -> !x.getName().equals(definedPramiryKey))
              .collect(Collectors.toList())
         );
       } else { // TODO use physloc in where will be slow, only command in small tables
@@ -86,6 +90,12 @@ public class SqlServerFullRecordExtractor extends AbstractFullRecordExtractor {
             schemaName,
             tableName,
             getConvertedPhysloc()
+        );
+        this.getMinPkSql = MessageFormat.format(
+            MIN_PK_FORMAT_WHIHOUT_ESCAPE,
+            getConvertedPhysloc(),
+            schemaName,
+            tableName
         );
 
         //上下文主键替换
