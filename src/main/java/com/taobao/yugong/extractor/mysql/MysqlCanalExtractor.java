@@ -73,9 +73,9 @@ public class MysqlCanalExtractor extends AbstractSqlServerExtractor {
     tracer.update(context.getTableMeta().getFullName(), ProgressStatus.INCING);
 
     connector.connect();
-    connector.subscribe("");
-//    connector.subscribe(String.format("%s.%s",
-//        context.getTableMeta().getSchema(), context.getTableMeta().getName()));
+//    connector.subscribe("");
+    connector.subscribe(String.format("%s\\.%s",
+        context.getTableMeta().getSchema(), context.getTableMeta().getName()));
   }
 
   @Override
@@ -99,7 +99,7 @@ public class MysqlCanalExtractor extends AbstractSqlServerExtractor {
 
   private List<IncrementRecord> fetchCanalRecord(JdbcTemplate jdbcTemplate,
       List<ColumnMeta> primaryKeyMetas, List<ColumnMeta> columnsMetas) {
-    Message message = connector.getWithoutAck(100, 10L, TimeUnit.SECONDS);
+    Message message = connector.getWithoutAck(100, 5L, TimeUnit.SECONDS);
     long batchId = message.getId();
     int size = message.getEntries().size();
     if (batchId == -1 || size == 0) {
@@ -126,8 +126,14 @@ public class MysqlCanalExtractor extends AbstractSqlServerExtractor {
           return rows.stream().map(rowData -> {
             List<ColumnValue> columnValues = Lists.newArrayList();
             List<ColumnValue> primaryKeys = Lists.newArrayList();
-            List<CanalEntry.Column> afterColumns = rowData.getAfterColumnsList();
-            Map<String, ColumnValue> columnMap = parseCanalRowDataList2ColumnValueMap(afterColumns);
+            List<CanalEntry.Column> effectsColumns;
+            if (entity.getHeader().getEventType() == CanalEntry.EventType.INSERT ||
+                entity.getHeader().getEventType() == CanalEntry.EventType.UPDATE) {
+              effectsColumns =  rowData.getAfterColumnsList();
+            } else { // DELETE
+              effectsColumns =  rowData.getBeforeColumnsList();
+            }
+            Map<String, ColumnValue> columnMap = parseCanalRowDataList2ColumnValueMap(effectsColumns);
 
             for (ColumnMeta primaryKey : primaryKeyMetas) {
               if (!columnMap.containsKey(primaryKey.getName())) {

@@ -376,10 +376,6 @@ public class YuGongController extends AbstractYuGongLifeCycle {
         int stepTime = config.getInt("yugong.cdc.steptime", 60 * 10);
         SqlServerCdcExtractor recordExtractor = new SqlServerCdcExtractor(context, dateStart,
             noUpdateSleepTime, stepTime);
-        //        recordExtractor.setConcurrent(config.getBoolean("yugong.extractor.concurrent.enable",
-        //            true));
-        //        recordExtractor.setThreadSize(config.getInt("yugong.extractor.concurrent.size", 5));
-        //        recordExtractor.setExecutor(extractorExecutor);
         recordExtractor.setTracer(progressTracer);
         return recordExtractor;
       } else if (sourceDbType == DbType.MYSQL) {

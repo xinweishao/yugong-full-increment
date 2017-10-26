@@ -4,6 +4,7 @@ import com.google.common.collect.MigrateMap;
 import com.taobao.yugong.common.db.meta.ColumnValue;
 import com.taobao.yugong.common.db.meta.Table;
 import com.taobao.yugong.common.db.meta.TableMetaGenerator;
+import com.taobao.yugong.common.db.sql.SqlTemplate;
 import com.taobao.yugong.common.db.sql.SqlTemplates;
 import com.taobao.yugong.common.db.sql.TypeMapping;
 import com.taobao.yugong.common.model.DbType;
@@ -183,6 +184,12 @@ public class IncrementRecordApplier extends AbstractRecordApplier {
                   meta.getName(),
                   primaryKeys,
                   columns);
+            } else if (targetDbType == DbType.SQL_SERVER) {
+              applierSql = SqlTemplates.SQL_SERVER.getMergeSql(meta.getSchema(),
+                  meta.getName(),
+                  primaryKeys,
+                  columns,
+                  true);
             }
           } else {
             if (YuGongUtils.isEmpty(meta.getColumns()) && targetDbType == DbType.MYSQL) {
@@ -305,7 +312,13 @@ public class IncrementRecordApplier extends AbstractRecordApplier {
           Table meta = tableMetaGeneratorGetTableMeta(names.get(0), names.get(1));
 
           String[] primaryKeys = getPrimaryNames(record);
-          applierSql = SqlTemplates.COMMON.getDeleteSql(meta.getSchema(), meta.getName(), primaryKeys);
+          if (targetDbType == DbType.SQL_SERVER) {
+            applierSql = SqlTemplates.SQL_SERVER.getDeleteSql(meta.getSchema(), meta.getName(),
+                primaryKeys);
+          } else {
+            applierSql = SqlTemplates.COMMON.getDeleteSql(meta.getSchema(), meta.getName(),
+                primaryKeys);
+          }
 
           int index = 1;
           Map<String, Integer> indexs = new HashMap<String, Integer>();

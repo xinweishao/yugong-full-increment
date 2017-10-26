@@ -18,7 +18,7 @@ public class SqlServerTemplate extends SqlTemplate {
   public String getInsertSql(String schemaName, String tableName, String[] pkNames, String[] columnNames) {
     StringBuilder sql = new StringBuilder();
     sql.append(String.format("SET IDENTITY_INSERT [%s] ON;", tableName));
-    sql.append("INSERT INTO [").append(makeFullName("dbo", tableName)).append("] (");
+    sql.append("INSERT INTO [").append(makeFullName(schemaName, tableName)).append("] (");
     String[] allColumns = buildAllColumns(pkNames, columnNames);
     int size = allColumns.length;
     for (int i = 0; i < size; i++) {
@@ -42,7 +42,7 @@ public class SqlServerTemplate extends SqlTemplate {
       sql.append(getColumnName(allColumns[i])).append(splitCommea(size, i));
     }
 
-    sql.append(" FROM [").append(makeFullName("dbo", tableName)).append("] WHERE ( ");
+    sql.append(" FROM [").append(makeFullName(schemaName, tableName)).append("] WHERE ( ");
     if (pkNames.size() > 0) { // 可能没有主键
       makeColumnEquals(sql, pkNames.toArray(new String[0]), "AND");
     } else {
@@ -106,5 +106,20 @@ public class SqlServerTemplate extends SqlTemplate {
       }
     }
     return str.toString();
+  }
+
+  @Override
+  protected String makeFullName(String schemaName, String tableName) {
+    String full = schemaName + ".dbo." + tableName;
+    return full.intern();
+  }
+
+  @Override
+  public String getDeleteSql(String schemaName, String tableName, String[] pkNames) {
+    StringBuilder sql = new StringBuilder();
+    sql.append("delete from ").append(makeFullName(schemaName, tableName)).append(" where ");
+    makeColumnEquals(sql, pkNames, "and");
+    // intern优化，避免出现大量相同的字符串
+    return sql.toString().intern();
   }
 }
