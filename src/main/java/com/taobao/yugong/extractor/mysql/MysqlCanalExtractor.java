@@ -11,6 +11,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.taobao.yugong.common.db.meta.ColumnMeta;
 import com.taobao.yugong.common.db.meta.ColumnValue;
 import com.taobao.yugong.common.db.meta.Table;
+import com.taobao.yugong.common.model.ExtractStatus;
 import com.taobao.yugong.common.model.ProgressStatus;
 import com.taobao.yugong.common.model.YuGongContext;
 import com.taobao.yugong.common.model.position.Position;
@@ -85,7 +86,11 @@ public class MysqlCanalExtractor extends AbstractSqlServerExtractor {
     List<IncrementRecord> records;
     records = fetchCanalRecord(jdbcTemplate, primaryKeyMetas,
         columnsMetas);
-    logger.info("processed ids: {}", Joiner.on(",").join(records.stream()
+    if (records.size() == 0) {
+      setStatus(ExtractStatus.CATCH_UP);
+      tracer.update(context.getTableMeta().getFullName(), ProgressStatus.SUCCESS);
+    }
+    logger.info("size: {}, processed ids: {}", records.size(), Joiner.on(",").join(records.stream()
         .map(x -> Joiner.on("+").join(x.getPrimaryKeys().stream()
             .map(x1 -> x1.getValue().toString()).collect(Collectors.toList()))).collect(Collectors.toList())));
 
@@ -94,9 +99,6 @@ public class MysqlCanalExtractor extends AbstractSqlServerExtractor {
 
   private List<IncrementRecord> fetchCanalRecord(JdbcTemplate jdbcTemplate,
       List<ColumnMeta> primaryKeyMetas, List<ColumnMeta> columnsMetas) {
-//    connector.unsubscribe();
-//    connector.subscribe("bbs.user_0");
-//    connector.subscribe("bbs.user_1");
     Message message = connector.getWithoutAck(100, 10L, TimeUnit.SECONDS);
     long batchId = message.getId();
     int size = message.getEntries().size();
@@ -111,7 +113,6 @@ public class MysqlCanalExtractor extends AbstractSqlServerExtractor {
             CanalEntry.EventType.UPDATE
             ).contains(x.getHeader().getEventType())
         )
-//        .filter(x -> x.getEntryType() == CanalEntry.EntryType.ROWDATA)
         .map(entity -> {
           CanalEntry.RowChange rowChange;
           try {

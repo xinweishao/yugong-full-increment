@@ -6,12 +6,12 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.taobao.yugong.common.db.meta.ColumnValue;
+import com.taobao.yugong.common.model.record.IncrementOpType;
 import com.taobao.yugong.common.model.record.IncrementRecord;
 import com.taobao.yugong.common.model.record.Record;
 import com.taobao.yugong.translator.modules.pass.UserRouterMapUtil;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -67,9 +67,6 @@ public class UserRouterMapMobileShardingTranslator implements DataTranslator {
     if (isBindColumn.getValue() == null) {
       return ImmutableList.of();
     }
-    if (!(boolean)isBindColumn.getValue()) {
-      return ImmutableList.of();
-    }
     if (mobileNumColumn == null) {
       return ImmutableList.of();
     }
@@ -77,8 +74,18 @@ public class UserRouterMapMobileShardingTranslator implements DataTranslator {
       return ImmutableList.of();
     }
     ColumnValue userIdColumn = record.getColumnByName("UserId");
-    return UserRouterMapUtil.buildRouteMapRecordCdc(record.getOpType(), RouteMapType.MOBILE,
-        "+86 " + mobileNumColumn.getValue(), (int) userIdColumn.getValue());
+    if ((boolean)isBindColumn.getValue()) {
+      return UserRouterMapUtil.buildRouteMapRecordCdc(record.getOpType(), RouteMapType.MOBILE,
+          "+86 " + mobileNumColumn.getValue(), (int) userIdColumn.getValue());
+    } else { // unbind mobile, remove Old LoginRouteMap Mobile Num
+      if (record.getOpType() == IncrementOpType.U) {
+        return UserRouterMapUtil.buildRouteMapRecordCdcRemoveMobile(
+            "+86 " + mobileNumColumn.getValue(), (int)userIdColumn.getValue());
+      }
+      else {
+        return ImmutableList.of();
+      }
+    }
   }
 
 
