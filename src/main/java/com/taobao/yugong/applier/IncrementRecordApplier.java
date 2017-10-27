@@ -185,11 +185,15 @@ public class IncrementRecordApplier extends AbstractRecordApplier {
                   primaryKeys,
                   columns);
             } else if (targetDbType == DbType.SQL_SERVER) {
+              boolean identityInsertMode = true;
+              if (meta.getName().equals("User_FinanceAuth")) {
+                identityInsertMode = false;
+              }
               applierSql = SqlTemplates.SQL_SERVER.getMergeSql(meta.getSchema(),
                   meta.getName(),
                   primaryKeys,
                   columns,
-                  true);
+                  identityInsertMode);
             }
           } else {
             if (YuGongUtils.isEmpty(meta.getColumns()) && targetDbType == DbType.MYSQL) {
@@ -258,11 +262,15 @@ public class IncrementRecordApplier extends AbstractRecordApplier {
                   columns,
                   false);
             } else if (targetDbType == DbType.SQL_SERVER) {
+              boolean identityInsertMode = true;
+              if (meta.getName().equals("User_FinanceAuth")) {
+                identityInsertMode = false;
+              }
               applierSql = SqlTemplates.SQL_SERVER.getMergeSql(meta.getSchema(),
                   meta.getName(),
                   primaryKeys,
                   columns,
-                  true);
+                  identityInsertMode);
             } else if (targetDbType == DbType.ORACLE) {
               applierSql = SqlTemplates.ORACLE.getMergeSql(meta.getSchema(),
                   meta.getName(),

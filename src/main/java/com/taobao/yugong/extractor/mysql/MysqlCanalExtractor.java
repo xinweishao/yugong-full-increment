@@ -73,9 +73,9 @@ public class MysqlCanalExtractor extends AbstractSqlServerExtractor {
     tracer.update(context.getTableMeta().getFullName(), ProgressStatus.INCING);
 
     connector.connect();
-//    connector.subscribe("");
-    connector.subscribe(String.format("%s\\.%s",
-        context.getTableMeta().getSchema(), context.getTableMeta().getName()));
+    connector.subscribe();
+//    connector.subscribe(String.format("%s\\.%s",
+//        context.getTableMeta().getSchema(), context.getTableMeta().getName()));
   }
 
   @Override
@@ -99,7 +99,7 @@ public class MysqlCanalExtractor extends AbstractSqlServerExtractor {
 
   private List<IncrementRecord> fetchCanalRecord(JdbcTemplate jdbcTemplate,
       List<ColumnMeta> primaryKeyMetas, List<ColumnMeta> columnsMetas) {
-    Message message = connector.getWithoutAck(100, 5L, TimeUnit.SECONDS);
+    Message message = connector.getWithoutAck(10240, 1000L, TimeUnit.MILLISECONDS);
     long batchId = message.getId();
     int size = message.getEntries().size();
     if (batchId == -1 || size == 0) {
