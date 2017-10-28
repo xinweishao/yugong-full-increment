@@ -35,6 +35,7 @@ import com.taobao.yugong.exception.YuGongException;
 import com.taobao.yugong.extractor.AbstractRecordExtractor;
 import com.taobao.yugong.extractor.RecordExtractor;
 import com.taobao.yugong.extractor.mysql.MysqlCanalExtractor;
+import com.taobao.yugong.extractor.mysql.MysqlCanalRedisExtractor;
 import com.taobao.yugong.extractor.mysql.MysqlFullRecordExtractor;
 import com.taobao.yugong.extractor.oracle.AbstractOracleRecordExtractor;
 import com.taobao.yugong.extractor.oracle.OracleAllRecordExtractor;
@@ -384,8 +385,16 @@ public class YuGongController extends AbstractYuGongLifeCycle {
           throw new YuGongException("yugong.canal.ip should not be empty");
         }
         int canalServerPort = config.getInt("yugong.canal.port", 11111);
-        MysqlCanalExtractor recordExtractor = new MysqlCanalExtractor(context, canalServerIp,
-            canalServerPort);
+        String redisServerIp = config.getString("yugong.redis.ip");
+        if (Strings.isNullOrEmpty(canalServerIp)) {
+          throw new YuGongException("yugong.redis.ip should not be empty");
+        }
+        int redisServerPort = config.getInt("yugong.redis.port", 6379);
+//        MysqlCanalExtractor recordExtractor = new MysqlCanalExtractor(context, canalServerIp,
+//            canalServerPort);
+        MysqlCanalRedisExtractor recordExtractor = new MysqlCanalRedisExtractor(context,
+            redisServerIp,
+            redisServerPort);
         recordExtractor.setTracer(progressTracer);
         return recordExtractor;
       } else {

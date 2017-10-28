@@ -1,5 +1,6 @@
 package com.taobao.yugong.applier;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.MigrateMap;
 import com.taobao.yugong.common.db.meta.ColumnValue;
 import com.taobao.yugong.common.db.meta.Table;
@@ -50,6 +51,8 @@ public class IncrementRecordApplier extends AbstractRecordApplier {
   protected YuGongContext context;
   protected DbType sourceDbType;
   protected DbType targetDbType;
+  private ImmutableList<String> noAutoIncrementTables = ImmutableList.of("User_FinanceAuth",
+      "user_ext", "user_level");
 
   public IncrementRecordApplier(YuGongContext context) {
     this.context = context;
@@ -186,7 +189,7 @@ public class IncrementRecordApplier extends AbstractRecordApplier {
                   columns);
             } else if (targetDbType == DbType.SQL_SERVER) {
               boolean identityInsertMode = true;
-              if (meta.getName().equals("User_FinanceAuth")) {
+              if (noAutoIncrementTables.contains(meta.getName())) {
                 identityInsertMode = false;
               }
               applierSql = SqlTemplates.SQL_SERVER.getMergeSql(meta.getSchema(),
@@ -263,7 +266,7 @@ public class IncrementRecordApplier extends AbstractRecordApplier {
                   false);
             } else if (targetDbType == DbType.SQL_SERVER) {
               boolean identityInsertMode = true;
-              if (meta.getName().equals("User_FinanceAuth")) {
+              if (noAutoIncrementTables.contains(meta.getName())) {
                 identityInsertMode = false;
               }
               applierSql = SqlTemplates.SQL_SERVER.getMergeSql(meta.getSchema(),

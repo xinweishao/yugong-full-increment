@@ -117,7 +117,7 @@ public class SqlServerTemplate extends SqlTemplate {
   @Override
   public String getDeleteSql(String schemaName, String tableName, String[] pkNames) {
     StringBuilder sql = new StringBuilder();
-    sql.append("delete from ").append(makeFullName(schemaName, tableName)).append(" where ");
+    sql.append("delete from [").append(makeFullName(schemaName, tableName)).append("] where ");
     makeColumnEquals(sql, pkNames, "and");
     // intern优化，避免出现大量相同的字符串
     return sql.toString().intern();

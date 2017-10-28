@@ -1,12 +1,10 @@
 package com.taobao.yugong.extractor.mysql;
 
-import com.alibaba.otter.canal.client.CanalConnector;
-import com.alibaba.otter.canal.client.CanalConnectors;
 import com.alibaba.otter.canal.protocol.CanalEntry;
-import com.alibaba.otter.canal.protocol.Message;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.taobao.yugong.common.db.meta.ColumnMeta;
 import com.taobao.yugong.common.db.meta.ColumnValue;
@@ -22,22 +20,25 @@ import com.taobao.yugong.common.utils.SqlUtils;
 import com.taobao.yugong.exception.YuGongException;
 import com.taobao.yugong.extractor.sqlserver.AbstractSqlServerExtractor;
 
-import org.joda.time.DateTime;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import java.net.InetSocketAddress;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.Pipeline;
+import redis.clients.jedis.Response;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Not thread safe
  */
-public class MysqlCanalExtractor extends AbstractSqlServerExtractor {
+public class MysqlCanalRedisExtractor extends AbstractSqlServerExtractor {
 
   private final String schemaName;
   private final String tableName;
@@ -45,21 +46,16 @@ public class MysqlCanalExtractor extends AbstractSqlServerExtractor {
   private List<ColumnMeta> primaryKeyMetas;
   private List<ColumnMeta> columnsMetas;
   private YuGongContext context;
-  private String canalServerIp;
-  private int canalServerPort;
-  private String canalServerInstance;
-  private CanalConnector connector;
+  private Jedis redisClient;
+  private int batchQuery;
+  private int noUpdateSleepTimeSecond = 2;
 
-  public MysqlCanalExtractor(YuGongContext context,
-      String canalServerIp, int canalServerPort) {
+  public MysqlCanalRedisExtractor(YuGongContext context,
+      String redisServerIp, int redisServerPort) {
     this.context = context;
     this.schemaName = context.getTableMeta().getSchema();
     this.tableName = context.getTableMeta().getName();
-    this.canalServerIp = canalServerIp;
-    this.canalServerPort = canalServerPort;
-    this.canalServerInstance = this.schemaName + "_" + this.tableName;
-    this.connector = CanalConnectors.newSingleConnector(
-        new InetSocketAddress(canalServerIp, canalServerPort), canalServerInstance, "", "");
+    this.redisClient = new Jedis(redisServerIp, redisServerPort);
   }
 
   @Override
@@ -70,23 +66,22 @@ public class MysqlCanalExtractor extends AbstractSqlServerExtractor {
     columnsMetas = tableMeta.getColumns();
     tracer.update(context.getTableMeta().getFullName(), ProgressStatus.INCING);
 
-    connector.connect();
-    connector.subscribe();
-//    connector.subscribe(String.format("%s\\.%s",
-//        context.getTableMeta().getSchema(), context.getTableMeta().getName()));
+    redisClient.connect();
   }
 
   @Override
   public List<Record> extract() {
-
-//    logger.info("start {}, end {}", now, end);
     JdbcTemplate jdbcTemplate = new JdbcTemplate(context.getSourceDs());
     List<IncrementRecord> records;
-    records = fetchCanalRecord(jdbcTemplate, primaryKeyMetas,
-        columnsMetas);
-    if (records.size() == 0) {
+    records = fetchCanalRecord(primaryKeyMetas, columnsMetas);
+    if (records.isEmpty()) {
       setStatus(ExtractStatus.CATCH_UP);
       tracer.update(context.getTableMeta().getFullName(), ProgressStatus.SUCCESS);
+      try {
+        Thread.sleep(noUpdateSleepTimeSecond * 1000);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();// 传递下去
+      }
     }
     logger.info("size: {}, processed ids: {}", records.size(), Joiner.on(",").join(records.stream()
         .map(x -> Joiner.on("+").join(x.getPrimaryKeys().stream()
@@ -95,23 +90,27 @@ public class MysqlCanalExtractor extends AbstractSqlServerExtractor {
     return (List<Record>) (List<? extends Record>) records;
   }
 
-  private List<IncrementRecord> fetchCanalRecord(JdbcTemplate jdbcTemplate,
-      List<ColumnMeta> primaryKeyMetas, List<ColumnMeta> columnsMetas) {
-    Message message = connector.getWithoutAck(10240, 1000L, TimeUnit.MILLISECONDS);
-    long batchId = message.getId();
-    int size = message.getEntries().size();
-    if (batchId == -1 || size == 0) {
-      return Lists.newArrayList();
+  private List<IncrementRecord> fetchCanalRecord(List<ColumnMeta> primaryKeyMetas,
+      List<ColumnMeta> columnsMetas) {
+    Pipeline pipelined = redisClient.pipelined();
+    List<Response<byte[]>> entryStringListResponses = Lists.newArrayList();
+    batchQuery = 100;
+    IntStream.range(0, batchQuery).forEach(x ->
+        entryStringListResponses.add(pipelined.lpop((this.schemaName + "." + this.tableName).getBytes())));
+    pipelined.sync();
+    List<byte[]> rowDataStrings = entryStringListResponses.stream().map(Response::get)
+        .filter(Objects::nonNull).collect(Collectors.toList());
+    if (rowDataStrings.isEmpty()) {
+      return ImmutableList.of();
     }
 
-    List<IncrementRecord> records = message.getEntries().stream()
-        .filter(x -> ImmutableList.of(
-            CanalEntry.EventType.INSERT,
-            CanalEntry.EventType.DELETE,
-            CanalEntry.EventType.UPDATE
-            ).contains(x.getHeader().getEventType())
-        )
-        .map(entry -> {
+    return rowDataStrings.stream().map(x -> {
+      try {
+        return CanalEntry.Entry.parseFrom(ByteString.copyFrom(x));
+      } catch (InvalidProtocolBufferException e) {
+        throw new YuGongException(e);
+      }})
+        .map((CanalEntry.Entry entry) -> {
           CanalEntry.RowChange rowChange;
           try {
             rowChange = CanalEntry.RowChange.parseFrom(entry.getStoreValue());
@@ -127,9 +126,9 @@ public class MysqlCanalExtractor extends AbstractSqlServerExtractor {
             List<CanalEntry.Column> effectsColumns;
             if (entry.getHeader().getEventType() == CanalEntry.EventType.INSERT ||
                 entry.getHeader().getEventType() == CanalEntry.EventType.UPDATE) {
-              effectsColumns =  rowData.getAfterColumnsList();
+              effectsColumns = rowData.getAfterColumnsList();
             } else { // DELETE
-              effectsColumns =  rowData.getBeforeColumnsList();
+              effectsColumns = rowData.getBeforeColumnsList();
             }
             Map<String, ColumnValue> columnMap = parseCanalRowDataList2ColumnValueMap(effectsColumns);
 
@@ -159,8 +158,6 @@ public class MysqlCanalExtractor extends AbstractSqlServerExtractor {
         })
         .flatMap(Collection::stream)
         .collect(Collectors.toList());
-    connector.ack(batchId);
-    return records;
   }
   
   private Map<String, ColumnValue> parseCanalRowDataList2ColumnValueMap(
