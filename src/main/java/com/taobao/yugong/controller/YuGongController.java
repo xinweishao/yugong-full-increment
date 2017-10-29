@@ -380,18 +380,18 @@ public class YuGongController extends AbstractYuGongLifeCycle {
         recordExtractor.setTracer(progressTracer);
         return recordExtractor;
       } else if (sourceDbType == DbType.MYSQL) {
-        String canalServerIp = config.getString("yugong.canal.ip");
-        if (Strings.isNullOrEmpty(canalServerIp)) {
-          throw new YuGongException("yugong.canal.ip should not be empty");
-        }
-        int canalServerPort = config.getInt("yugong.canal.port", 11111);
+//        String canalServerIp = config.getString("yugong.canal.ip");
+//        if (Strings.isNullOrEmpty(canalServerIp)) {
+//          throw new YuGongException("yugong.canal.ip should not be empty");
+//        }
+//        int canalServerPort = config.getInt("yugong.canal.port", 11111);
+//        MysqlCanalExtractor recordExtractor = new MysqlCanalExtractor(context, canalServerIp,
+//            canalServerPort);
         String redisServerIp = config.getString("yugong.redis.ip");
-        if (Strings.isNullOrEmpty(canalServerIp)) {
+        if (Strings.isNullOrEmpty(redisServerIp)) {
           throw new YuGongException("yugong.redis.ip should not be empty");
         }
         int redisServerPort = config.getInt("yugong.redis.port", 6379);
-//        MysqlCanalExtractor recordExtractor = new MysqlCanalExtractor(context, canalServerIp,
-//            canalServerPort);
         MysqlCanalRedisExtractor recordExtractor = new MysqlCanalRedisExtractor(context,
             redisServerIp,
             redisServerPort);

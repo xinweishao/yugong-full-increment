@@ -18,7 +18,7 @@ public class SqlServerTemplate extends SqlTemplate {
   public String getInsertSql(String schemaName, String tableName, String[] pkNames, String[] columnNames) {
     StringBuilder sql = new StringBuilder();
     sql.append(String.format("SET IDENTITY_INSERT [%s] ON;", tableName));
-    sql.append("INSERT INTO [").append(makeFullName(schemaName, tableName)).append("] (");
+    sql.append("INSERT INTO ").append(makeFullName(schemaName, tableName)).append(" (");
     String[] allColumns = buildAllColumns(pkNames, columnNames);
     int size = allColumns.length;
     for (int i = 0; i < size; i++) {
@@ -42,7 +42,7 @@ public class SqlServerTemplate extends SqlTemplate {
       sql.append(getColumnName(allColumns[i])).append(splitCommea(size, i));
     }
 
-    sql.append(" FROM [").append(makeFullName(schemaName, tableName)).append("] WHERE ( ");
+    sql.append(" FROM ").append(makeFullName(schemaName, tableName)).append(" WHERE ( ");
     if (pkNames.size() > 0) { // 可能没有主键
       makeColumnEquals(sql, pkNames.toArray(new String[0]), "AND");
     } else {
@@ -59,11 +59,11 @@ public class SqlServerTemplate extends SqlTemplate {
     String identityInsert = "";
 
     if(identityInsertMode){
-      identityInsert = "SET IDENTITY_INSERT [${tableName}] ON;\n";
+      identityInsert = "SET IDENTITY_INSERT ${tableName} ON;\n";
     }
 
     String sqlTemplate = identityInsert
-        + "MERGE [${tableName}] AS target\n"
+        + "MERGE ${tableName} AS target\n"
         + "USING (values (${questions})) AS source (${allColumns})\n"
         + "ON ${conditionPrimaryEqualString}\n"
         + "WHEN MATCHED THEN\n"
@@ -72,7 +72,7 @@ public class SqlServerTemplate extends SqlTemplate {
         + "   INSERT (${allColumns}) VALUES (${allColumnsWithSource});";
     String[] allColumns = buildAllColumns(pkNames, colNames);
     int size = allColumns.length;
-    params.put("tableName", tableName);
+    params.put("tableName", makeFullName(schemaName, tableName));
     params.put("questions", Joiner.on(", ").join(IntStream.range(0, size).boxed()
         .map(x -> "?").collect(Collectors.toList())));
     params.put("allColumns", Joiner.on(", ").join(allColumns));
@@ -110,14 +110,14 @@ public class SqlServerTemplate extends SqlTemplate {
 
   @Override
   protected String makeFullName(String schemaName, String tableName) {
-    String full = schemaName + ".dbo." + tableName;
+    String full = "[" + schemaName + "].dbo.[" + tableName + "]";
     return full.intern();
   }
 
   @Override
   public String getDeleteSql(String schemaName, String tableName, String[] pkNames) {
     StringBuilder sql = new StringBuilder();
-    sql.append("delete from [").append(makeFullName(schemaName, tableName)).append("] where ");
+    sql.append("delete from ").append(makeFullName(schemaName, tableName)).append(" where ");
     makeColumnEquals(sql, pkNames, "and");
     // intern优化，避免出现大量相同的字符串
     return sql.toString().intern();

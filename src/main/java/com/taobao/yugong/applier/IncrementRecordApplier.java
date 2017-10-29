@@ -52,7 +52,7 @@ public class IncrementRecordApplier extends AbstractRecordApplier {
   protected DbType sourceDbType;
   protected DbType targetDbType;
   private ImmutableList<String> noAutoIncrementTables = ImmutableList.of("User_FinanceAuth",
-      "user_ext", "user_level");
+      "user_ext", "user_level", "Hujiangid_WXunionid", "uc_QQ", "uc_Sina", "uc_Profile");
 
   public IncrementRecordApplier(YuGongContext context) {
     this.context = context;
