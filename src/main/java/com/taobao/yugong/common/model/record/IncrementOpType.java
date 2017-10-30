@@ -1,5 +1,6 @@
 package com.taobao.yugong.common.model.record;
 
+import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.taobao.yugong.exception.YuGongException;
@@ -28,5 +29,27 @@ public enum IncrementOpType {
       throw new YuGongException(String.format("Do not support %s", operation));
     }
     return Optional.of(mapping.get(operation));
+  }
+
+  public static Optional<IncrementOpType> ofMysqlCancal(CanalEntry.EventType eventType) {
+    ImmutableMap<CanalEntry.EventType, IncrementOpType> mapping = ImmutableMap
+        .<CanalEntry.EventType, IncrementOpType>builder()
+        .put(CanalEntry.EventType.INSERT, IncrementOpType.I)
+        .put(CanalEntry.EventType.DELETE, IncrementOpType.D)
+        .put(CanalEntry.EventType.UPDATE, IncrementOpType.U)
+//        .put(CanalEntry.EventType.CREATE, null)
+//        .put(CanalEntry.EventType.ALTER, null)
+//        .put(CanalEntry.EventType.ERASE, null)
+//        .put(CanalEntry.EventType.QUERY, null)
+//        .put(CanalEntry.EventType.TRUNCATE, null)
+//        .put(CanalEntry.EventType.RENAME, null)
+//        .put(CanalEntry.EventType.CINDEX, null)
+//        .put(CanalEntry.EventType.DINDEX, null)
+        .build();
+
+    if (!mapping.containsKey(eventType)) {
+      return Optional.empty();
+    }
+    return Optional.of(mapping.get(eventType));
   }
 }

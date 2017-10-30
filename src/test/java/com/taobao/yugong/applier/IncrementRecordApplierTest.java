@@ -83,8 +83,8 @@ public class IncrementRecordApplierTest {
 
     AbstractRecordApplier.TableSqlUnit sqlUnit = applier.getUpdateSqlUnit(record);
     assertNotNull(sqlUnit);
-    assertEquals("SET IDENTITY_INSERT table ON;\n"
-            + "MERGE table AS target\n"
+    assertEquals("SET IDENTITY_INSERT [schema].dbo.[table] ON;\n"
+            + "MERGE [schema].dbo.[table] AS target\n"
             + "USING (values (?, ?)) AS source (name, id)\n"
             + "ON target.id = source.id\n"
             + "WHEN MATCHED THEN\n"

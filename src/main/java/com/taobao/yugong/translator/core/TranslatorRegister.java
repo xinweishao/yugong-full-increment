@@ -23,8 +23,15 @@ public class TranslatorRegister {
 
   private static Map<String, Class<?>> dataTranslatorRegister = ImmutableMap.<String, Class<?>>builder()
       .put(NameStyleDataTranslator.class.getCanonicalName(), NameStyleDataTranslator.class)
-      .put(CompositeIndexesDataTranslator.class.getCanonicalName(), CompositeIndexesDataTranslator.class)
+      .put(CompositeIndexesDataTranslator.class.getCanonicalName(),
+          CompositeIndexesDataTranslator.class)
       .put(ColumnFixDataTranslator.class.getCanonicalName(), ColumnFixDataTranslator.class)
+      .put(ModShardingTranslator.class.getCanonicalName(), ModShardingTranslator.class)
+      .put(RangeShardingTranslator.class.getCanonicalName(), RangeShardingTranslator.class)
+      .put(UserRouterMapShardingTranslator.class.getCanonicalName(),
+          UserRouterMapShardingTranslator.class)
+      .put(UserRouterMapMobileShardingTranslator.class.getCanonicalName(),
+          UserRouterMapMobileShardingTranslator.class)
       .build();
 
 

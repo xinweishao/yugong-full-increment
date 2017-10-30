@@ -1,7 +1,7 @@
 package com.taobao.yugong.extractor.mysql;
 
-import com.taobao.yugong.extractor.AbstractFullRecordExtractor;
+import com.taobao.yugong.extractor.AbstractRecordExtractor;
 
-public class AbstractMysqlExtractor extends AbstractFullRecordExtractor {
+public abstract class AbstractMysqlExtractor extends AbstractRecordExtractor {
 
 }
