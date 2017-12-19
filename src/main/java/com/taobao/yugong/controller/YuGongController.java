@@ -536,7 +536,7 @@ public class YuGongController extends AbstractYuGongLifeCycle {
       if (dataTranslator != null) {
         translators.add(dataTranslator);
       } else {
-        logger.error("Cannot load conf: {}", translatorConf.getClazz());
+        throw new YuGongException(String.format("Cannot load conf: %s", translatorConf.getClazz()));
       }
     });
     return translators;
