@@ -13,7 +13,12 @@ import java.util.List;
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class ClassLearningNoteInfoTranslator implements DataTranslator {
 
-    @Override
+  public static final String IS_ACTIVE = "is_active";
+  public static final String IS_DELETED = "is_deleted";
+  public static final String SECOND_POINT = "second_point";
+  public static final String IS_MEDIA = "is_media";
+
+  @Override
     public String translatorSchema() {
         return null;
     }
@@ -30,28 +35,29 @@ public class ClassLearningNoteInfoTranslator implements DataTranslator {
 
     @Override
     public List<Record> translator(List<Record> records) {
-        records
-                .stream()
-                .forEach(
-                        record -> {
-                            ColumnValue isActive = record.getColumnByName("is_active");
-                            ColumnValue isDeleted = new ColumnValue();
-                            ColumnMeta isDeletedMeta = new ColumnMeta("is_deleted", Types.BOOLEAN);
-                            isDeleted.setColumn(isDeletedMeta);
-                            isDeleted.setValue(!(Boolean) isActive.getValue());
+      records
+          .forEach(
+              record -> {
+                ColumnValue isActiveRecord = record.getColumnByName(IS_ACTIVE);
+                ColumnValue isDeletedRecord = new ColumnValue();
+                ColumnMeta isDeletedMeta = new ColumnMeta(IS_DELETED, Types.BOOLEAN);
+                isDeletedRecord.setColumn(isDeletedMeta);
+                isDeletedRecord.setValue(!(Boolean) isActiveRecord.getValue());
+                record.removeColumnByName(IS_ACTIVE);
 
-                            ColumnValue secondPoint = record.getColumnByName("second_point");
-                            ColumnValue isMedia = new ColumnValue();
-                            ColumnMeta meta = new ColumnMeta("is_media", Types.BOOLEAN);
-                            isMedia.setColumn(meta);
-                            if (secondPoint.getValue() == null || secondPoint.getValue().equals(-1)) {
-                                isMedia.setValue(0);
-                            } else {
-                                isMedia.setValue(1);
-                            }
-                            record.addColumn(isMedia);
+                ColumnValue secondPointRecord = record.getColumnByName(SECOND_POINT);
+                ColumnValue isMediaRecord = new ColumnValue();
+                ColumnMeta meta = new ColumnMeta(IS_MEDIA, Types.BOOLEAN);
+                isMediaRecord.setColumn(meta);
+                if (secondPointRecord.getValue() == null ||
+                    secondPointRecord.getValue().equals(-1)) {
+                  isMediaRecord.setValue(0);
+                } else {
+                  isMediaRecord.setValue(1);
+                }
+                record.addColumn(isMediaRecord);
 
-                        });
+              });
         return records;
     }
 
