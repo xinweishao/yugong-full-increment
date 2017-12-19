@@ -2,11 +2,9 @@ package com.taobao.yugong.translator;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
-import com.taobao.yugong.common.db.meta.ColumnMeta;
 import com.taobao.yugong.common.db.meta.ColumnValue;
 import com.taobao.yugong.common.model.record.Record;
 
-import java.sql.Types;
 import java.util.List;
 
 
@@ -34,12 +32,8 @@ public class ClassLearningIsActiveReverseTranslator implements DataTranslator {
                 .stream()
                 .forEach(
                         record -> {
-                            ColumnValue isActive = record.getColumnByName("is_active");
-                            ColumnValue isDeleted = new ColumnValue();
-                            ColumnMeta isDeletedMeta = new ColumnMeta("is_deleted", Types.BOOLEAN);
-                            isDeleted.setColumn(isDeletedMeta);
-                            isDeleted.setValue(!(Boolean) isActive.getValue());
-
+                            ColumnValue isDeleted = record.getColumnByName("is_deleted");
+                            isDeleted.setValue(!(Boolean) isDeleted.getValue());
                         });
         return records;
     }

@@ -34,11 +34,8 @@ public class ClassLearningNoteInfoTranslator implements DataTranslator {
                 .stream()
                 .forEach(
                         record -> {
-                            ColumnValue isActive = record.getColumnByName("is_active");
-                            ColumnValue isDeleted = new ColumnValue();
-                            ColumnMeta isDeletedMeta = new ColumnMeta("is_deleted", Types.BOOLEAN);
-                            isDeleted.setColumn(isDeletedMeta);
-                            isDeleted.setValue(!(Boolean) isActive.getValue());
+                            ColumnValue isDeleted = record.getColumnByName("is_deleted");
+                            isDeleted.setValue(!(Boolean) isDeleted.getValue());
 
                             ColumnValue secondPoint = record.getColumnByName("second_point");
                             ColumnValue isMedia = new ColumnValue();
