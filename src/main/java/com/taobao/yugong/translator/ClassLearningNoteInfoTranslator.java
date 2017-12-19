@@ -44,6 +44,7 @@ public class ClassLearningNoteInfoTranslator implements DataTranslator {
                 isDeletedRecord.setColumn(isDeletedMeta);
                 isDeletedRecord.setValue(!(Boolean) isActiveRecord.getValue());
                 record.removeColumnByName(IS_ACTIVE);
+                record.addColumn(isDeletedRecord);
 
                 ColumnValue secondPointRecord = record.getColumnByName(SECOND_POINT);
                 ColumnValue isMediaRecord = new ColumnValue();
