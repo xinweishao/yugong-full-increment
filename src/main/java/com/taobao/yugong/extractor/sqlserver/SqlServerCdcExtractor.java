@@ -42,10 +42,10 @@ public class SqlServerCdcExtractor extends AbstractSqlServerExtractor {
   private Table tableMeta;
   private List<ColumnMeta> primaryKeyMetas;
   private List<ColumnMeta> columnsMetas;
-  private YuGongContext context;
+  private final YuGongContext context;
   private DateTime start;
-  private int noUpdateSleepTime;
-  private int stepTime;
+  private final int noUpdateSleepTime;
+  private final int stepTime;
 
   public SqlServerCdcExtractor(YuGongContext context, DateTime start, int noUpdateSleepTime,
       int stepTime) {
@@ -112,7 +112,7 @@ public class SqlServerCdcExtractor extends AbstractSqlServerExtractor {
   }
 
   List<IncrementRecord> fetchCdcRecord(JdbcTemplate jdbcTemplate,
-      List<ColumnMeta> primaryKeysM, List<ColumnMeta> columnsM, DateTime start, DateTime end)
+      final List<ColumnMeta> primaryKeysM, final List<ColumnMeta> columnsM, DateTime start, DateTime end)
   throws BadSqlGrammarException {
     SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
@@ -151,7 +151,8 @@ public class SqlServerCdcExtractor extends AbstractSqlServerExtractor {
         }
         IncrementRecord record = new IncrementRecord(
             context.getTableMeta().getSchema(),
-            context.getTableMeta().getName(), primaryKeys, columnValues, operation.get());
+            context.getTableMeta().getName(),
+            primaryKeys, columnValues, operation.get());
         records.add(record);
       }
 

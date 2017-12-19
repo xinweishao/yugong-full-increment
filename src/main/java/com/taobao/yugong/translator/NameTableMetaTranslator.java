@@ -4,11 +4,14 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.CaseFormat;
+import com.taobao.yugong.common.db.meta.ColumnMeta;
 import com.taobao.yugong.common.db.meta.Table;
 import com.taobao.yugong.translator.core.TranslatorRegister;
 
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.stream.Collectors;
 
 /**
  * contains in {@link NameStyleDataTranslator}
@@ -54,9 +57,9 @@ public class NameTableMetaTranslator implements TableMetaTranslator {
     // TODO 确认使用新建模式还是洋葱模式？
     //    Table newTable = SerializationUtils.clone(table);
     table.setName(tableCaseConvert(table.getName()));
-    table.getColumns().forEach(x -> {
-      x.setName(columnCaseConvert(x.getName()));
-      //      x.setRawName(columnCaseConvert(x.getRawName()));
-    });
+    table.setColumns(table.getColumns().stream()
+        .map(x -> new ColumnMeta(columnCaseConvert(x.getName()),
+            x.getType())).collect(Collectors.toList()));
+    
   }
 }
