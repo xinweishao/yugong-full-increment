@@ -38,26 +38,24 @@ public class ClassLearningNoteInfoTranslator implements DataTranslator {
       records
           .forEach(
               record -> {
-                ColumnValue isActiveRecord = record.getColumnByName(IS_ACTIVE);
-                ColumnValue isDeletedRecord = new ColumnValue();
-                ColumnMeta isDeletedMeta = new ColumnMeta(IS_DELETED, Types.BOOLEAN);
-                isDeletedRecord.setColumn(isDeletedMeta);
-                isDeletedRecord.setValue(!(Boolean) isActiveRecord.getValue());
-                record.removeColumnByName(IS_ACTIVE);
-                record.addColumn(isDeletedRecord);
+                  ColumnValue isActive = record.getColumnByName(IS_ACTIVE);
+                  ColumnValue isDeleted = new ColumnValue();
+                  ColumnMeta isDeletedMeta = new ColumnMeta(IS_DELETED, Types.BOOLEAN);
+                  isDeleted.setColumn(isDeletedMeta);
+                  isDeleted.setValue(!(Boolean) isActive.getValue());
+                  record.addColumn(isDeleted);
+                  record.removeColumnByName(IS_ACTIVE);
 
-                ColumnValue secondPointRecord = record.getColumnByName(SECOND_POINT);
-                ColumnValue isMediaRecord = new ColumnValue();
-                ColumnMeta meta = new ColumnMeta(IS_MEDIA, Types.BOOLEAN);
-                isMediaRecord.setColumn(meta);
-                if (secondPointRecord.getValue() == null ||
-                    secondPointRecord.getValue().equals(-1)) {
-                  isMediaRecord.setValue(0);
-                } else {
-                  isMediaRecord.setValue(1);
-                }
-                record.addColumn(isMediaRecord);
-
+                  ColumnValue secondPoint = record.getColumnByName(SECOND_POINT);
+                  ColumnValue isMedia = new ColumnValue();
+                  ColumnMeta meta = new ColumnMeta(IS_MEDIA, Types.BOOLEAN);
+                  isMedia.setColumn(meta);
+                  if (secondPoint.getValue() == null || secondPoint.getValue().equals(-1)) {
+                      isMedia.setValue(0);
+                  } else {
+                      isMedia.setValue(1);
+                  }
+                  record.addColumn(isMedia);
               });
         return records;
     }
