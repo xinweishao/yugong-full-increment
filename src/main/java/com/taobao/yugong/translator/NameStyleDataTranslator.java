@@ -5,11 +5,14 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Strings;
+import com.taobao.yugong.common.db.meta.ColumnMeta;
 import com.taobao.yugong.common.model.record.Record;
 
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
+
+import org.apache.commons.beanutils.BeanUtils;
 
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 @Data
@@ -54,10 +57,17 @@ public class NameStyleDataTranslator extends AbstractDataTranslator {
     } else {
       record.setTableName(tableCaseConvert(record.getTableName()));
     }
-    record.getColumns().forEach(x ->
-        x.getColumn().setName(columnCaseConvert(x.getColumn().getName())));
-    record.getPrimaryKeys().forEach(x ->
-        x.getColumn().setName(columnCaseConvert(x.getColumn().getName())));
+    record.getColumns().forEach(x -> {
+      ColumnMeta meta = new ColumnMeta(columnCaseConvert(x.getColumn().getName()),
+          x.getColumn().getType());
+      x.setColumn(meta);
+        }
+    );
+    record.getPrimaryKeys().forEach(x -> {
+      ColumnMeta columnMeta = new ColumnMeta(columnCaseConvert(x.getColumn().getName()),
+          x.getColumn().getType());
+      x.setColumn(columnMeta);
+    });
     if (!Strings.isNullOrEmpty(this.schemaTo)) {
       record.setSchemaName(this.schemaTo);
     }

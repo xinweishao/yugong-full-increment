@@ -230,10 +230,10 @@ public class ColumnTranslator implements RecordTranslator {
       if (column != null && targetColumns.size() >= 1) {
         Iterator<String> iter = targetColumns.iterator();
         String columnName = iter.next();
-        column.getColumn().setName(columnName);
+        column.setColumn(new ColumnMeta(columnName, column.getColumn().getType()));
         if (iter.hasNext()) {
           ColumnValue newColumn = column.clone();
-          newColumn.getColumn().setName(iter.next());
+          newColumn.setColumn(new ColumnMeta(iter.next(), newColumn.getColumn().getType()));
           record.addColumn(newColumn);
         }
       }
@@ -241,12 +241,13 @@ public class ColumnTranslator implements RecordTranslator {
 
     for (Map.Entry<String, String> entry : columnReplace.entrySet()) {
       for (ColumnValue column : record.getColumns()) {
-        column.getColumn().setName(column.getColumn().getName()
-            .replace(entry.getKey(), entry.getValue()));
+        String name = column.getColumn().getName().replace(entry.getKey(), entry.getValue());
+        column.setColumn(new ColumnMeta(name, column.getColumn().getType()));
       }
       for (ColumnValue column : record.getPrimaryKeys()) {
-        column.getColumn().setName(column.getColumn().getName()
-            .replace(entry.getKey(), entry.getValue()));
+        String name = column.getColumn().getName()
+            .replace(entry.getKey(), entry.getValue());
+        column.setColumn(new ColumnMeta(name, column.getColumn().getType()));
       }
     }
 

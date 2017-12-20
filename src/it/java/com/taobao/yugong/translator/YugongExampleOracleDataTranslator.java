@@ -65,7 +65,7 @@ public class YugongExampleOracleDataTranslator extends AbstractDataTranslator im
     // 2. 字段名字不同
     ColumnValue nameColumn = record.getColumnByName("name");
     if (nameColumn != null) {
-      nameColumn.getColumn().setName("display_name");
+      nameColumn.setColumn(new ColumnMeta("display_name", nameColumn.getColumn().getType()));
     }
 
     // 3. 字段逻辑处理
@@ -82,7 +82,8 @@ public class YugongExampleOracleDataTranslator extends AbstractDataTranslator im
     // 4. 字段类型不同
     ColumnValue amountColumn = record.getColumnByName("amount");
     if (amountColumn != null) {
-      amountColumn.getColumn().setType(Types.VARCHAR);
+      amountColumn
+          .setColumn(new ColumnMeta(amountColumn.getColumn().getName(), Types.VARCHAR));
       amountColumn.setValue(ObjectUtils.toString(amountColumn.getValue()));
     }
 

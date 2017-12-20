@@ -34,6 +34,10 @@ public class TranslatorRegister {
           UserRouterMapMobileShardingTranslator.class)
       .put(Sha1ShardingTranslator.class.getCanonicalName(),
           Sha1ShardingTranslator.class)
+      .put(ClassLearningIsActiveReverseTranslator.class.getCanonicalName(),
+          ClassLearningIsActiveReverseTranslator.class)
+      .put(ClassLearningNoteInfoTranslator.class.getCanonicalName(),
+          ClassLearningNoteInfoTranslator.class)
       .build();
 
 

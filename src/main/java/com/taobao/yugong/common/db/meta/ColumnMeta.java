@@ -19,8 +19,8 @@ import java.sql.JDBCType;
 public class ColumnMeta {
 
 //  private String rawName;
-  private String name;
-  private int type;
+  private final String name;
+  private final int type;
 
   public ColumnMeta(String columnName, int columnType) {
 //    this.rawName = columnName;
@@ -29,10 +29,6 @@ public class ColumnMeta {
     this.type = columnType;
   }
 
-  public void setName(String name) {
-//    this.name = StringUtils.upperCase(name);
-    this.name = name;
-  }
 
   public ColumnMeta clone() {
 //    return new ColumnMeta(this.rawName, this.type);

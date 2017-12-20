@@ -1,6 +1,7 @@
 package com.taobao.yugong.translator;
 
 import com.google.common.collect.Lists;
+import com.taobao.yugong.common.db.meta.ColumnMeta;
 import com.taobao.yugong.common.db.meta.ColumnValue;
 import com.taobao.yugong.common.model.record.Record;
 
@@ -63,14 +64,16 @@ public class YugongExampleTwoDataTranslator extends AbstractDataTranslator imple
     // 1. 字段名字不同
     ColumnValue name1Column = record.getColumnByName("name");
     if (name1Column != null) {
-      name1Column.getColumn().setName("name_1");
+      name1Column
+          .setColumn(new ColumnMeta("name_1", name1Column.getColumn().getType()));
     }
 
     record2.setTableName("yugong_example_two_2");
     // 1. 字段名字不同
     ColumnValue name2Column = record2.getColumnByName("name");
     if (name2Column != null) {
-      name2Column.getColumn().setName("name_2");
+      name2Column
+          .setColumn(new ColumnMeta("name_2", name2Column.getColumn().getType()));
     }
     return Arrays.asList(record1, record2);
   }

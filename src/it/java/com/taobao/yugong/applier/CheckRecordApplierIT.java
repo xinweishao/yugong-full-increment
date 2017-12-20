@@ -3,6 +3,7 @@ package com.taobao.yugong.applier;
 import com.google.common.base.CaseFormat;
 import com.taobao.yugong.BaseDbIT;
 import com.taobao.yugong.common.db.DataSourceFactory;
+import com.taobao.yugong.common.db.meta.ColumnMeta;
 import com.taobao.yugong.common.db.meta.Table;
 import com.taobao.yugong.common.db.meta.TableMetaGenerator;
 import com.taobao.yugong.common.model.DbType;
@@ -73,19 +74,24 @@ public class CheckRecordApplierIT extends BaseDbIT {
 //          record.setSchemaName(targetSchema);
 //        }
         if (record.getTableName().equals("ProductOperationLog")) {
-          record.getColumnByName("Editdate").getColumn().setName("EditDate");
+          record.getColumnByName("Editdate").setColumn(new ColumnMeta("EditDate",
+              record.getColumnByName("Editdate").getColumn().getType()));
         }
         if (record.getTableName().equals("FrontCategory")) {
-          record.getColumnByName("BussinessID").getColumn().setName("BusinessID");
+          record.getColumnByName("BussinessID")
+              .setColumn(new ColumnMeta("BusinessID", record.getColumnByName("BussinessID").getColumn().getType()));
         }
         if (record.getTableName().equals("FrontCategory")) {
-          record.getColumnByName("IsHighLight").getColumn().setName("IsHightlight");
+          record.getColumnByName("IsHighLight")
+              .setColumn(new ColumnMeta("IsHightlight", record.getColumnByName("IsHighLight").getColumn().getType()));
         }
         if (record.getTableName().equals("ProductRequestLog")) {
-          record.getColumnByName("Indate").getColumn().setName("InDate");
+          record.getColumnByName("Indate")
+              .setColumn(new ColumnMeta("InDate", record.getColumnByName("Indate").getColumn().getType()));
         }
         if (record.getTableName().equals("SellerRequestLog")) {
-          record.getColumnByName("Indate").getColumn().setName("InData");
+          record.getColumnByName("Indate")
+              .setColumn(new ColumnMeta("InData", record.getColumnByName("Indate").getColumn().getType()));
         }
         
         return super.translator(record);

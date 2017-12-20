@@ -18,8 +18,8 @@ import java.util.List;
 @Data
 public class Table implements Serializable {
 
-  private String type;
-  private String schema;
+  private final String type;
+  private final String schema;
   private String name;
 
   private List<ColumnMeta> primaryKeys = Lists.newArrayList();
