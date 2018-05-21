@@ -122,3 +122,8 @@ logs
 
 请联系作者 **3D**，CCTalk 找我「狄敬超」。
 
+
+相关文章：
+
+*   [从 SQL Server 到 MySQL （一）：异构数据库迁移 - Log4D](https://blog.alswl.com/2018/03/sql-server-migration-1/) 
+*   [从 SQL Server 到 MySQL（二）：在线迁移，空中换发动机 - Log4D](https://blog.alswl.com/2018/05/sql-server-migration-2/)
