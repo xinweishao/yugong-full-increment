@@ -116,9 +116,47 @@ logs
     ```
 *   运行
 
+## Tips
+
+odjbc missing:
+
+>   ould not resolve dependencies for project com.taobao.yugong:yugong:jar:1.2.0:
+>   The following artifacts could not be resolved: com.oracle:ojdbc14:jar:10.2.0.4.0,
+>   com.alibaba.otter:canal.client:jar:1.0.25-SNAPSHOT:
+>   Failure to find com.oracle:ojdbc14:jar:10.2.0.4.0 in
+>   http://maven.aliyun.com/nexus/content/groups/public/ was cached in the local repository,
+>   resolution will not be reattempted until the update interval of maven.aliyun.com
+>   has elapsed or updates are forced
+
+```
+open http://www.oracle.com/technetwork/apps-tech/jdbc-10201-088211.html
+# download ojbc14_g.jar
+mvn install:install-file -DgroupId=com.oracle -DartifactId=ojdbc14 -Dversion=10.2.0.4.0 -Dpackaging=jar -Dfile=ojdbc14_g.jar -DgeneratePom=true
+```
+
+canal-client missing:
+
+>   Could not resolve dependencies for project com.taobao.yugong:yugong:jar:1.2.0: Failure to find
+>   com.alibaba.otter:canal.client:jar:1.0.25-SNAPSHOT in
+>   https://oss.sonatype.org/content/repositories/snapshots was cached in the local repository,
+>   resolution will not be reattempted until the update interval of sonatype has elapsed or updates are
+>   forced
+
+```
+git clone https://github.com/alibaba/canal
+cd canal
+git checkout 2cebfa0
+mvn clean install
+```
 
 ## 需要帮助怎么办？
 
 
 请联系作者 **3D**，CCTalk 找我「狄敬超」。
 
+
+相关文章：
+
+*   [从 SQL Server 到 MySQL （一）：异构数据库迁移 - Log4D](https://blog.alswl.com/2018/03/sql-server-migration-1/) 
+*   [从 SQL Server 到 MySQL（二）：在线迁移，空中换发动机 - Log4D](https://blog.alswl.com/2018/05/sql-server-migration-2/)
+*   [从 SQL Server 到 MySQL（三）：愚公移山 - 开源力量 - Log4D](https://blog.alswl.com/2018/06/sql-server-migration-3/)
